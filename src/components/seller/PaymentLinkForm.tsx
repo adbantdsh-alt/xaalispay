@@ -5,6 +5,7 @@ import type { Product } from "@/lib/types";
 import { formatCurrency, getOrderTotal } from "@/lib/utils";
 import { ProductFields, type ProductFormValues } from "@/components/seller/ProductForm";
 import { buildPaymentLinkMessage, buildWhatsAppUrl } from "@/lib/share";
+import { PaymentLinkSuccessPanel } from "@/components/seller/PaymentLinkSuccessPanel";
 import { CopyButton } from "@/components/ui/CopyButton";
 import { buildPaymentLinkUrl, formatPublicUrl } from "@/lib/site-url";
 
@@ -67,42 +68,14 @@ export function PaymentLinkForm({
 
   if (createdPayUrl) {
     return (
-      <div className="link-success-panel">
-        <div className="link-success-icon">✓</div>
-        <h2 className="link-success-title">Lien prêt !</h2>
-        <p className="link-success-desc text-muted">
-          {createdProductName} — envoyez ce lien à votre client.
-        </p>
-
-        <div className="link-success-url-box">
-          <p className="link-success-url">{formatPublicUrl(createdPayUrl)}</p>
-        </div>
-
-        <button
-          type="button"
-          className="btn-whatsapp-full"
-          onClick={() =>
-            window.open(
-              buildWhatsAppUrl(
-                buildPaymentLinkMessage(createdPayUrl, createdProductName || "votre commande")
-              ),
-              "_blank"
-            )
-          }
-        >
-          Envoyer sur WhatsApp
-        </button>
-
-        <CopyButton
-          text={createdPayUrl}
-          label="Copier le lien"
-          className="btn-secondary btn-compact btn-inline"
-        />
-
-        <button type="button" onClick={onReset} className="btn-ghost btn-inline link-success-new">
-          + Partager un autre produit
-        </button>
-      </div>
+      <PaymentLinkSuccessPanel
+        payUrl={createdPayUrl}
+        productName={createdProductName}
+        title="Lien prêt !"
+        subtitle={`${createdProductName} — envoyez ce lien à votre client.`}
+        onReset={onReset}
+        resetLabel="+ Partager un autre produit"
+      />
     );
   }
 

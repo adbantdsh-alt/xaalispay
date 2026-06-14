@@ -2021,6 +2021,88 @@ input, button, textarea, select { font: inherit; color: var(--text); }
   margin-top: 0.25rem;
 }
 
+.seller-app .link-auto-copied {
+  width: 100%;
+  margin: 0;
+  padding: 0.625rem 0.875rem;
+  border-radius: var(--radius);
+  background: rgba(26, 79, 214, 0.1);
+  color: var(--accent-blue);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.seller-app .link-success-url-tap {
+  width: 100%;
+  cursor: pointer;
+  text-align: center;
+  transition: background 0.2s var(--ease), border-color 0.2s var(--ease);
+}
+
+.seller-app .link-success-url-tap:active {
+  background: var(--accent-blue-dim);
+  border-color: rgba(26, 79, 214, 0.35);
+}
+
+.seller-app .link-success-url-hint {
+  display: block;
+  margin-top: 0.375rem;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-seller-muted);
+}
+
+.seller-app .link-copy-main {
+  width: 100%;
+  min-height: 52px;
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+.seller-app .product-link-tap {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.625rem 0.75rem;
+  border-radius: var(--radius);
+  border: 1px dashed rgba(26, 79, 214, 0.35);
+  background: var(--accent-blue-dim);
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+}
+
+.seller-app .product-link-tap-url {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: var(--accent-blue);
+  word-break: break-all;
+}
+
+.seller-app .product-link-tap-hint {
+  font-size: 0.625rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-seller-muted);
+}
+
+.seller-app .product-row-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.625rem;
+  width: 100%;
+}
+
+.seller-app .product-copy-link {
+  width: 100%;
+}
+
 .quick-actions-embedded { gap: 1.125rem; }
 
 .pay-hero-subprice {
@@ -2381,16 +2463,4 @@ input, button, textarea, select { font: inherit; color: var(--text); }
   margin-bottom: 1rem;
   font-size: 0.875rem;
   line-height: 1.5;
-}
-
-.seller-app .product-row-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin-top: 0.625rem;
-}
-
-.seller-app .product-copy-link {
-  flex: 1;
-  min-width: 140px;
 }

@@ -5,6 +5,7 @@ import type { Product } from "@/lib/types";
 import { formatCurrency, formatDeliveryHours } from "@/lib/utils";
 import { fileToDataUrl } from "@/lib/product-form";
 import { CopyButton } from "@/components/ui/CopyButton";
+import { copyToClipboard } from "@/lib/share";
 import { buildProductPaymentUrl, formatPublicUrl } from "@/lib/site-url";
 
 export interface ProductFormValues {
@@ -178,6 +179,15 @@ export function ProductListItem({
   onEdit: () => void;
 }) {
   const payUrl = buildProductPaymentUrl(product);
+  const [copied, setCopied] = useState(false);
+
+  const handleQuickCopy = async () => {
+    const ok = await copyToClipboard(payUrl);
+    if (ok) {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
 
   return (
     <article className="product-row">
@@ -200,9 +210,21 @@ export function ProductListItem({
         {product.note && <p className="product-row-note text-muted">{product.note}</p>}
         {product.paymentSlug && (
           <div className="product-row-actions">
+            <button
+              type="button"
+              className="product-link-tap"
+              onClick={handleQuickCopy}
+              aria-label="Copier le lien de paiement"
+            >
+              <span className="product-link-tap-url">{formatPublicUrl(payUrl)}</span>
+              <span className="product-link-tap-hint">
+                {copied ? "✓ Copié !" : "Appuyer pour copier"}
+              </span>
+            </button>
             <CopyButton
               text={payUrl}
               label="Copier le lien"
+              copiedLabel="✓ Copié"
               className="btn-seller-primary btn-compact product-copy-link"
             />
             <button type="button" className="btn-secondary btn-compact" onClick={onEdit}>

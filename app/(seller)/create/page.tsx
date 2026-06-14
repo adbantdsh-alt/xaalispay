@@ -23,6 +23,7 @@ import {
 } from "@/lib/share";
 import { buildShopUrl, buildProductPaymentUrl, formatPublicUrl } from "@/lib/site-url";
 import { PaymentLinkForm } from "@/components/seller/PaymentLinkForm";
+import { PaymentLinkSuccessPanel } from "@/components/seller/PaymentLinkSuccessPanel";
 import { CopyButton } from "@/components/ui/CopyButton";
 
 function CreatePageContent() {
@@ -366,27 +367,15 @@ function CreatePageContent() {
             </p>
           )}
           {createdPayUrl ? (
-            <div className="link-success-panel">
-              <div className="link-success-icon">✓</div>
-              <h2 className="link-success-title">Produit créé !</h2>
-              <p className="link-success-desc text-muted">
-                {createdProductName} — partagez ce lien à vos clients.
-              </p>
-              <div className="link-success-url-box">
-                <p className="link-success-url">{formatPublicUrl(createdPayUrl)}</p>
-              </div>
-              <button
-                type="button"
-                className="btn-seller-primary btn-compact btn-inline"
-                onClick={() => {
-                  setCreatedPayUrl("");
-                  setCreatedProductName("");
-                  setSuccess("");
-                }}
-              >
-                + Créer un autre produit
-              </button>
-            </div>
+            <PaymentLinkSuccessPanel
+              payUrl={createdPayUrl}
+              productName={createdProductName}
+              onReset={() => {
+                setCreatedPayUrl("");
+                setCreatedProductName("");
+                setSuccess("");
+              }}
+            />
           ) : (
             <form onSubmit={handleCreateProduct} className="shop-card form-stack">
               <p className="shop-card-desc text-muted">
