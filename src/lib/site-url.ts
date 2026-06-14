@@ -31,3 +31,8 @@ export function buildProductPaymentUrl(product: Pick<Product, "paymentSlug">): s
 export function formatPublicUrl(url: string): string {
   return url.replace(/^https?:\/\//, "");
 }
+
+export function buildAuthCallbackUrl(next = "/dashboard"): string {
+  const path = `/auth/callback?next=${encodeURIComponent(next)}`;
+  return `${getSiteUrl()}${path}`;
+}

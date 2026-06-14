@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { BrandMark } from "@/components/ui/BrandMark";
 import { createClient, isSupabaseConfigured } from "@/lib/supabase/client";
+import { buildAuthCallbackUrl } from "@/lib/site-url";
 import { isValidUsername, slugifyUsername } from "@/lib/utils";
 
 function PasswordField({
@@ -65,11 +66,53 @@ function AuthForm() {
   const [username, setUsername] = useState("");
   const [phone, setPhone] = useState("");
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
+  const [pendingEmail, setPendingEmail] = useState("");
+  const [resending, setResending] = useState(false);
 
   useEffect(() => {
     setMode(initialMode);
   }, [initialMode]);
+
+  useEffect(() => {
+    const err = searchParams.get("error");
+    if (err === "confirmation") {
+      setError("Lien de confirmation invalide ou expiré. Renvoyez l'email ci-dessous.");
+      setMode("login");
+    }
+  }, [searchParams]);
+
+  const authRedirect = buildAuthCallbackUrl(
+    searchParams.get("redirect") || "/dashboard"
+  );
+
+  const handleResendConfirmation = async () => {
+    const targetEmail = pendingEmail || email;
+    if (!targetEmail.trim()) {
+      setError("Entrez votre email pour renvoyer la confirmation");
+      return;
+    }
+    setResending(true);
+    setError("");
+    setSuccess("");
+    try {
+      const supabase = createClient();
+      const { error: resendError } = await supabase.auth.resend({
+        type: "signup",
+        email: targetEmail.trim(),
+        options: { emailRedirectTo: authRedirect },
+      });
+      if (resendError) throw resendError;
+      setSuccess(
+        `Email de confirmation renvoyé à ${targetEmail}. Cliquez le lien sur xaalispay.com (pas localhost).`
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Renvoi impossible");
+    } finally {
+      setResending(false);
+    }
+  };
 
   const handleLocalSignup = async () => {
     const cleanUsername = slugifyUsername(username);
@@ -114,6 +157,7 @@ function AuthForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    setSuccess("");
     setLoading(true);
 
     try {
@@ -133,7 +177,16 @@ function AuthForm() {
           email,
           password,
         });
-        if (authError) throw authError;
+        if (authError) {
+          const msg = authError.message.toLowerCase();
+          if (msg.includes("email not confirmed") || msg.includes("not verified")) {
+            setPendingEmail(email);
+            throw new Error(
+              "Email non confirmé. Utilisez le bouton ci-dessous pour recevoir un nouveau lien sur xaalispay.com."
+            );
+          }
+          throw authError;
+        }
         router.push(searchParams.get("redirect") || "/dashboard");
         router.refresh();
         return;
@@ -149,6 +202,9 @@ function AuthForm() {
       const { data, error: authError } = await supabase.auth.signUp({
         email,
         password,
+        options: {
+          emailRedirectTo: authRedirect,
+        },
       });
       if (authError) throw authError;
       if (!data.user) throw new Error("Inscription échouée");
@@ -168,6 +224,15 @@ function AuthForm() {
       const profileData = await profileRes.json();
       if (!profileRes.ok) {
         throw new Error(profileData.error || "Profil vendeur non créé");
+      }
+
+      if (!data.session) {
+        setPendingEmail(email);
+        setSuccess(
+          `Compte créé ! Ouvrez l'email envoyé à ${email} et cliquez le lien de confirmation (xaalispay.com).`
+        );
+        setMode("login");
+        return;
       }
 
       router.push("/dashboard");
@@ -296,6 +361,18 @@ function AuthForm() {
         </div>
 
         {error && <p className="alert-danger">{error}</p>}
+        {success && <p className="toast-success" role="status">{success}</p>}
+
+        {(pendingEmail || (mode === "login" && email)) && useSupabase && (
+          <button
+            type="button"
+            onClick={handleResendConfirmation}
+            disabled={resending}
+            className="btn-secondary"
+          >
+            {resending ? "Envoi…" : "Renvoyer l'email de confirmation"}
+          </button>
+        )}
 
         <button type="submit" disabled={loading} className="btn-primary">
           {loading
