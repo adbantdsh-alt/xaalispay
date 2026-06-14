@@ -1,4 +1,4 @@
-import { readDb, updateDb, writeDb } from "./db";
+import { getDb, updateDb } from "./db";
 import {
   computeDeliveryDeadlineAt,
   computeProtectionEndsAt,
@@ -20,30 +20,38 @@ export { computeWalletBreakdown } from "./wallet-breakdown";
 
 const HELD_STATUSES: OrderStatus[] = ["paid", "protection", "dispute"];
 
-export function getProfileByUsername(username: string): Profile | undefined {
-  const db = readDb();
+export async function getProfileByUsername(
+  username: string
+): Promise<Profile | undefined> {
+  const db = await getDb();
   return db.profiles.find(
     (p) => p.username.toLowerCase() === username.toLowerCase()
   );
 }
 
-export function getProfileById(id: string): Profile | undefined {
-  return readDb().profiles.find((p) => p.id === id);
+export async function getProfileById(id: string): Promise<Profile | undefined> {
+  const db = await getDb();
+  return db.profiles.find((p) => p.id === id);
 }
 
-export function createProfile(data: Omit<Profile, "createdAt">): Profile {
-  const existing = getProfileById(data.id);
+export async function createProfile(
+  data: Omit<Profile, "createdAt">
+): Promise<Profile> {
+  const existing = await getProfileById(data.id);
   if (existing) return existing;
 
   const profile: Profile = { ...data, createdAt: new Date().toISOString() };
-  updateDb((db) => {
+  await updateDb((db) => {
     db.profiles.push(profile);
   });
   return profile;
 }
 
-export function isUsernameTaken(username: string, excludeId?: string): boolean {
-  const db = readDb();
+export async function isUsernameTaken(
+  username: string,
+  excludeId?: string
+): Promise<boolean> {
+  const db = await getDb();
   return db.profiles.some(
     (p) =>
       p.username.toLowerCase() === username.toLowerCase() &&
@@ -53,19 +61,19 @@ export function isUsernameTaken(username: string, excludeId?: string): boolean {
 
 const USERNAME_CHANGE_COOLDOWN_MS = 30 * 24 * 60 * 60 * 1000;
 
-export function updateProfileUsername(
+export async function updateProfileUsername(
   userId: string,
   username: string
-): { profile: Profile } | { error: string } {
+): Promise<{ profile: Profile } | { error: string }> {
   const clean = username.toLowerCase().trim();
   if (!isValidUsername(clean)) {
-    return { error: "Pseudo invalide (3-20 caractères, lettres/chiffres/_)" };
+    return { error: "XaalisTag invalide (3-20 caractères, lettres/chiffres/_)" };
   }
-  if (isUsernameTaken(clean, userId)) {
-    return { error: "Ce pseudo est déjà pris" };
+  if (await isUsernameTaken(clean, userId)) {
+    return { error: "Ce XaalisTag est déjà pris" };
   }
 
-  const profile = getProfileById(userId);
+  const profile = await getProfileById(userId);
   if (!profile) return { error: "Profil introuvable" };
 
   if (profile.username === clean) {
@@ -82,7 +90,7 @@ export function updateProfileUsername(
     }
   }
 
-  updateDb((db) => {
+  await updateDb((db) => {
     const p = db.profiles.find((x) => x.id === userId);
     if (p) {
       p.username = clean;
@@ -90,11 +98,14 @@ export function updateProfileUsername(
     }
   });
 
-  return { profile: getProfileById(userId)! };
+  return { profile: (await getProfileById(userId))! };
 }
 
-export function getProductsBySeller(sellerId: string, activeOnly = false): Product[] {
-  const db = readDb();
+export async function getProductsBySeller(
+  sellerId: string,
+  activeOnly = false
+): Promise<Product[]> {
+  const db = await getDb();
   return db.products
     .filter((p) => p.sellerId === sellerId && (!activeOnly || p.active))
     .sort(
@@ -103,23 +114,27 @@ export function getProductsBySeller(sellerId: string, activeOnly = false): Produ
     );
 }
 
-export function getProductById(id: string): Product | undefined {
-  return readDb().products.find((p) => p.id === id);
+export async function getProductById(id: string): Promise<Product | undefined> {
+  const db = await getDb();
+  return db.products.find((p) => p.id === id);
 }
 
-export function getProductByPaymentSlug(slug: string): Product | undefined {
-  return readDb().products.find((p) => p.paymentSlug === slug);
+export async function getProductByPaymentSlug(
+  slug: string
+): Promise<Product | undefined> {
+  const db = await getDb();
+  return db.products.find((p) => p.paymentSlug === slug);
 }
 
-export function createProduct(
+export async function createProduct(
   sellerId: string,
   data: Omit<
     Product,
     "id" | "sellerId" | "paymentSlug" | "active" | "createdAt" | "updatedAt"
   >
-): Product {
+): Promise<Product> {
   const now = new Date().toISOString();
-  const used = collectUsedPaymentSlugs(readDb());
+  const used = collectUsedPaymentSlugs(await getDb());
   const product: Product = {
     id: crypto.randomUUID(),
     sellerId,
@@ -129,13 +144,13 @@ export function createProduct(
     updatedAt: now,
     ...data,
   };
-  updateDb((db) => {
+  await updateDb((db) => {
     db.products.push(product);
   });
   return product;
 }
 
-export function updateProduct(
+export async function updateProduct(
   productId: string,
   sellerId: string,
   data: Partial<
@@ -151,9 +166,9 @@ export function updateProduct(
       | "active"
     >
   >
-): Product | null {
+): Promise<Product | null> {
   let updated: Product | null = null;
-  updateDb((db) => {
+  await updateDb((db) => {
     const product = db.products.find(
       (p) => p.id === productId && p.sellerId === sellerId
     );
@@ -164,21 +179,24 @@ export function updateProduct(
   return updated;
 }
 
-export function getOrdersBySeller(sellerId: string): Order[] {
-  return readDb()
-    .orders.filter((o) => o.sellerId === sellerId)
+export async function getOrdersBySeller(sellerId: string): Promise<Order[]> {
+  const db = await getDb();
+  return db.orders
+    .filter((o) => o.sellerId === sellerId)
     .sort(
       (a, b) =>
         new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     );
 }
 
-export function getOrderBySlug(slug: string): Order | undefined {
-  return readDb().orders.find((o) => o.slug === slug);
+export async function getOrderBySlug(slug: string): Promise<Order | undefined> {
+  const db = await getDb();
+  return db.orders.find((o) => o.slug === slug);
 }
 
-export function getOrderById(id: string): Order | undefined {
-  return readDb().orders.find((o) => o.id === id);
+export async function getOrderById(id: string): Promise<Order | undefined> {
+  const db = await getDb();
+  return db.orders.find((o) => o.id === id);
 }
 
 export interface CreateOrderClient {
@@ -189,14 +207,14 @@ export interface CreateOrderClient {
   note?: string;
 }
 
-export function createOrderFromProduct(
+export async function createOrderFromProduct(
   product: Product,
   client: CreateOrderClient = {}
-): Order {
+): Promise<Order> {
   const firstName = (client.firstName || "").trim();
   const lastName = (client.lastName || "").trim();
   const fullName = [firstName, lastName].filter(Boolean).join(" ").trim();
-  const used = collectUsedPaymentSlugs(readDb());
+  const used = collectUsedPaymentSlugs(await getDb());
   const now = new Date().toISOString();
   const order: Order = {
     id: crypto.randomUUID(),
@@ -217,20 +235,20 @@ export function createOrderFromProduct(
     createdAt: now,
     updatedAt: now,
   };
-  updateDb((db) => {
+  await updateDb((db) => {
     db.orders.push(order);
   });
   return order;
 }
 
-export function processPayment(
+export async function processPayment(
   slug: string,
   paymentMethod: string
-): Order | null {
+): Promise<Order | null> {
   let result: Order | null = null;
   const now = new Date().toISOString();
 
-  updateDb((db) => {
+  await updateDb((db) => {
     const order = db.orders.find((o) => o.slug === slug);
     if (!order || order.status !== "pending_payment") return;
 
@@ -248,11 +266,15 @@ export function processPayment(
   return result;
 }
 
-export function validateDelivery(orderId: string, sellerId: string, pin: string): Order | null {
+export async function validateDelivery(
+  orderId: string,
+  sellerId: string,
+  pin: string
+): Promise<Order | null> {
   let result: Order | null = null;
   const now = new Date().toISOString();
 
-  updateDb((db) => {
+  await updateDb((db) => {
     const order = db.orders.find(
       (o) => o.id === orderId && o.sellerId === sellerId
     );
@@ -268,11 +290,11 @@ export function validateDelivery(orderId: string, sellerId: string, pin: string)
   return result;
 }
 
-export function openDispute(slug: string): boolean {
+export async function openDispute(slug: string): Promise<boolean> {
   let ok = false;
   const now = new Date().toISOString();
 
-  updateDb((db) => {
+  await updateDb((db) => {
     const order = db.orders.find((o) => o.slug === slug);
     if (!order || order.status !== "protection") return;
     order.status = "dispute";
@@ -283,52 +305,8 @@ export function openDispute(slug: string): boolean {
   return ok;
 }
 
-export function releaseExpiredOrders(): string[] {
-  const released: string[] = [];
-  const now = Date.now();
-
-  updateDb((db) => {
-    for (const order of db.orders) {
-      if (
-        order.status === "protection" &&
-        order.protectionEndsAt &&
-        new Date(order.protectionEndsAt).getTime() <= now
-      ) {
-        order.status = "released";
-        order.releasedAt = new Date().toISOString();
-        order.updatedAt = order.releasedAt;
-        released.push(order.id);
-      }
-    }
-  });
-
-  return released;
-}
-
-export function refundExpiredDeliveries(): string[] {
-  const refunded: string[] = [];
-  const now = Date.now();
-
-  updateDb((db) => {
-    for (const order of db.orders) {
-      if (
-        order.status === "paid" &&
-        order.deliveryDeadlineAt &&
-        new Date(order.deliveryDeadlineAt).getTime() <= now
-      ) {
-        order.status = "refunded";
-        order.refundedAt = new Date().toISOString();
-        order.updatedAt = order.refundedAt;
-        refunded.push(order.id);
-      }
-    }
-  });
-
-  return refunded;
-}
-
-export function processOrderMaintenance(): boolean {
-  const db = readDb();
+export async function processOrderMaintenance(): Promise<boolean> {
+  const db = await getDb();
   let changed = false;
   const now = Date.now();
   const nowIso = new Date().toISOString();
@@ -358,13 +336,13 @@ export function processOrderMaintenance(): boolean {
     }
   }
 
-  if (changed) writeDb(db);
+  if (changed) await updateDb((d) => Object.assign(d, db));
   return changed;
 }
 
-export function getWalletData(sellerId: string) {
-  processOrderMaintenance();
-  const orders = getOrdersBySeller(sellerId);
+export async function getWalletData(sellerId: string) {
+  await processOrderMaintenance();
+  const orders = await getOrdersBySeller(sellerId);
 
   let available = 0;
   const sequestered: WalletSequesteredItem[] = [];

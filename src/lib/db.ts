@@ -2,6 +2,7 @@ import fs from "fs";
 import path from "path";
 import type { Database } from "./types";
 import { ensureProductPaymentSlugs } from "./utils";
+import { isRemoteStoreEnabled, loadRemoteDatabase, saveRemoteDatabase } from "./data-store";
 
 const DATA_DIR = process.env.VERCEL
   ? path.join("/tmp", "xaalispay-data")
@@ -9,6 +10,7 @@ const DATA_DIR = process.env.VERCEL
 const DB_PATH = path.join(DATA_DIR, "db.json");
 
 let memoryDb: Database | null = null;
+let loadPromise: Promise<Database> | null = null;
 
 const defaultDb: Database = {
   authUsers: [],
@@ -50,9 +52,7 @@ function normalizeDb(db: Database): Database {
 
 function finalizeDb(db: Database): Database {
   const normalized = normalizeDb(db);
-  if (ensureProductPaymentSlugs(normalized)) {
-    writeDb(normalized);
-  }
+  ensureProductPaymentSlugs(normalized);
   return normalized;
 }
 
@@ -61,13 +61,11 @@ function loadDefaultDb(): Database {
   return memoryDb;
 }
 
-export function readDb(): Database {
-  if (memoryDb) return memoryDb;
-
+function loadLocalDatabase(): Database {
   try {
     ensureDataDir();
   } catch (err) {
-    console.error("data dir inaccessible, mémoire seule:", err);
+    console.error("data dir inaccessible:", err);
     return loadDefaultDb();
   }
 
@@ -81,39 +79,22 @@ export function readDb(): Database {
         /* ignore */
       }
     }
-    try {
-      fs.writeFileSync(DB_PATH, JSON.stringify(defaultDb, null, 2));
-    } catch {
-      /* Vercel : disque parfois indisponible au premier accès */
-    }
     return loadDefaultDb();
   }
 
   try {
     const raw = fs.readFileSync(DB_PATH, "utf-8").trim();
-    if (!raw) {
-      return loadDefaultDb();
-    }
+    if (!raw) return loadDefaultDb();
     const db = finalizeDb(JSON.parse(raw) as Database);
     memoryDb = db;
     return db;
   } catch (err) {
-    console.error("db.json illisible — tentative restauration backup:", err);
-    if (fs.existsSync(BACKUP_PATH)) {
-      try {
-        const db = finalizeDb(JSON.parse(fs.readFileSync(BACKUP_PATH, "utf-8")) as Database);
-        memoryDb = db;
-        return db;
-      } catch {
-        /* ignore */
-      }
-    }
+    console.error("db.json illisible:", err);
     return loadDefaultDb();
   }
 }
 
-export function writeDb(db: Database) {
-  memoryDb = normalizeDb(structuredClone(db));
+function saveLocalDatabase(db: Database) {
   try {
     ensureDataDir();
     if (fs.existsSync(DB_PATH)) {
@@ -123,15 +104,59 @@ export function writeDb(db: Database) {
         /* ignore */
       }
     }
-    fs.writeFileSync(DB_PATH, JSON.stringify(memoryDb, null, 2));
+    fs.writeFileSync(DB_PATH, JSON.stringify(db, null, 2));
   } catch (err) {
-    console.error("writeDb échoué, données en mémoire:", err);
+    console.error("saveLocalDatabase échoué:", err);
   }
 }
 
-export function updateDb(mutator: (db: Database) => void) {
-  const db = readDb();
+async function hydrateDatabase(): Promise<Database> {
+  if (isRemoteStoreEnabled()) {
+    const remote = await loadRemoteDatabase();
+    if (remote) {
+      memoryDb = finalizeDb(remote);
+      return memoryDb;
+    }
+    memoryDb = loadDefaultDb();
+    await saveRemoteDatabase(memoryDb);
+    return memoryDb;
+  }
+
+  return loadLocalDatabase();
+}
+
+export async function getDb(): Promise<Database> {
+  if (memoryDb) return memoryDb;
+  if (!loadPromise) {
+    loadPromise = hydrateDatabase().finally(() => {
+      loadPromise = null;
+    });
+  }
+  return loadPromise;
+}
+
+export async function updateDb(mutator: (db: Database) => void): Promise<Database> {
+  const db = await getDb();
   mutator(db);
-  writeDb(db);
-  return db;
+  memoryDb = finalizeDb(structuredClone(db));
+
+  if (isRemoteStoreEnabled()) {
+    await saveRemoteDatabase(memoryDb);
+  } else {
+    saveLocalDatabase(memoryDb);
+  }
+
+  return memoryDb;
+}
+
+/** @deprecated Utiliser getDb() — conservé pour scripts locaux */
+export function readDb(): Database {
+  if (memoryDb) return memoryDb;
+  return loadLocalDatabase();
+}
+
+/** @deprecated Utiliser updateDb() */
+export function writeDb(db: Database) {
+  memoryDb = normalizeDb(structuredClone(db));
+  saveLocalDatabase(memoryDb);
 }

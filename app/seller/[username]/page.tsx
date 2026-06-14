@@ -18,7 +18,7 @@ export default async function SellerPublicPage({
   const { username } = await params;
   if (RESERVED.includes(username.toLowerCase())) redirect("/");
 
-  const profile = getProfileByUsername(username);
+  const profile = await getProfileByUsername(username);
   if (!profile) {
     return (
       <div className="page-shell status-screen">
@@ -30,7 +30,7 @@ export default async function SellerPublicPage({
     );
   }
 
-  const products = getProductsBySeller(profile.id, true);
+  const products = await getProductsBySeller(profile.id, true);
   const initial = profile.displayName.charAt(0).toUpperCase();
 
   return (

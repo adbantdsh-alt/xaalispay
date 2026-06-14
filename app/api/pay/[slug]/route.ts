@@ -14,8 +14,8 @@ import { isMobileMoneyMethod } from "@/lib/payment-methods";
 import { updateDb } from "@/lib/db";
 import type { Order, Product } from "@/lib/types";
 
-function buildSellerPayload(sellerId: string) {
-  const seller = getProfileById(sellerId);
+async function buildSellerPayload(sellerId: string) {
+  const seller = await getProfileById(sellerId);
   return {
     displayName: seller?.displayName || "Vendeur",
     username: seller?.username || "",
@@ -24,7 +24,10 @@ function buildSellerPayload(sellerId: string) {
   };
 }
 
-function buildProductPayPayload(product: Product) {
+function buildProductPayPayload(
+  product: Product,
+  seller: Awaited<ReturnType<typeof buildSellerPayload>>
+) {
   return {
     productName: product.name,
     productPrice: product.price,
@@ -36,12 +39,15 @@ function buildProductPayPayload(product: Product) {
     status: "pending_payment" as const,
     slug: product.paymentSlug,
     isProductLink: true,
-    seller: buildSellerPayload(product.sellerId),
+    seller,
   };
 }
 
-function buildOrderPayPayload(order: Order) {
-  const product = getProductById(order.productId);
+async function buildOrderPayPayload(order: Order) {
+  const [product, seller] = await Promise.all([
+    getProductById(order.productId),
+    buildSellerPayload(order.sellerId),
+  ]);
   return {
     productName: order.productName,
     productPrice: order.productPrice,
@@ -64,7 +70,7 @@ function buildOrderPayPayload(order: Order) {
         : undefined,
     protectionEndsAt: order.protectionEndsAt,
     deliveryDeadlineAt: order.deliveryDeadlineAt,
-    seller: buildSellerPayload(order.sellerId),
+    seller,
   };
 }
 
@@ -73,23 +79,24 @@ export async function GET(
   { params }: { params: Promise<{ slug: string }> }
 ) {
   const { slug } = await params;
-  processOrderMaintenance();
+  await processOrderMaintenance();
 
-  const order = getOrderBySlug(slug);
+  const order = await getOrderBySlug(slug);
   if (order) {
     return NextResponse.json({
-      order: buildOrderPayPayload(order),
+      order: await buildOrderPayPayload(order),
       protectionMinutes: getProtectionDurationMinutes(),
     });
   }
 
-  const product = getProductByPaymentSlug(slug);
+  const product = await getProductByPaymentSlug(slug);
   if (!product || !product.active) {
     return NextResponse.json({ error: "Lien invalide" }, { status: 404 });
   }
 
+  const seller = await buildSellerPayload(product.sellerId);
   return NextResponse.json({
-    order: buildProductPayPayload(product),
+    order: buildProductPayPayload(product, seller),
     protectionMinutes: getProtectionDurationMinutes(),
   });
 }
@@ -133,21 +140,21 @@ export async function POST(
         );
       }
 
-      let order = getOrderBySlug(slug);
+      let order = await getOrderBySlug(slug);
 
       if (!order) {
-        const product = getProductByPaymentSlug(slug);
+        const product = await getProductByPaymentSlug(slug);
         if (!product || !product.active) {
           return NextResponse.json({ error: "Lien invalide" }, { status: 404 });
         }
-        order = createOrderFromProduct(product, {
+        order = await createOrderFromProduct(product, {
           firstName,
           lastName,
           phone: clientPhone.trim(),
           address: clientAddress.trim(),
         });
       } else if (order.status === "pending_payment") {
-        updateDb((db) => {
+        await updateDb((db) => {
           const o = db.orders.find((x) => x.slug === slug);
           if (!o) return;
           o.clientName = fullName;
@@ -158,7 +165,7 @@ export async function POST(
         });
       }
 
-      const paid = processPayment(order.slug, paymentMethod);
+      const paid = await processPayment(order.slug, paymentMethod);
       if (!paid) {
         return NextResponse.json({ error: "Paiement impossible" }, { status: 400 });
       }
@@ -171,7 +178,7 @@ export async function POST(
     }
 
     if (action === "dispute") {
-      const ok = openDispute(slug);
+      const ok = await openDispute(slug);
       if (!ok) {
         return NextResponse.json(
           { error: "Litige impossible pendant cette étape" },

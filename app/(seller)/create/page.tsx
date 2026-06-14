@@ -206,7 +206,7 @@ function CreatePageContent() {
     resetMessages();
     const clean = slugifyUsername(pseudo);
     if (!isValidUsername(clean)) {
-      setError("Pseudo invalide (3-20 car., lettres/chiffres/_)");
+      setError("XaalisTag invalide (3-20 car., lettres/chiffres/_)");
       return;
     }
     setPseudoSaving(true);
@@ -223,7 +223,7 @@ function CreatePageContent() {
     }
     setProfile(data.profile);
     setPseudo(data.profile.username);
-    setSuccess("Pseudo mis à jour");
+    setSuccess("XaalisTag mis à jour");
   };
 
   if (loading) {
@@ -243,8 +243,8 @@ function CreatePageContent() {
               <h1 className="shop-page-title">Boutique</h1>
               {profile && <p className="shop-page-sub text-muted">@{profile.username}</p>}
             </div>
-            <Link href="/create?tab=pseudo" className="shop-pseudo-link">
-              Modifier pseudo
+            <Link href="/create?tab=tag" className="shop-pseudo-link">
+              Mon XaalisTag
             </Link>
           </header>
 
@@ -368,12 +368,15 @@ function CreatePageContent() {
 
       {view === "pseudo" && profile && (
         <>
-          <ShopBackBar title="Pseudo boutique" />
+          <ShopBackBar title="Mon XaalisTag" />
           {error && <p className="alert-danger">{error}</p>}
           {success && <p className="toast-success" role="status">{success}</p>}
           <form onSubmit={handlePseudoSave} className="shop-card form-stack">
             <p className="shop-card-desc text-muted">
-              Lien actuel : <strong>xaalispay.com/seller/{profile.username}</strong> — 1 changement max. par mois.
+              Votre XaalisTag est votre identifiant public, comme un Wise Tag.
+              Les clients vous trouvent sur{" "}
+              <strong>xaalispay.com/seller/{profile.username}</strong>
+              {" "}— 1 changement max. par mois.
             </p>
             <div className="pseudo-input-row">
               <span className="pseudo-prefix">@</span>
@@ -382,7 +385,7 @@ function CreatePageContent() {
                 value={pseudo}
                 onChange={(e) => setPseudo(slugifyUsername(e.target.value))}
                 maxLength={20}
-                placeholder="mon_boutique"
+                placeholder="adba"
               />
             </div>
             <button

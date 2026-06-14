@@ -13,7 +13,7 @@ export async function GET(request: Request) {
     const supabase = await createClient();
     const { data, error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error && data.user) {
-      markProfileEmailVerified(data.user.id);
+      await markProfileEmailVerified(data.user.id);
       const safeNext = next.startsWith("/") ? next : "/dashboard";
       return NextResponse.redirect(`${siteUrl}${safeNext}?verified=1`);
     }

@@ -2,12 +2,16 @@ import type { Profile } from "./types";
 
 export const SUPER_ADMIN_EMAIL = "adbaxgoat@gmail.com";
 
+/** Tag par défaut du super admin à la création du profil (modifiable ensuite). */
 export const SUPER_ADMIN_DEFAULT_PROFILE = {
-  username: "xaalistag",
-  displayName: "xaalistag",
+  username: "adba",
+  displayName: "adba",
   businessName: "XaalisPay",
   phone: undefined as string | undefined,
 };
+
+/** Ancien tag imposé par erreur — migré une fois vers le tag personnel. */
+export const LEGACY_FORCED_TAG = "xaalistag";
 
 export function isSuperAdminEmail(email?: string | null): boolean {
   return email?.toLowerCase().trim() === SUPER_ADMIN_EMAIL;

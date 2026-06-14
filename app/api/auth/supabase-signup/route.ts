@@ -20,7 +20,7 @@ export async function POST(request: Request) {
     if (isSuperAdminEmail(cleanEmail)) {
       const userId = await repairSuperAdminSupabaseAccount(cleanEmail, password);
       if (userId) {
-        ensureSuperAdminProfile(userId, cleanEmail);
+        await ensureSuperAdminProfile(userId, cleanEmail);
         const supabase = await createClient();
         const login = await supabase.auth.signInWithPassword({
           email: cleanEmail,
@@ -53,7 +53,7 @@ export async function POST(request: Request) {
     }
 
     await confirmSupabaseUser(data.user.id);
-    ensureSuperAdminProfile(data.user.id, data.user.email);
+    await ensureSuperAdminProfile(data.user.id, data.user.email);
 
     let session = data.session;
     if (!session) {

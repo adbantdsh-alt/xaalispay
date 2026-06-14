@@ -15,7 +15,7 @@ export async function GET() {
     return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
   }
 
-  const products = getProductsBySeller(user.id);
+  const products = await getProductsBySeller(user.id);
   return NextResponse.json({ products });
 }
 
@@ -25,7 +25,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
   }
 
-  const access = getSellerAccess(user.id, user.email);
+  const access = await getSellerAccess(user.id, user.email);
   if (!access.canCreateProducts) {
     return NextResponse.json(
       {
@@ -48,7 +48,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const product = createProduct(user.id, fields);
+    const product = await createProduct(user.id, fields);
     return NextResponse.json({
       product,
       payUrl: buildPaymentLinkUrl(product.paymentSlug),
@@ -75,7 +75,7 @@ export async function PATCH(request: Request) {
     if (raw.deliveryCost !== undefined) data.deliveryCost = Number(raw.deliveryCost);
     if (raw.deliveryHours !== undefined) data.deliveryHours = Number(raw.deliveryHours);
 
-    const product = updateProduct(id, user.id, data);
+    const product = await updateProduct(id, user.id, data);
     if (!product) {
       return NextResponse.json({ error: "Produit introuvable" }, { status: 404 });
     }

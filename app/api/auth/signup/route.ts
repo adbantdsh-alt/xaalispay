@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { hashPassword, setSessionCookie } from "@/lib/auth-local";
-import { readDb, updateDb } from "@/lib/db";
+import { getDb, updateDb } from "@/lib/db";
 import { createProfile, isUsernameTaken } from "@/lib/orders";
 import { isValidUsername, slugifyUsername } from "@/lib/utils";
 
@@ -41,7 +41,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const db = readDb();
+    const db = await getDb();
     const emailTaken = db.authUsers.some(
       (u) => u.email.toLowerCase() === email.toLowerCase()
     );
@@ -52,7 +52,7 @@ export async function POST(request: Request) {
       );
     }
 
-    if (isUsernameTaken(cleanUsername)) {
+    if (await isUsernameTaken(cleanUsername)) {
       return NextResponse.json(
         { error: "Cet identifiant est déjà pris" },
         { status: 409 }
@@ -62,7 +62,7 @@ export async function POST(request: Request) {
     const userId = crypto.randomUUID();
     const passwordHash = await hashPassword(password);
 
-    updateDb((d) => {
+    await updateDb((d) => {
       d.authUsers.push({
         id: userId,
         email: email.toLowerCase(),
@@ -71,7 +71,7 @@ export async function POST(request: Request) {
       });
     });
 
-    createProfile({
+    await createProfile({
       id: userId,
       username: cleanUsername,
       displayName: displayName.trim(),

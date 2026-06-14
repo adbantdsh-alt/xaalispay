@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { setSessionCookie, verifyPassword } from "@/lib/auth-local";
-import { readDb } from "@/lib/db";
+import { getDb } from "@/lib/db";
 
 export async function POST(request: Request) {
   try {
@@ -13,7 +13,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const db = readDb();
+    const db = await getDb();
     const user = db.authUsers.find(
       (u) => u.email.toLowerCase() === email.toLowerCase()
     );

@@ -10,7 +10,7 @@ export function useShopView(): ShopView {
   const tab = params.get("tab");
   if (tab === "link") return "link";
   if (tab === "products" || tab === "product") return "product";
-  if (tab === "pseudo") return "pseudo";
+  if (tab === "pseudo" || tab === "tag") return "pseudo";
   return "home";
 }
 

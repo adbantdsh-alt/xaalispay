@@ -16,12 +16,12 @@ export async function POST(request: Request) {
       );
     }
 
-    const profile = getProfileByUsername(username);
+    const profile = await getProfileByUsername(username);
     if (!profile) {
       return NextResponse.json({ error: "Vendeur introuvable" }, { status: 404 });
     }
 
-    const product = getProductById(productId);
+    const product = await getProductById(productId);
     if (!product || product.sellerId !== profile.id || !product.active) {
       return NextResponse.json({ error: "Produit introuvable" }, { status: 404 });
     }

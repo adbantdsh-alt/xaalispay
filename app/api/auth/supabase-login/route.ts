@@ -74,7 +74,7 @@ export async function POST(request: Request) {
 
     if (data.user.email && isSuperAdminEmail(data.user.email)) {
       await ensureSupabaseLoginAllowed(data.user.email);
-      const profile = ensureSuperAdminProfile(data.user.id, data.user.email);
+      const profile = await ensureSuperAdminProfile(data.user.id, data.user.email);
       return NextResponse.json({
         user: { id: data.user.id, email: data.user.email },
         isSuperAdmin: true,

@@ -135,7 +135,7 @@ export function VendorSearch({ large = false }: { large?: boolean }) {
             onChange={(e) => setQuery(e.target.value.replace(/^@+/, ""))}
             onFocus={() => query && hasResults && setOpen(true)}
             onKeyDown={handleKeyDown}
-            placeholder="identifiant ou nom de produit"
+            placeholder="XaalisTag ou nom de produit"
             className="vendor-search-input"
             autoComplete="off"
             aria-label="Rechercher un vendeur ou un produit"

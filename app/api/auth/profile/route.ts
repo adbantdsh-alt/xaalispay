@@ -17,7 +17,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const existing = getProfileById(userId);
+    const existing = await getProfileById(userId);
     if (existing) {
       return NextResponse.json({ profile: existing });
     }
@@ -29,14 +29,14 @@ export async function POST(request: Request) {
       );
     }
 
-    if (isUsernameTaken(username)) {
+    if (await isUsernameTaken(username)) {
       return NextResponse.json(
         { error: "Cet identifiant est déjà pris" },
         { status: 409 }
       );
     }
 
-    const profile = createProfile({
+    const profile = await createProfile({
       id: userId,
       username,
       displayName,
@@ -45,7 +45,8 @@ export async function POST(request: Request) {
       ...(isSuperAdminEmail(email) ? superAdminProfileDefaults() : {}),
     });
 
-    return NextResponse.json({ profile: ensureSuperAdminProfile(userId, email) || profile });
+    const ensured = await ensureSuperAdminProfile(userId, email);
+    return NextResponse.json({ profile: ensured || profile });
   } catch (err) {
     console.error("Profile creation error:", err);
     return NextResponse.json(
@@ -69,10 +70,10 @@ export async function PATCH(request: Request) {
   try {
     const { username } = await request.json();
     if (!username?.trim()) {
-      return NextResponse.json({ error: "Pseudo requis" }, { status: 400 });
+      return NextResponse.json({ error: "XaalisTag requis" }, { status: 400 });
     }
 
-    const result = updateProfileUsername(user.id, username);
+    const result = await updateProfileUsername(user.id, username);
     if ("error" in result) {
       return NextResponse.json({ error: result.error }, { status: 400 });
     }

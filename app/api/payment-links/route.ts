@@ -19,10 +19,10 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { productId, product: inlineProduct } = body;
 
-    let product = productId ? getProductById(productId) : undefined;
+    let product = productId ? await getProductById(productId) : undefined;
 
     if (inlineProduct?.name) {
-      const access = getSellerAccess(user.id, user.email);
+      const access = await getSellerAccess(user.id, user.email);
       if (!access.canCreateProducts) {
         return NextResponse.json(
           {
@@ -40,14 +40,14 @@ export async function POST(request: Request) {
           { status: 400 }
         );
       }
-      product = createProduct(user.id, fields);
+      product = await createProduct(user.id, fields);
     }
 
     if (!product || product.sellerId !== user.id || !product.active) {
       return NextResponse.json({ error: "Produit introuvable" }, { status: 404 });
     }
 
-    const profile = getProfileById(user.id);
+    const profile = await getProfileById(user.id);
     const payUrl = buildPaymentLinkUrl(product.paymentSlug);
 
     return NextResponse.json({

@@ -1,4 +1,4 @@
-import { readDb } from "./db";
+import { getDb } from "./db";
 
 export interface VendorSearchResult {
   username: string;
@@ -14,13 +14,13 @@ export interface ProductSearchResult {
   displayName: string;
 }
 
-export function searchMarketplace(query: string, limit = 8) {
+export async function searchMarketplace(query: string, limit = 8) {
   const q = query.trim().toLowerCase().replace(/^@/, "");
   if (!q || q.length < 1) {
     return { vendors: [] as VendorSearchResult[], products: [] as ProductSearchResult[] };
   }
 
-  const db = readDb();
+  const db = await getDb();
   const vendorLimit = Math.ceil(limit / 2);
   const productLimit = Math.ceil(limit / 2);
 

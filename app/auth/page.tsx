@@ -294,7 +294,7 @@ function AuthForm() {
             </div>
             <div>
               <label className="mb-1.5 block text-sm font-medium">
-                Identifiant public *
+                Votre XaalisTag *
               </label>
               <div className="relative">
                 <span className="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-black">
@@ -305,11 +305,13 @@ function AuthForm() {
                   value={username}
                   onChange={(e) => setUsername(slugifyUsername(e.target.value))}
                   required
-                  placeholder="ma_boutique"
+                  placeholder="adba"
                 />
               </div>
               <p className="mt-1 text-xs text-muted">
-                Vos clients vous trouveront via xaalispay.com/seller/{username || "identifiant"}
+                Comme un Wise Tag : vos clients vous paient via @
+                {username || "votre_tag"} sur xaalispay.com/seller/
+                {username || "votre_tag"}
               </p>
             </div>
             <div>

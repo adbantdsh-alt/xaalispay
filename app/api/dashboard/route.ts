@@ -15,14 +15,14 @@ export async function GET() {
     return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
   }
 
-  processOrderMaintenance();
-  const access = getSellerAccess(user.id, user.email);
+  await processOrderMaintenance();
+  const access = await getSellerAccess(user.id, user.email);
   if (!access.profile) {
     return NextResponse.json({ error: "Profil vendeur introuvable" }, { status: 404 });
   }
 
-  const wallet = getWalletData(user.id);
-  const orders = getOrdersBySeller(user.id);
+  const wallet = await getWalletData(user.id);
+  const orders = await getOrdersBySeller(user.id);
 
   return NextResponse.json({
     profile: access.profile,
@@ -47,7 +47,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Commande et PIN requis" }, { status: 400 });
     }
 
-    const order = validateDelivery(orderId, user.id, String(pin).trim());
+    const order = await validateDelivery(orderId, user.id, String(pin).trim());
     if (!order) {
       return NextResponse.json(
         { error: "PIN incorrect ou commande non éligible" },
