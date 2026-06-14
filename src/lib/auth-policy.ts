@@ -2,6 +2,13 @@ import type { Profile } from "./types";
 
 export const SUPER_ADMIN_EMAIL = "adbaxgoat@gmail.com";
 
+export const SUPER_ADMIN_DEFAULT_PROFILE = {
+  username: "adba",
+  displayName: "adba",
+  businessName: "XaalisPay",
+  phone: undefined as string | undefined,
+};
+
 export function isSuperAdminEmail(email?: string | null): boolean {
   return email?.toLowerCase().trim() === SUPER_ADMIN_EMAIL;
 }

@@ -50,3 +50,36 @@ export async function ensureSupabaseLoginAllowed(email: string): Promise<void> {
   const userId = await findSupabaseUserIdByEmail(email);
   if (userId) await confirmSupabaseUser(userId);
 }
+
+export async function repairSuperAdminSupabaseAccount(
+  email: string,
+  password: string
+): Promise<string | null> {
+  const normalized = email.toLowerCase().trim();
+  const admin = createAdminClient();
+  if (!admin) return null;
+
+  let userId = await findSupabaseUserIdByEmail(normalized);
+
+  if (!userId) {
+    const { data, error } = await admin.auth.admin.createUser({
+      email: normalized,
+      password,
+      email_confirm: true,
+    });
+
+    if (error) {
+      userId = await findSupabaseUserIdByEmail(normalized);
+      if (!userId) return null;
+    } else {
+      userId = data.user.id;
+    }
+  }
+
+  await admin.auth.admin.updateUserById(userId, {
+    email_confirm: true,
+    password,
+  });
+
+  return userId;
+}

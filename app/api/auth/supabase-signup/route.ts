@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { isSuperAdminEmail } from "@/lib/auth-policy";
-import { confirmSupabaseUser } from "@/lib/supabase/admin";
+import { ensureSuperAdminProfile } from "@/lib/profile-access";
+import { confirmSupabaseUser, repairSuperAdminSupabaseAccount } from "@/lib/supabase/admin";
 import { buildAuthCallbackUrl } from "@/lib/site-url";
 import { createClient } from "@/lib/supabase/server";
 
@@ -14,9 +15,30 @@ export async function POST(request: Request) {
       );
     }
 
+    const cleanEmail = email.trim().toLowerCase();
+
+    if (isSuperAdminEmail(cleanEmail)) {
+      const userId = await repairSuperAdminSupabaseAccount(cleanEmail, password);
+      if (userId) {
+        ensureSuperAdminProfile(userId, cleanEmail);
+        const supabase = await createClient();
+        const login = await supabase.auth.signInWithPassword({
+          email: cleanEmail,
+          password,
+        });
+        if (login.data.user) {
+          return NextResponse.json({
+            user: { id: login.data.user.id, email: login.data.user.email },
+            isSuperAdmin: true,
+            needsEmailVerification: false,
+          });
+        }
+      }
+    }
+
     const supabase = await createClient();
     const { data, error } = await supabase.auth.signUp({
-      email: email.trim(),
+      email: cleanEmail,
       password,
       options: {
         emailRedirectTo: buildAuthCallbackUrl("/dashboard"),
@@ -31,11 +53,12 @@ export async function POST(request: Request) {
     }
 
     await confirmSupabaseUser(data.user.id);
+    ensureSuperAdminProfile(data.user.id, data.user.email);
 
     let session = data.session;
     if (!session) {
       const login = await supabase.auth.signInWithPassword({
-        email: email.trim(),
+        email: cleanEmail,
         password,
       });
       session = login.data.session;
