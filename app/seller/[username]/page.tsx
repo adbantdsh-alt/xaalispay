@@ -49,9 +49,9 @@ export default async function SellerPublicPage({
       </div>
 
       <SellerShopClient
-        username={profile.username}
         products={products.map((p) => ({
           id: p.id,
+          paymentSlug: p.paymentSlug,
           name: p.name,
           price: p.price,
           deliveryCost: p.deliveryCost || 0,

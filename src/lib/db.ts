@@ -1,6 +1,7 @@
 import fs from "fs";
 import path from "path";
 import type { Database } from "./types";
+import { ensureProductPaymentSlugs } from "./utils";
 
 const DATA_DIR = process.env.VERCEL
   ? path.join("/tmp", "xaalispay-data")
@@ -33,13 +34,23 @@ function normalizeDb(db: Database): Database {
     if (p.deliveryCost === undefined) p.deliveryCost = 0;
     if (p.note === undefined) p.note = "";
     if (p.image === undefined) p.image = "";
+    if (p.paymentSlug === undefined) p.paymentSlug = "";
   }
   for (const o of db.orders) {
     if (o.deliveryCost === undefined) o.deliveryCost = 0;
     if (o.clientFirstName === undefined) o.clientFirstName = "";
+    if (o.clientAddress === undefined) o.clientAddress = "";
     if (o.clientNote === undefined) o.clientNote = "";
   }
   return db;
+}
+
+function finalizeDb(db: Database): Database {
+  const normalized = normalizeDb(db);
+  if (ensureProductPaymentSlugs(normalized)) {
+    writeDb(normalized);
+  }
+  return normalized;
 }
 
 function loadDefaultDb(): Database {
@@ -60,8 +71,8 @@ export function readDb(): Database {
   if (!fs.existsSync(DB_PATH)) {
     if (fs.existsSync(BACKUP_PATH)) {
       try {
-        const db = normalizeDb(JSON.parse(fs.readFileSync(BACKUP_PATH, "utf-8")) as Database);
-        writeDb(db);
+        const db = finalizeDb(JSON.parse(fs.readFileSync(BACKUP_PATH, "utf-8")) as Database);
+        memoryDb = db;
         return db;
       } catch {
         /* ignore */
@@ -80,15 +91,15 @@ export function readDb(): Database {
     if (!raw) {
       return loadDefaultDb();
     }
-    const db = normalizeDb(JSON.parse(raw) as Database);
+    const db = finalizeDb(JSON.parse(raw) as Database);
     memoryDb = db;
     return db;
   } catch (err) {
     console.error("db.json illisible — tentative restauration backup:", err);
     if (fs.existsSync(BACKUP_PATH)) {
       try {
-        const db = normalizeDb(JSON.parse(fs.readFileSync(BACKUP_PATH, "utf-8")) as Database);
-        writeDb(db);
+        const db = finalizeDb(JSON.parse(fs.readFileSync(BACKUP_PATH, "utf-8")) as Database);
+        memoryDb = db;
         return db;
       } catch {
         /* ignore */

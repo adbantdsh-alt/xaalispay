@@ -6,8 +6,9 @@ import {
 } from "./protection";
 import type { Order, OrderStatus, Product, Profile } from "./types";
 import {
-  generatePaymentSlug,
   generatePin,
+  generateUniquePaymentSlug,
+  collectUsedPaymentSlugs,
   getOrderTotal,
   isValidUsername,
 } from "./utils";
@@ -106,14 +107,23 @@ export function getProductById(id: string): Product | undefined {
   return readDb().products.find((p) => p.id === id);
 }
 
+export function getProductByPaymentSlug(slug: string): Product | undefined {
+  return readDb().products.find((p) => p.paymentSlug === slug);
+}
+
 export function createProduct(
   sellerId: string,
-  data: Omit<Product, "id" | "sellerId" | "active" | "createdAt" | "updatedAt">
+  data: Omit<
+    Product,
+    "id" | "sellerId" | "paymentSlug" | "active" | "createdAt" | "updatedAt"
+  >
 ): Product {
   const now = new Date().toISOString();
+  const used = collectUsedPaymentSlugs(readDb());
   const product: Product = {
     id: crypto.randomUUID(),
     sellerId,
+    paymentSlug: generateUniquePaymentSlug(used),
     active: true,
     createdAt: now,
     updatedAt: now,
@@ -175,6 +185,7 @@ export interface CreateOrderClient {
   firstName?: string;
   lastName?: string;
   phone?: string;
+  address?: string;
   note?: string;
 }
 
@@ -185,16 +196,18 @@ export function createOrderFromProduct(
   const firstName = (client.firstName || "").trim();
   const lastName = (client.lastName || "").trim();
   const fullName = [firstName, lastName].filter(Boolean).join(" ").trim();
+  const used = collectUsedPaymentSlugs(readDb());
   const now = new Date().toISOString();
   const order: Order = {
     id: crypto.randomUUID(),
     sellerId: product.sellerId,
     productId: product.id,
-    slug: generatePaymentSlug(),
+    slug: generateUniquePaymentSlug(used),
     pin: generatePin(),
     clientName: fullName,
     clientFirstName: firstName,
     clientPhone: (client.phone || "").trim(),
+    clientAddress: (client.address || "").trim(),
     clientNote: (client.note || "").trim(),
     productName: product.name,
     productPrice: product.price,

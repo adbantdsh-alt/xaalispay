@@ -26,6 +26,7 @@ export interface AuthUser {
 export interface Product {
   id: string;
   sellerId: string;
+  paymentSlug: string;
   name: string;
   description: string;
   price: number;
@@ -47,6 +48,7 @@ export interface Order {
   clientName: string;
   clientFirstName: string;
   clientPhone: string;
+  clientAddress: string;
   clientNote: string;
   productName: string;
   productPrice: number;

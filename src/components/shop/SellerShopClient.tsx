@@ -1,12 +1,12 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { formatCurrency, getOrderTotal } from "@/lib/utils";
 import { buildPaymentLinkPath } from "@/lib/site-url";
 
 interface ShopProduct {
   id: string;
+  paymentSlug: string;
   name: string;
   price: number;
   deliveryCost: number;
@@ -14,37 +14,14 @@ interface ShopProduct {
 }
 
 export function SellerShopClient({
-  username,
   products,
 }: {
-  username: string;
   products: ShopProduct[];
 }) {
   const router = useRouter();
-  const [loadingId, setLoadingId] = useState<string | null>(null);
-  const [error, setError] = useState("");
-
-  const handlePay = async (productId: string) => {
-    setError("");
-    setLoadingId(productId);
-    const res = await fetch("/api/orders", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username, productId }),
-    });
-    const data = await res.json();
-    setLoadingId(null);
-    if (!res.ok) {
-      setError(data.error || "Impossible de créer la commande");
-      return;
-    }
-    router.push(buildPaymentLinkPath(data.order.slug));
-  };
 
   return (
     <section className="seller-home">
-      {error && <p className="alert-danger">{error}</p>}
-
       {products.length === 0 ? (
         <div className="shop-public-empty">
           <p className="shop-public-empty-title">Boutique vide pour le moment</p>
@@ -70,19 +47,16 @@ export function SellerShopClient({
               <p className="product-card-name">{product.name}</p>
               <button
                 type="button"
-                onClick={() => handlePay(product.id)}
-                disabled={loadingId === product.id}
+                onClick={() => router.push(buildPaymentLinkPath(product.paymentSlug))}
                 className="btn-primary"
                 style={{ marginTop: "1.25rem" }}
               >
-                {loadingId === product.id ? "Chargement…" : "Payer en sécurité"}
+                Payer en sécurité
               </button>
             </div>
           </article>
         ))
       )}
-
-      <p className="trust-badge">🔒 Paiement sécurisé XaalisPay</p>
     </section>
   );
 }

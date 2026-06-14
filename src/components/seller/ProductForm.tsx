@@ -4,6 +4,8 @@ import { useId, useRef, useState } from "react";
 import type { Product } from "@/lib/types";
 import { formatCurrency, formatDeliveryHours } from "@/lib/utils";
 import { fileToDataUrl } from "@/lib/product-form";
+import { CopyButton } from "@/components/ui/CopyButton";
+import { buildProductPaymentUrl, formatPublicUrl } from "@/lib/site-url";
 
 export interface ProductFormValues {
   name: string;
@@ -162,6 +164,19 @@ export function ProductListItem({
           {formatDeliveryHours(product.deliveryHours)}
         </p>
         {product.note && <p className="product-row-note">{product.note}</p>}
+        {product.paymentSlug && (
+          <div className="product-row-link">
+            <span className="product-row-link-label">Lien paiement</span>
+            <span className="product-row-link-url">
+              {formatPublicUrl(buildProductPaymentUrl(product))}
+            </span>
+            <CopyButton
+              text={buildProductPaymentUrl(product)}
+              label="Copier"
+              className="btn-secondary btn-compact"
+            />
+          </div>
+        )}
       </div>
       <button
         type="button"

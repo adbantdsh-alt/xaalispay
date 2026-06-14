@@ -1,14 +1,12 @@
 import { NextResponse } from "next/server";
 import {
-  createOrderFromProduct,
   getProductById,
   getProfileByUsername,
-  processOrderMaintenance,
 } from "@/lib/orders";
+import { buildPaymentLinkPath } from "@/lib/site-url";
 
 export async function POST(request: Request) {
   try {
-    processOrderMaintenance();
     const { username, productId } = await request.json();
 
     if (!username || !productId) {
@@ -28,10 +26,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Produit introuvable" }, { status: 404 });
     }
 
-    const order = createOrderFromProduct(product, {});
-
     return NextResponse.json({
-      order: { id: order.id, slug: order.slug },
+      order: { slug: product.paymentSlug },
+      payPath: buildPaymentLinkPath(product.paymentSlug),
     });
   } catch {
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });

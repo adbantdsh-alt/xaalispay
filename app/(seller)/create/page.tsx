@@ -19,7 +19,7 @@ import {
   buildShopShareMessage,
   buildWhatsAppUrl,
 } from "@/lib/share";
-import { buildShopUrl, formatPublicUrl } from "@/lib/site-url";
+import { buildShopUrl, buildProductPaymentUrl, formatPublicUrl } from "@/lib/site-url";
 import { PaymentLinkForm } from "@/components/seller/PaymentLinkForm";
 
 function CreatePageContent() {
@@ -35,10 +35,6 @@ function CreatePageContent() {
   const [linkMode, setLinkMode] = useState<"existing" | "new">("existing");
   const [selectedProductId, setSelectedProductId] = useState("");
   const [inlineProduct, setInlineProduct] = useState<ProductFormValues>(emptyProductForm());
-  const [clientFirstName, setClientFirstName] = useState("");
-  const [clientLastName, setClientLastName] = useState("");
-  const [clientPhone, setClientPhone] = useState("");
-  const [clientNote, setClientNote] = useState("");
   const [createdPayUrl, setCreatedPayUrl] = useState("");
   const [createdProductName, setCreatedProductName] = useState("");
 
@@ -119,17 +115,15 @@ function CreatePageContent() {
     }
 
     setProductForm(emptyProductForm());
-    setSuccess("Produit enregistré");
+    setCreatedPayUrl(data.payUrl || buildProductPaymentUrl(data.product));
+    setCreatedProductName(data.product.name);
+    setSuccess("Produit créé — lien de paiement prêt");
     load();
   };
 
   const resetLinkForm = () => {
     setCreatedPayUrl("");
     setCreatedProductName("");
-    setClientFirstName("");
-    setClientLastName("");
-    setClientPhone("");
-    setClientNote("");
     setInlineProduct(emptyProductForm());
     setError("");
     setSuccess("");
@@ -159,12 +153,7 @@ function CreatePageContent() {
     resetMessages();
     setSaving(true);
 
-    const body: Record<string, unknown> = {
-      clientFirstName: clientFirstName.trim(),
-      clientLastName: clientLastName.trim(),
-      clientPhone: clientPhone.trim(),
-      clientNote: clientNote.trim(),
-    };
+    const body: Record<string, unknown> = {};
 
     if (linkMode === "existing") {
       if (!selectedProductId) {
@@ -300,13 +289,40 @@ function CreatePageContent() {
         <>
           <ShopBackBar title="Nouveau produit" />
           {error && <p className="alert-danger">{error}</p>}
-          {success && <p className="toast-success" role="status">{success}</p>}
-          <form onSubmit={handleCreateProduct} className="shop-card form-stack">
-            <ProductFields form={productForm} onChange={setProductForm} />
-            <button type="submit" disabled={saving} className="btn-seller-primary btn-compact btn-inline">
-              {saving ? "Enregistrement…" : "Enregistrer le produit"}
-            </button>
-          </form>
+          {success && !createdPayUrl && <p className="toast-success" role="status">{success}</p>}
+          {createdPayUrl ? (
+            <div className="link-success-panel">
+              <div className="link-success-icon">✓</div>
+              <h2 className="link-success-title">Produit créé !</h2>
+              <p className="link-success-desc text-muted">
+                {createdProductName} — partagez ce lien à vos clients.
+              </p>
+              <div className="link-success-url-box">
+                <p className="link-success-url">{formatPublicUrl(createdPayUrl)}</p>
+              </div>
+              <button
+                type="button"
+                className="btn-seller-primary btn-compact btn-inline"
+                onClick={() => {
+                  setCreatedPayUrl("");
+                  setCreatedProductName("");
+                  setSuccess("");
+                }}
+              >
+                + Créer un autre produit
+              </button>
+            </div>
+          ) : (
+            <form onSubmit={handleCreateProduct} className="shop-card form-stack">
+              <p className="shop-card-desc text-muted">
+                Chaque produit reçoit automatiquement son lien de paiement XaalisPay.
+              </p>
+              <ProductFields form={productForm} onChange={setProductForm} />
+              <button type="submit" disabled={saving} className="btn-seller-primary btn-compact btn-inline">
+                {saving ? "Enregistrement…" : "Créer le produit"}
+              </button>
+            </form>
+          )}
         </>
       )}
 
@@ -323,14 +339,6 @@ function CreatePageContent() {
             onSelectProduct={setSelectedProductId}
             inlineProduct={inlineProduct}
             onInlineProductChange={setInlineProduct}
-            clientFirstName={clientFirstName}
-            clientLastName={clientLastName}
-            clientPhone={clientPhone}
-            clientNote={clientNote}
-            onClientFirstName={setClientFirstName}
-            onClientLastName={setClientLastName}
-            onClientPhone={setClientPhone}
-            onClientNote={setClientNote}
             onSubmit={handleCreatePaymentLink}
             saving={saving}
             createdPayUrl={createdPayUrl}

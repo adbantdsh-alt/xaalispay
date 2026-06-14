@@ -1,5 +1,5 @@
 import { customAlphabet } from "nanoid";
-import type { Order, Product } from "./types";
+import type { Database, Order } from "./types";
 
 const slugAlphabet = customAlphabet("ABCDEFGHJKLMNPQRSTUVWXYZ23456789", 6);
 const pinAlphabet = customAlphabet("0123456789", 4);
@@ -16,6 +16,36 @@ export function formatCurrency(amount: number): string {
 
 export function generatePaymentSlug(): string {
   return slugAlphabet();
+}
+
+export function collectUsedPaymentSlugs(db: Database): Set<string> {
+  const used = new Set<string>();
+  for (const order of db.orders) used.add(order.slug);
+  for (const product of db.products) {
+    if (product.paymentSlug) used.add(product.paymentSlug);
+  }
+  return used;
+}
+
+export function generateUniquePaymentSlug(used: Set<string>): string {
+  for (let i = 0; i < 30; i++) {
+    const slug = generatePaymentSlug();
+    if (!used.has(slug)) return slug;
+  }
+  return `${generatePaymentSlug()}${generatePaymentSlug().slice(0, 2)}`;
+}
+
+export function ensureProductPaymentSlugs(db: Database): boolean {
+  const used = collectUsedPaymentSlugs(db);
+  let changed = false;
+  for (const product of db.products) {
+    if (!product.paymentSlug) {
+      product.paymentSlug = generateUniquePaymentSlug(used);
+      used.add(product.paymentSlug);
+      changed = true;
+    }
+  }
+  return changed;
 }
 
 export function generatePin(): string {

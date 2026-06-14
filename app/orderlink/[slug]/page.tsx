@@ -23,10 +23,13 @@ interface PayOrder {
   deliveryHours?: number;
   status: string;
   slug: string;
+  isProductLink?: boolean;
   pin?: string;
   protectionEndsAt?: string;
   clientName?: string;
+  clientFirstName?: string;
   clientPhone?: string;
+  clientAddress?: string;
   clientNote?: string;
   seller: { displayName: string; username: string };
 }
@@ -34,8 +37,12 @@ interface PayOrder {
 export default function PayPage() {
   const { slug } = useParams<{ slug: string }>();
   const [order, setOrder] = useState<PayOrder | null>(null);
-  const [clientName, setClientName] = useState("");
+  const [clientFirstName, setClientFirstName] = useState("");
+  const [clientLastName, setClientLastName] = useState("");
   const [clientPhone, setClientPhone] = useState("");
+  const [clientAddress, setClientAddress] = useState("");
+  const [trackingSlug, setTrackingSlug] = useState<string | null>(null);
+  const [isProductLink, setIsProductLink] = useState(false);
   const [loading, setLoading] = useState(true);
   const [paying, setPaying] = useState(false);
   const [paid, setPaid] = useState(false);
@@ -46,17 +53,19 @@ export default function PayPage() {
   const [disputeError, setDisputeError] = useState("");
   const [error, setError] = useState("");
 
+  const pollSlug = trackingSlug || slug;
+
   const fetchOrder = useCallback(async () => {
-    const res = await fetch(`/api/pay/${slug}`);
+    const res = await fetch(`/api/pay/${pollSlug}`);
     if (res.ok) {
       const data = await res.json();
       setOrder(data.order);
       setProtectionMinutes(data.protectionMinutes || 30);
-      if (data.order.clientName && !clientName) {
-        setClientName(data.order.clientName);
-      }
-      if (data.order.clientPhone && !clientPhone) {
-        setClientPhone(data.order.clientPhone);
+      setIsProductLink(!!data.order.isProductLink);
+      if (!trackingSlug && data.order.isProductLink) {
+        setPaid(false);
+        setLoading(false);
+        return;
       }
       if (data.order.status !== "pending_payment") {
         setPaid(true);
@@ -64,13 +73,14 @@ export default function PayPage() {
       }
     }
     setLoading(false);
-  }, [slug]);
+  }, [pollSlug, trackingSlug]);
 
   useEffect(() => {
     fetchOrder();
+    if (isProductLink && !trackingSlug) return;
     const interval = setInterval(fetchOrder, 4000);
     return () => clearInterval(interval);
-  }, [fetchOrder]);
+  }, [fetchOrder, isProductLink, trackingSlug]);
 
   const handleMaintenance = async () => {
     await fetch("/api/maintenance", { method: "POST" });
@@ -78,8 +88,13 @@ export default function PayPage() {
   };
 
   const handlePay = async (method: string) => {
-    if (!clientName.trim() || !clientPhone.trim()) {
-      setError("Nom et téléphone obligatoires");
+    if (
+      !clientFirstName.trim() ||
+      !clientLastName.trim() ||
+      !clientPhone.trim() ||
+      !clientAddress.trim()
+    ) {
+      setError("Prénom, nom, téléphone et adresse obligatoires");
       return;
     }
     setError("");
@@ -90,8 +105,10 @@ export default function PayPage() {
       body: JSON.stringify({
         action: "pay",
         paymentMethod: method,
-        clientName: clientName.trim(),
+        clientFirstName: clientFirstName.trim(),
+        clientLastName: clientLastName.trim(),
         clientPhone: clientPhone.trim(),
+        clientAddress: clientAddress.trim(),
       }),
     });
     const data = await res.json();
@@ -102,7 +119,15 @@ export default function PayPage() {
     }
     setPaid(true);
     setPin(data.pin);
-    fetchOrder();
+    if (data.orderSlug) {
+      setTrackingSlug(data.orderSlug);
+      setIsProductLink(false);
+      const trackRes = await fetch(`/api/pay/${data.orderSlug}`);
+      if (trackRes.ok) {
+        const trackData = await trackRes.json();
+        setOrder(trackData.order);
+      }
+    }
   };
 
   const handleDispute = async () => {
@@ -111,7 +136,7 @@ export default function PayPage() {
       setDisputeError("Décrivez le problème");
       return;
     }
-    const res = await fetch(`/api/pay/${slug}`, {
+    const res = await fetch(`/api/pay/${pollSlug}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ action: "dispute", reason: disputeReason }),
@@ -318,15 +343,24 @@ export default function PayPage() {
         )}
 
         <div className="pay-coords-block">
-          <p className="pay-coords-label">Vos coordonnées</p>
+          <p className="pay-coords-label">Vos informations</p>
           <div className="pay-coords-fields">
-            <input
-              className="input-field"
-              placeholder="Votre nom"
-              value={clientName}
-              onChange={(e) => setClientName(e.target.value)}
-              aria-label="Votre nom"
-            />
+            <div className="field-row">
+              <input
+                className="input-field"
+                placeholder="Prénom"
+                value={clientFirstName}
+                onChange={(e) => setClientFirstName(e.target.value)}
+                aria-label="Prénom"
+              />
+              <input
+                className="input-field"
+                placeholder="Nom"
+                value={clientLastName}
+                onChange={(e) => setClientLastName(e.target.value)}
+                aria-label="Nom"
+              />
+            </div>
             <div className="phone-input-row">
               <span className="phone-prefix">+221</span>
               <input
@@ -338,6 +372,14 @@ export default function PayPage() {
                 aria-label="Téléphone"
               />
             </div>
+            <textarea
+              className="input-field form-textarea-sm"
+              placeholder="Adresse de livraison"
+              value={clientAddress}
+              onChange={(e) => setClientAddress(e.target.value)}
+              rows={2}
+              aria-label="Adresse"
+            />
           </div>
         </div>
 

@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/session";
 import {
-  createOrderFromProduct,
   createProduct,
   getProductById,
   getProfileById,
@@ -17,14 +16,7 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json();
-    const {
-      productId,
-      product: inlineProduct,
-      clientFirstName,
-      clientLastName,
-      clientPhone,
-      clientNote,
-    } = body;
+    const { productId, product: inlineProduct } = body;
 
     let product = productId ? getProductById(productId) : undefined;
 
@@ -43,22 +35,16 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Produit introuvable" }, { status: 404 });
     }
 
-    const order = createOrderFromProduct(product, {
-      firstName: clientFirstName,
-      lastName: clientLastName,
-      phone: clientPhone,
-      note: clientNote,
-    });
-
     const profile = getProfileById(user.id);
+    const payUrl = buildPaymentLinkUrl(product.paymentSlug);
 
     return NextResponse.json({
       order: {
-        id: order.id,
-        slug: order.slug,
-        payUrl: buildPaymentLinkUrl(order.slug),
-        productName: order.productName,
-        total: order.productPrice + order.deliveryCost,
+        id: product.id,
+        slug: product.paymentSlug,
+        payUrl,
+        productName: product.name,
+        total: product.price + (product.deliveryCost || 0),
       },
       profile: profile ? { username: profile.username } : undefined,
     });

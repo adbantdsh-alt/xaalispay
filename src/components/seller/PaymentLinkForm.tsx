@@ -6,7 +6,7 @@ import { formatCurrency, getOrderTotal } from "@/lib/utils";
 import { ProductFields, type ProductFormValues } from "@/components/seller/ProductForm";
 import { buildPaymentLinkMessage, buildWhatsAppUrl } from "@/lib/share";
 import { CopyButton } from "@/components/ui/CopyButton";
-import { formatPublicUrl } from "@/lib/site-url";
+import { buildPaymentLinkUrl, formatPublicUrl } from "@/lib/site-url";
 
 export function PaymentLinkForm({
   products,
@@ -16,14 +16,6 @@ export function PaymentLinkForm({
   onSelectProduct,
   inlineProduct,
   onInlineProductChange,
-  clientFirstName,
-  clientLastName,
-  clientPhone,
-  clientNote,
-  onClientFirstName,
-  onClientLastName,
-  onClientPhone,
-  onClientNote,
   onSubmit,
   saving,
   createdPayUrl,
@@ -38,14 +30,6 @@ export function PaymentLinkForm({
   onSelectProduct: (id: string) => void;
   inlineProduct: ProductFormValues;
   onInlineProductChange: (v: ProductFormValues) => void;
-  clientFirstName: string;
-  clientLastName: string;
-  clientPhone: string;
-  clientNote: string;
-  onClientFirstName: (v: string) => void;
-  onClientLastName: (v: string) => void;
-  onClientPhone: (v: string) => void;
-  onClientNote: (v: string) => void;
   onSubmit: (e: React.FormEvent) => void;
   saving: boolean;
   createdPayUrl: string;
@@ -57,6 +41,10 @@ export function PaymentLinkForm({
 
   const activeProducts = products.filter((p) => p.active);
   const selectedProduct = products.find((p) => p.id === selectedProductId);
+
+  const selectedPayUrl = selectedProduct?.paymentSlug
+    ? buildPaymentLinkUrl(selectedProduct.paymentSlug)
+    : "";
 
   const filteredProducts = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -74,6 +62,8 @@ export function PaymentLinkForm({
     linkMode === "new"
       ? !!inlineProduct.name && !!inlineProduct.price
       : activeProducts.length > 0 && !!selectedProductId && selectedProduct?.active;
+
+  const displayUrl = createdPayUrl || (linkMode === "existing" ? selectedPayUrl : "");
 
   if (createdPayUrl) {
     return (
@@ -110,7 +100,7 @@ export function PaymentLinkForm({
         />
 
         <button type="button" onClick={onReset} className="btn-ghost btn-inline link-success-new">
-          + Créer un autre lien
+          + Partager un autre produit
         </button>
       </div>
     );
@@ -118,14 +108,8 @@ export function PaymentLinkForm({
 
   return (
     <form onSubmit={onSubmit} className="shop-card link-flow-card form-stack">
-      <div className="link-flow-steps">
-        <span className="link-flow-step link-flow-step-active">① Produit</span>
-        <span className="link-flow-step link-flow-step-active">② Client</span>
-        <span className="link-flow-step">③ Partager</span>
-      </div>
-
       <p className="shop-card-desc text-muted">
-        Tout en un : choisissez ou créez le produit, ajoutez le client, générez le lien.
+        Chaque produit a déjà son lien de paiement. Sélectionnez-le pour le partager.
       </p>
 
       <div className="link-mode-tabs">
@@ -147,7 +131,7 @@ export function PaymentLinkForm({
 
       {linkMode === "existing" ? (
         <section className="link-flow-section">
-          <p className="shop-section-label">Rechercher un produit</p>
+          <p className="shop-section-label">Choisir un produit</p>
 
           {products.length === 0 ? (
             <div className="link-empty-hint">
@@ -242,61 +226,38 @@ export function PaymentLinkForm({
         </section>
       )}
 
-      {selectedProduct && linkMode === "existing" && selectedProduct.active && (
-        <div className="link-product-preview">
-          <span>Sélectionné :</span> <strong>{selectedProduct.name}</strong>
-          {" — "}
-          {formatCurrency(
-            getOrderTotal({
-              productPrice: selectedProduct.price,
-              deliveryCost: selectedProduct.deliveryCost || 0,
-            })
-          )}
+      {displayUrl && linkMode === "existing" && selectedProduct?.active && (
+        <div className="link-product-preview link-product-preview-url">
+          <p className="link-success-url">{formatPublicUrl(displayUrl)}</p>
+          <div className="share-buttons">
+            <CopyButton text={displayUrl} label="Copier le lien" className="btn-secondary btn-compact" />
+            <button
+              type="button"
+              className="btn-whatsapp-full btn-compact"
+              onClick={() =>
+                window.open(
+                  buildWhatsAppUrl(
+                    buildPaymentLinkMessage(displayUrl, selectedProduct.name)
+                  ),
+                  "_blank"
+                )
+              }
+            >
+              WhatsApp
+            </button>
+          </div>
         </div>
       )}
 
-      <section className="link-flow-section link-flow-client">
-        <p className="shop-section-label">Infos client (optionnel)</p>
-        <p className="link-client-hint text-subtle">
-          Pré-remplit la fiche de paiement pour votre client.
-        </p>
-        <div className="field-row">
-          <input
-            className="input-field input-compact"
-            placeholder="Prénom"
-            value={clientFirstName}
-            onChange={(e) => onClientFirstName(e.target.value)}
-          />
-          <input
-            className="input-field input-compact"
-            placeholder="Nom"
-            value={clientLastName}
-            onChange={(e) => onClientLastName(e.target.value)}
-          />
-        </div>
-        <input
-          className="input-field input-compact"
-          placeholder="Téléphone (+221…)"
-          value={clientPhone}
-          onChange={(e) => onClientPhone(e.target.value)}
-          inputMode="tel"
-        />
-        <textarea
-          className="input-field input-compact form-textarea-sm"
-          placeholder="Note pour le client (ex. couleur, délai…)"
-          value={clientNote}
-          onChange={(e) => onClientNote(e.target.value)}
-          rows={2}
-        />
-      </section>
-
-      <button
-        type="submit"
-        disabled={saving || !canSubmit}
-        className="btn-seller-primary btn-compact btn-inline"
-      >
-        {saving ? "Génération…" : "Générer le lien de paiement"}
-      </button>
+      {linkMode === "new" && (
+        <button
+          type="submit"
+          disabled={saving || !canSubmit}
+          className="btn-seller-primary btn-compact btn-inline"
+        >
+          {saving ? "Création…" : "Créer et obtenir le lien"}
+        </button>
+      )}
     </form>
   );
 }

@@ -6,6 +6,7 @@ import {
   updateProduct,
 } from "@/lib/orders";
 import { normalizeProductFields } from "@/lib/product-form";
+import { buildPaymentLinkUrl } from "@/lib/site-url";
 
 export async function GET() {
   const user = await getSessionUser();
@@ -35,7 +36,10 @@ export async function POST(request: Request) {
     }
 
     const product = createProduct(user.id, fields);
-    return NextResponse.json({ product });
+    return NextResponse.json({
+      product,
+      payUrl: buildPaymentLinkUrl(product.paymentSlug),
+    });
   } catch {
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }

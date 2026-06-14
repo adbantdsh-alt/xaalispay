@@ -1,3 +1,5 @@
+import type { Product } from "./types";
+
 const DEFAULT_SITE_URL = "https://xaalispay.com";
 
 export function getSiteUrl(): string {
@@ -20,6 +22,10 @@ export function buildPaymentLinkPath(slug: string): string {
 
 export function buildPaymentLinkUrl(slug: string): string {
   return `${getSiteUrl()}${buildPaymentLinkPath(slug)}`;
+}
+
+export function buildProductPaymentUrl(product: Pick<Product, "paymentSlug">): string {
+  return buildPaymentLinkUrl(product.paymentSlug);
 }
 
 export function formatPublicUrl(url: string): string {
