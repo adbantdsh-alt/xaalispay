@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { buildShopPath } from "@/lib/site-url";
 
 interface ProfileData {
   username: string;
@@ -66,7 +67,7 @@ export default function ProfilePage() {
         ))}
       </section>
 
-      <Link href={`/${profile.username}`} className="btn-secondary">
+      <Link href={buildShopPath(profile.username)} className="btn-secondary">
         Voir ma boutique
       </Link>
       <button type="button" onClick={logout} className="btn-ghost" style={{ width: "100%" }}>

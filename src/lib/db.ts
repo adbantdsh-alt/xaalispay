@@ -2,8 +2,12 @@ import fs from "fs";
 import path from "path";
 import type { Database } from "./types";
 
-const DATA_DIR = path.join(process.cwd(), "data");
+const DATA_DIR = process.env.VERCEL
+  ? path.join("/tmp", "xaalispay-data")
+  : path.join(process.cwd(), "data");
 const DB_PATH = path.join(DATA_DIR, "db.json");
+
+let memoryDb: Database | null = null;
 
 const defaultDb: Database = {
   authUsers: [],
@@ -18,44 +22,97 @@ function ensureDataDir() {
   }
 }
 
+const BACKUP_PATH = `${DB_PATH}.bak`;
+
+function normalizeDb(db: Database): Database {
+  if (!db.authUsers) db.authUsers = [];
+  if (!db.products) db.products = [];
+  if (!db.profiles) db.profiles = [];
+  if (!db.orders) db.orders = [];
+  for (const p of db.products) {
+    if (p.deliveryCost === undefined) p.deliveryCost = 0;
+    if (p.note === undefined) p.note = "";
+    if (p.image === undefined) p.image = "";
+  }
+  for (const o of db.orders) {
+    if (o.deliveryCost === undefined) o.deliveryCost = 0;
+    if (o.clientFirstName === undefined) o.clientFirstName = "";
+    if (o.clientNote === undefined) o.clientNote = "";
+  }
+  return db;
+}
+
+function loadDefaultDb(): Database {
+  memoryDb = structuredClone(defaultDb);
+  return memoryDb;
+}
+
 export function readDb(): Database {
-  ensureDataDir();
+  if (memoryDb) return memoryDb;
+
+  try {
+    ensureDataDir();
+  } catch (err) {
+    console.error("data dir inaccessible, mémoire seule:", err);
+    return loadDefaultDb();
+  }
+
   if (!fs.existsSync(DB_PATH)) {
-    fs.writeFileSync(DB_PATH, JSON.stringify(defaultDb, null, 2));
-    return structuredClone(defaultDb);
+    if (fs.existsSync(BACKUP_PATH)) {
+      try {
+        const db = normalizeDb(JSON.parse(fs.readFileSync(BACKUP_PATH, "utf-8")) as Database);
+        writeDb(db);
+        return db;
+      } catch {
+        /* ignore */
+      }
+    }
+    try {
+      fs.writeFileSync(DB_PATH, JSON.stringify(defaultDb, null, 2));
+    } catch {
+      /* Vercel : disque parfois indisponible au premier accès */
+    }
+    return loadDefaultDb();
   }
 
   try {
     const raw = fs.readFileSync(DB_PATH, "utf-8").trim();
     if (!raw) {
-      fs.writeFileSync(DB_PATH, JSON.stringify(defaultDb, null, 2));
-      return structuredClone(defaultDb);
+      return loadDefaultDb();
     }
-    const db = JSON.parse(raw) as Database;
-    if (!db.authUsers) db.authUsers = [];
-    if (!db.products) db.products = [];
-    if (!db.profiles) db.profiles = [];
-    if (!db.orders) db.orders = [];
-    for (const p of db.products) {
-      if (p.deliveryCost === undefined) p.deliveryCost = 0;
-      if (p.note === undefined) p.note = "";
-      if (p.image === undefined) p.image = "";
-    }
-    for (const o of db.orders) {
-      if (o.deliveryCost === undefined) o.deliveryCost = 0;
-      if (o.clientFirstName === undefined) o.clientFirstName = "";
-      if (o.clientNote === undefined) o.clientNote = "";
-    }
+    const db = normalizeDb(JSON.parse(raw) as Database);
+    memoryDb = db;
     return db;
-  } catch {
-    fs.writeFileSync(DB_PATH, JSON.stringify(defaultDb, null, 2));
-    return structuredClone(defaultDb);
+  } catch (err) {
+    console.error("db.json illisible — tentative restauration backup:", err);
+    if (fs.existsSync(BACKUP_PATH)) {
+      try {
+        const db = normalizeDb(JSON.parse(fs.readFileSync(BACKUP_PATH, "utf-8")) as Database);
+        writeDb(db);
+        return db;
+      } catch {
+        /* ignore */
+      }
+    }
+    return loadDefaultDb();
   }
 }
 
 export function writeDb(db: Database) {
-  ensureDataDir();
-  fs.writeFileSync(DB_PATH, JSON.stringify(db, null, 2));
+  memoryDb = normalizeDb(structuredClone(db));
+  try {
+    ensureDataDir();
+    if (fs.existsSync(DB_PATH)) {
+      try {
+        fs.copyFileSync(DB_PATH, BACKUP_PATH);
+      } catch {
+        /* ignore */
+      }
+    }
+    fs.writeFileSync(DB_PATH, JSON.stringify(memoryDb, null, 2));
+  } catch (err) {
+    console.error("writeDb échoué, données en mémoire:", err);
+  }
 }
 
 export function updateDb(mutator: (db: Database) => void) {

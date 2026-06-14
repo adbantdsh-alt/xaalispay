@@ -1,13 +1,14 @@
 "use client";
 
 import { Suspense, useEffect, useState } from "react";
+import Link from "next/link";
 import type { Product, Profile } from "@/lib/types";
 import { slugifyUsername, isValidUsername } from "@/lib/utils";
 import {
-  ShopTabs,
-  useShopTab,
-  type ShopTab,
-} from "@/components/seller/ShopTabs";
+  ShopActionButtons,
+  ShopBackBar,
+  useShopView,
+} from "@/components/seller/ShopHub";
 import {
   ProductFields,
   ProductListItem,
@@ -15,13 +16,14 @@ import {
   type ProductFormValues,
 } from "@/components/seller/ProductForm";
 import {
-  buildPaymentLinkMessage,
+  buildShopShareMessage,
   buildWhatsAppUrl,
 } from "@/lib/share";
-import { CopyButton } from "@/components/ui/CopyButton";
+import { buildShopUrl, formatPublicUrl } from "@/lib/site-url";
+import { PaymentLinkForm } from "@/components/seller/PaymentLinkForm";
 
 function CreatePageContent() {
-  const tab = useShopTab();
+  const view = useShopView();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -30,8 +32,6 @@ function CreatePageContent() {
   const [success, setSuccess] = useState("");
 
   const [productForm, setProductForm] = useState<ProductFormValues>(emptyProductForm());
-  const [showProductForm, setShowProductForm] = useState(false);
-
   const [linkMode, setLinkMode] = useState<"existing" | "new">("existing");
   const [selectedProductId, setSelectedProductId] = useState("");
   const [inlineProduct, setInlineProduct] = useState<ProductFormValues>(emptyProductForm());
@@ -63,8 +63,12 @@ function CreatePageContent() {
       const data = await prodRes.json();
       const list = data.products || [];
       setProducts(list);
+      const firstActive = list.find((p: Product) => p.active);
       if (!selectedProductId && list.length > 0) {
-        setSelectedProductId(list.find((p: Product) => p.active)?.id || list[0].id);
+        setSelectedProductId(firstActive?.id || list[0].id);
+      }
+      if (!firstActive && list.length === 0) {
+        setLinkMode("new");
       }
     }
     setLoading(false);
@@ -77,14 +81,10 @@ function CreatePageContent() {
   useEffect(() => {
     setError("");
     setSuccess("");
-    setCreatedPayUrl("");
-    if (tab === "products") setShowProductForm(true);
-  }, [tab]);
+    if (view !== "link") setCreatedPayUrl("");
+  }, [view]);
 
-  const shopUrl =
-    typeof window !== "undefined" && profile
-      ? `${window.location.origin}/${profile.username}`
-      : "";
+  const shopUrl = profile ? buildShopUrl(profile.username) : "";
 
   const resetMessages = () => {
     setError("");
@@ -119,8 +119,20 @@ function CreatePageContent() {
     }
 
     setProductForm(emptyProductForm());
-    setSuccess("Produit créé");
+    setSuccess("Produit enregistré");
     load();
+  };
+
+  const resetLinkForm = () => {
+    setCreatedPayUrl("");
+    setCreatedProductName("");
+    setClientFirstName("");
+    setClientLastName("");
+    setClientPhone("");
+    setClientNote("");
+    setInlineProduct(emptyProductForm());
+    setError("");
+    setSuccess("");
   };
 
   const toggleActive = async (product: Product) => {
@@ -129,6 +141,16 @@ function CreatePageContent() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id: product.id, active: !product.active }),
     });
+    load();
+  };
+
+  const activateProductForLink = async (product: Product) => {
+    await fetch("/api/products", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: product.id, active: true }),
+    });
+    setSelectedProductId(product.id);
     load();
   };
 
@@ -179,7 +201,7 @@ function CreatePageContent() {
 
     setCreatedPayUrl(data.order.payUrl);
     setCreatedProductName(data.order.productName);
-    setSuccess("Lien de paiement créé");
+    setSuccess("Lien prêt à envoyer");
     load();
   };
 
@@ -218,337 +240,149 @@ function CreatePageContent() {
 
   return (
     <div className="seller-dashboard shop-page">
-      <header className="shop-page-head">
-        <div>
-          <h1 className="shop-page-title">Boutique</h1>
-          {profile && (
-            <p className="shop-page-sub text-muted">@{profile.username}</p>
+      {view === "home" && (
+        <>
+          <header className="shop-page-head">
+            <div>
+              <h1 className="shop-page-title">Boutique</h1>
+              {profile && <p className="shop-page-sub text-muted">@{profile.username}</p>}
+            </div>
+            <Link href="/create?tab=pseudo" className="shop-pseudo-link">
+              Modifier pseudo
+            </Link>
+          </header>
+
+          {shopUrl && (
+            <div className="shop-url-chip">
+              <span className="shop-url-text">{formatPublicUrl(shopUrl)}</span>
+              <button
+                type="button"
+                className="shop-url-share"
+                onClick={() =>
+                  window.open(
+                    buildWhatsAppUrl(buildShopShareMessage(shopUrl, profile!.username)),
+                    "_blank"
+                  )
+                }
+              >
+                Partager
+              </button>
+            </div>
           )}
-        </div>
-        {shopUrl && (
-          <p className="shop-page-url text-subtle">{shopUrl.replace(/^https?:\/\//, "")}</p>
-        )}
-      </header>
 
-      <ShopTabs active={tab} />
+          <ShopActionButtons />
 
-      {error && <p className="alert-danger">{error}</p>}
-      {success && <p className="toast-success" role="status">{success}</p>}
+          {error && <p className="alert-danger">{error}</p>}
+          {success && <p className="toast-success" role="status">{success}</p>}
 
-      {tab === "products" && (
-        <ProductsTab
-          products={products}
-          showForm={showProductForm}
-          onToggleForm={() => setShowProductForm((v) => !v)}
-          form={productForm}
-          onFormChange={setProductForm}
-          onSubmit={handleCreateProduct}
-          saving={saving}
-          onToggleProduct={toggleActive}
-        />
+          <section className="shop-section">
+            <p className="shop-section-label">Mes produits ({products.length})</p>
+            {products.length === 0 ? (
+              <p className="text-muted shop-empty">
+                Aucun produit — commencez par « Créer un produit ».
+              </p>
+            ) : (
+              <div className="product-list">
+                {products.map((product) => (
+                  <ProductListItem
+                    key={product.id}
+                    product={product}
+                    onToggle={() => toggleActive(product)}
+                  />
+                ))}
+              </div>
+            )}
+          </section>
+        </>
       )}
 
-      {tab === "link" && (
-        <PaymentLinkTab
-          products={products.filter((p) => p.active)}
-          linkMode={linkMode}
-          onLinkModeChange={setLinkMode}
-          selectedProductId={selectedProductId}
-          onSelectProduct={setSelectedProductId}
-          inlineProduct={inlineProduct}
-          onInlineProductChange={setInlineProduct}
-          clientFirstName={clientFirstName}
-          clientLastName={clientLastName}
-          clientPhone={clientPhone}
-          clientNote={clientNote}
-          onClientFirstName={setClientFirstName}
-          onClientLastName={setClientLastName}
-          onClientPhone={setClientPhone}
-          onClientNote={setClientNote}
-          onSubmit={handleCreatePaymentLink}
-          saving={saving}
-          createdPayUrl={createdPayUrl}
-          createdProductName={createdProductName}
-        />
+      {view === "product" && (
+        <>
+          <ShopBackBar title="Nouveau produit" />
+          {error && <p className="alert-danger">{error}</p>}
+          {success && <p className="toast-success" role="status">{success}</p>}
+          <form onSubmit={handleCreateProduct} className="shop-card form-stack">
+            <ProductFields form={productForm} onChange={setProductForm} />
+            <button type="submit" disabled={saving} className="btn-seller-primary btn-compact btn-inline">
+              {saving ? "Enregistrement…" : "Enregistrer le produit"}
+            </button>
+          </form>
+        </>
       )}
 
-      {tab === "pseudo" && profile && (
-        <PseudoTab
-          pseudo={pseudo}
-          onPseudoChange={setPseudo}
-          onSubmit={handlePseudoSave}
-          saving={pseudoSaving}
-          lastChanged={profile.usernameChangedAt}
-          current={profile.username}
-        />
+      {view === "link" && (
+        <>
+          <ShopBackBar title="Lien de paiement" />
+          {error && <p className="alert-danger">{error}</p>}
+          {success && <p className="toast-success" role="status">{success}</p>}
+          <PaymentLinkForm
+            products={products}
+            linkMode={linkMode}
+            onLinkModeChange={setLinkMode}
+            selectedProductId={selectedProductId}
+            onSelectProduct={setSelectedProductId}
+            inlineProduct={inlineProduct}
+            onInlineProductChange={setInlineProduct}
+            clientFirstName={clientFirstName}
+            clientLastName={clientLastName}
+            clientPhone={clientPhone}
+            clientNote={clientNote}
+            onClientFirstName={setClientFirstName}
+            onClientLastName={setClientLastName}
+            onClientPhone={setClientPhone}
+            onClientNote={setClientNote}
+            onSubmit={handleCreatePaymentLink}
+            saving={saving}
+            createdPayUrl={createdPayUrl}
+            createdProductName={createdProductName}
+            onReset={resetLinkForm}
+            onActivateProduct={activateProductForLink}
+          />
+        </>
+      )}
+
+      {view === "pseudo" && profile && (
+        <>
+          <ShopBackBar title="Pseudo boutique" />
+          {error && <p className="alert-danger">{error}</p>}
+          {success && <p className="toast-success" role="status">{success}</p>}
+          <form onSubmit={handlePseudoSave} className="shop-card form-stack">
+            <p className="shop-card-desc text-muted">
+              Lien actuel : <strong>xaalispay.com/seller/{profile.username}</strong> — 1 changement max. par mois.
+            </p>
+            <div className="pseudo-input-row">
+              <span className="pseudo-prefix">@</span>
+              <input
+                className="input-field input-compact"
+                value={pseudo}
+                onChange={(e) => setPseudo(slugifyUsername(e.target.value))}
+                maxLength={20}
+                placeholder="mon_boutique"
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={pseudoSaving || pseudo === profile.username}
+              className="btn-seller-primary btn-compact btn-inline"
+            >
+              {pseudoSaving ? "…" : "Enregistrer"}
+            </button>
+          </form>
+        </>
       )}
     </div>
   );
 }
 
-function ProductsTab({
-  products,
-  showForm,
-  onToggleForm,
-  form,
-  onFormChange,
-  onSubmit,
-  saving,
-  onToggleProduct,
-}: {
-  products: Product[];
-  showForm: boolean;
-  onToggleForm: () => void;
-  form: ProductFormValues;
-  onFormChange: (v: ProductFormValues) => void;
-  onSubmit: (e: React.FormEvent) => void;
-  saving: boolean;
-  onToggleProduct: (p: Product) => void;
-}) {
-  return (
-    <>
-      {showForm ? (
-        <form onSubmit={onSubmit} className="shop-card form-stack">
-          <p className="shop-card-title">Nouveau produit</p>
-          <ProductFields form={form} onChange={onFormChange} compact />
-          <div className="shop-card-actions">
-            <button type="submit" disabled={saving} className="btn-seller-primary btn-compact">
-              {saving ? "…" : "Enregistrer"}
-            </button>
-            <button type="button" onClick={onToggleForm} className="btn-ghost btn-compact">
-              Masquer
-            </button>
-          </div>
-        </form>
-      ) : (
-        <button type="button" onClick={onToggleForm} className="btn-seller-primary btn-compact btn-inline">
-          + Nouveau produit
-        </button>
-      )}
-
-      <section className="shop-section">
-        <p className="shop-section-label">Mes produits ({products.length})</p>
-        {products.length === 0 ? (
-          <p className="text-muted shop-empty">Créez un produit pour recevoir des paiements sécurisés.</p>
-        ) : (
-          <div className="product-list">
-            {products.map((product) => (
-              <ProductListItem
-                key={product.id}
-                product={product}
-                onToggle={() => onToggleProduct(product)}
-              />
-            ))}
-          </div>
-        )}
-      </section>
-    </>
-  );
-}
-
-function PaymentLinkTab({
-  products,
-  linkMode,
-  onLinkModeChange,
-  selectedProductId,
-  onSelectProduct,
-  inlineProduct,
-  onInlineProductChange,
-  clientFirstName,
-  clientLastName,
-  clientPhone,
-  clientNote,
-  onClientFirstName,
-  onClientLastName,
-  onClientPhone,
-  onClientNote,
-  onSubmit,
-  saving,
-  createdPayUrl,
-  createdProductName,
-}: {
-  products: Product[];
-  linkMode: "existing" | "new";
-  onLinkModeChange: (m: "existing" | "new") => void;
-  selectedProductId: string;
-  onSelectProduct: (id: string) => void;
-  inlineProduct: ProductFormValues;
-  onInlineProductChange: (v: ProductFormValues) => void;
-  clientFirstName: string;
-  clientLastName: string;
-  clientPhone: string;
-  clientNote: string;
-  onClientFirstName: (v: string) => void;
-  onClientLastName: (v: string) => void;
-  onClientPhone: (v: string) => void;
-  onClientNote: (v: string) => void;
-  onSubmit: (e: React.FormEvent) => void;
-  saving: boolean;
-  createdPayUrl: string;
-  createdProductName: string;
-}) {
-  const activeProducts = products;
-
-  return (
-    <form onSubmit={onSubmit} className="shop-card form-stack">
-      <p className="shop-card-title">Lien de paiement sécurisé</p>
-      <p className="shop-card-desc text-muted">
-        Envoyez ce lien à votre client — paiement protégé jusqu&apos;à livraison.
-      </p>
-
-      <div className="link-mode-tabs">
-        <button
-          type="button"
-          className={`link-mode-tab ${linkMode === "existing" ? "link-mode-tab-active" : ""}`}
-          onClick={() => onLinkModeChange("existing")}
-        >
-          Produit existant
-        </button>
-        <button
-          type="button"
-          className={`link-mode-tab ${linkMode === "new" ? "link-mode-tab-active" : ""}`}
-          onClick={() => onLinkModeChange("new")}
-        >
-          Nouveau produit
-        </button>
-      </div>
-
-      {linkMode === "existing" ? (
-        activeProducts.length === 0 ? (
-          <p className="text-muted">Aucun produit actif — créez-en un ou utilisez « Nouveau produit ».</p>
-        ) : (
-          <select
-            className="input-field input-compact"
-            value={selectedProductId}
-            onChange={(e) => onSelectProduct(e.target.value)}
-          >
-            {activeProducts.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.name}
-              </option>
-            ))}
-          </select>
-        )
-      ) : (
-        <ProductFields form={inlineProduct} onChange={onInlineProductChange} compact />
-      )}
-
-      <p className="shop-section-label" style={{ marginTop: "0.5rem" }}>Client (optionnel)</p>
-      <div className="field-row">
-        <input
-          className="input-field input-compact"
-          placeholder="Prénom"
-          value={clientFirstName}
-          onChange={(e) => onClientFirstName(e.target.value)}
-        />
-        <input
-          className="input-field input-compact"
-          placeholder="Nom"
-          value={clientLastName}
-          onChange={(e) => onClientLastName(e.target.value)}
-        />
-      </div>
-      <input
-        className="input-field input-compact"
-        placeholder="Téléphone"
-        value={clientPhone}
-        onChange={(e) => onClientPhone(e.target.value)}
-        inputMode="tel"
-      />
-      <textarea
-        className="input-field input-compact form-textarea-sm"
-        placeholder="Note pour le client (optionnel)"
-        value={clientNote}
-        onChange={(e) => onClientNote(e.target.value)}
-        rows={2}
-      />
-
-      <button
-        type="submit"
-        disabled={saving || (linkMode === "existing" && activeProducts.length === 0)}
-        className="btn-seller-primary btn-compact"
-      >
-        {saving ? "Création…" : "Générer le lien"}
-      </button>
-
-      {createdPayUrl && (
-        <div className="pay-link-result">
-          <p className="shop-section-label">Lien généré</p>
-          <p className="pay-link-url">{createdPayUrl}</p>
-          <div className="pay-link-actions">
-            <CopyButton text={createdPayUrl} label="Copier" />
-            <button
-              type="button"
-              className="btn-secondary btn-compact"
-              onClick={() =>
-                window.open(
-                  buildWhatsAppUrl(
-                    buildPaymentLinkMessage(
-                      createdPayUrl,
-                      createdProductName || "votre commande"
-                    )
-                  ),
-                  "_blank"
-                )
-              }
-            >
-              WhatsApp
-            </button>
-          </div>
-        </div>
-      )}
-    </form>
-  );
-}
-
-function PseudoTab({
-  pseudo,
-  onPseudoChange,
-  onSubmit,
-  saving,
-  lastChanged,
-  current,
-}: {
-  pseudo: string;
-  onPseudoChange: (v: string) => void;
-  onSubmit: (e: React.FormEvent) => void;
-  saving: boolean;
-  lastChanged?: string;
-  current: string;
-}) {
-  const nextChangeHint = lastChanged
-    ? "Dernière modification enregistrée — 1 changement max. par mois."
-    : "Vous pouvez modifier votre pseudo une fois par mois.";
-
-  return (
-    <form onSubmit={onSubmit} className="shop-card form-stack">
-      <p className="shop-card-title">Pseudo boutique</p>
-      <p className="shop-card-desc text-muted">
-        Votre lien : <strong>xaalispay/{current}</strong>
-      </p>
-      <p className="text-subtle" style={{ fontSize: "0.8125rem" }}>{nextChangeHint}</p>
-
-      <div className="pseudo-input-row">
-        <span className="pseudo-prefix">@</span>
-        <input
-          className="input-field input-compact"
-          value={pseudo}
-          onChange={(e) => onPseudoChange(slugifyUsername(e.target.value))}
-          maxLength={20}
-          placeholder="mon_boutique"
-        />
-      </div>
-
-      <button type="submit" disabled={saving || pseudo === current} className="btn-seller-primary btn-compact">
-        {saving ? "…" : "Enregistrer le pseudo"}
-      </button>
-    </form>
-  );
-}
-
 export default function CreatePage() {
   return (
-    <Suspense fallback={<div className="flex min-h-[50dvh] items-center justify-center"><div className="spinner" /></div>}>
+    <Suspense
+      fallback={
+        <div className="flex min-h-[50dvh] items-center justify-center">
+          <div className="spinner" />
+        </div>
+      }
+    >
       <CreatePageContent />
     </Suspense>
   );

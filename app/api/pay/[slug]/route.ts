@@ -32,6 +32,8 @@ export async function GET(
       productPrice: order.productPrice,
       deliveryCost: order.deliveryCost || 0,
       productImage: product?.image || "",
+      productDescription: product?.description || "",
+      productNote: product?.note || "",
       deliveryHours: order.deliveryHours,
       status: order.status,
       slug: order.slug,

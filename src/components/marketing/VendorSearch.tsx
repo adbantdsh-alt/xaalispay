@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { formatCurrency } from "@/lib/utils";
+import { buildShopPath } from "@/lib/site-url";
 
 interface VendorHit {
   username: string;
@@ -83,7 +84,7 @@ export function VendorSearch({ large = false }: { large?: boolean }) {
   const goToVendor = (username: string) => {
     setOpen(false);
     setQuery("");
-    router.push(`/${username}`);
+    router.push(buildShopPath(username));
   };
 
   const handleSubmit = (e: React.FormEvent) => {

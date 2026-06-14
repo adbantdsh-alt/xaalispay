@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { formatCurrency, getOrderTotal } from "@/lib/utils";
-import { BrandMark } from "@/components/ui/BrandMark";
+import { buildPaymentLinkPath } from "@/lib/site-url";
 
 interface ShopProduct {
   id: string;
@@ -38,7 +38,7 @@ export function SellerShopClient({
       setError(data.error || "Impossible de créer la commande");
       return;
     }
-    router.push(`/pay/${data.order.slug}`);
+    router.push(buildPaymentLinkPath(data.order.slug));
   };
 
   return (
@@ -46,9 +46,15 @@ export function SellerShopClient({
       {error && <p className="alert-danger">{error}</p>}
 
       {products.length === 0 ? (
-        <p className="text-muted" style={{ textAlign: "center", padding: "3rem 0" }}>
-          Aucun produit disponible
-        </p>
+        <div className="shop-public-empty">
+          <p className="shop-public-empty-title">Boutique vide pour le moment</p>
+          <p className="shop-public-empty-desc text-muted">
+            Ce vendeur n&apos;a pas encore publié de produit actif.
+          </p>
+          <p className="shop-public-empty-hint text-subtle">
+            Vendeur ? Connectez-vous puis ouvrez l&apos;onglet <strong>Boutique</strong> pour ajouter vos produits.
+          </p>
+        </div>
       ) : (
         products.map((product) => (
           <article key={product.id} className="product-card animate-fade-up">

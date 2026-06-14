@@ -1,4 +1,4 @@
-import { readDb, updateDb } from "./db";
+import { readDb, updateDb, writeDb } from "./db";
 import {
   computeDeliveryDeadlineAt,
   computeProtectionEndsAt,
@@ -314,9 +314,39 @@ export function refundExpiredDeliveries(): string[] {
   return refunded;
 }
 
-export function processOrderMaintenance() {
-  refundExpiredDeliveries();
-  releaseExpiredOrders();
+export function processOrderMaintenance(): boolean {
+  const db = readDb();
+  let changed = false;
+  const now = Date.now();
+  const nowIso = new Date().toISOString();
+
+  for (const order of db.orders) {
+    if (
+      order.status === "paid" &&
+      order.deliveryDeadlineAt &&
+      new Date(order.deliveryDeadlineAt).getTime() <= now
+    ) {
+      order.status = "refunded";
+      order.refundedAt = nowIso;
+      order.updatedAt = order.refundedAt;
+      changed = true;
+    }
+  }
+  for (const order of db.orders) {
+    if (
+      order.status === "protection" &&
+      order.protectionEndsAt &&
+      new Date(order.protectionEndsAt).getTime() <= now
+    ) {
+      order.status = "released";
+      order.releasedAt = nowIso;
+      order.updatedAt = order.releasedAt;
+      changed = true;
+    }
+  }
+
+  if (changed) writeDb(db);
+  return changed;
 }
 
 export function getWalletData(sellerId: string) {

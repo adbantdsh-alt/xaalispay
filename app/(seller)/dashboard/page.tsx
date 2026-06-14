@@ -10,6 +10,7 @@ import { DashboardSkeleton } from "@/components/ui/Skeleton";
 import { SellerHeader } from "@/components/seller/SellerHeader";
 import { WalletOverview } from "@/components/seller/WalletOverview";
 import { AssetRow } from "@/components/seller/AssetRow";
+import { buildShopUrl } from "@/lib/site-url";
 
 interface DashboardData {
   profile: { username: string; displayName: string };
@@ -105,10 +106,7 @@ export default function DashboardPage() {
   const hasValidatedDelivery = data.orders.some(
     (o) => o.status === "protection" || o.status === "released"
   );
-  const shopUrl =
-    typeof window !== "undefined"
-      ? `${window.location.origin}/${data.profile.username}`
-      : "";
+  const shopUrl = buildShopUrl(data.profile.username);
   const showEmpty = recentOrders.length === 0 && productCount === 0;
 
   return (

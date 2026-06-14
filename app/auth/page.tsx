@@ -257,7 +257,7 @@ function AuthForm() {
                 />
               </div>
               <p className="mt-1 text-xs text-muted">
-                Vos clients vous trouveront via localhost/@{username || "identifiant"}
+                Vos clients vous trouveront via xaalispay.com/seller/{username || "identifiant"}
               </p>
             </div>
             <div>

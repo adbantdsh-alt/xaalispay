@@ -41,7 +41,7 @@ export function QuickActions({
         <span className="quick-action-label">Lien</span>
       </Link>
 
-      <Link href="/create?tab=products" className="quick-action">
+      <Link href="/create?tab=product" className="quick-action">
         <span className="quick-action-icon">
           <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />

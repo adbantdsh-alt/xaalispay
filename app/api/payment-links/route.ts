@@ -7,6 +7,7 @@ import {
   getProfileById,
 } from "@/lib/orders";
 import { normalizeProductFields } from "@/lib/product-form";
+import { buildPaymentLinkUrl } from "@/lib/site-url";
 
 export async function POST(request: Request) {
   const user = await getSessionUser();
@@ -50,13 +51,12 @@ export async function POST(request: Request) {
     });
 
     const profile = getProfileById(user.id);
-    const origin = new URL(request.url).origin;
 
     return NextResponse.json({
       order: {
         id: order.id,
         slug: order.slug,
-        payUrl: `${origin}/pay/${order.slug}`,
+        payUrl: buildPaymentLinkUrl(order.slug),
         productName: order.productName,
         total: order.productPrice + order.deliveryCost,
       },
