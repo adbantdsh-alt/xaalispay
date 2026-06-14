@@ -53,8 +53,11 @@ export async function POST(request: Request) {
       product,
       payUrl: buildPaymentLinkUrl(product.paymentSlug),
     });
-  } catch {
-    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
+  } catch (err) {
+    const message =
+      err instanceof Error ? err.message : "Erreur serveur";
+    console.error("POST /api/products:", message);
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
 
@@ -81,7 +84,9 @@ export async function PATCH(request: Request) {
     }
 
     return NextResponse.json({ product });
-  } catch {
-    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
+  } catch (err) {
+    const message =
+      err instanceof Error ? err.message : "Erreur serveur";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

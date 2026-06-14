@@ -1,0 +1,59 @@
+import { NextResponse } from "next/server";
+import { getWalletData } from "@/lib/orders";
+import { isMobileMoneyMethod } from "@/lib/payment-methods";
+import { getSessionUser } from "@/lib/session";
+import { processWithdrawal } from "@/lib/withdrawals";
+
+export async function POST(request: Request) {
+  const user = await getSessionUser();
+  if (!user) {
+    return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+  }
+
+  try {
+    const { amount, method, phone } = await request.json();
+    const parsedAmount = Number(amount);
+    const cleanPhone = String(phone || "").trim();
+
+    if (!parsedAmount || parsedAmount <= 0) {
+      return NextResponse.json({ error: "Montant invalide" }, { status: 400 });
+    }
+    if (!method || !isMobileMoneyMethod(method)) {
+      return NextResponse.json(
+        { error: "Choisissez Wave ou Orange Money" },
+        { status: 400 }
+      );
+    }
+    if (!cleanPhone || cleanPhone.length < 8) {
+      return NextResponse.json({ error: "Numéro de téléphone requis" }, { status: 400 });
+    }
+
+    const wallet = await getWalletData(user.id);
+    if (parsedAmount > wallet.available) {
+      return NextResponse.json(
+        { error: "Solde insuffisant" },
+        { status: 400 }
+      );
+    }
+
+    const result = await processWithdrawal({
+      sellerId: user.id,
+      amount: parsedAmount,
+      method,
+      phone: cleanPhone,
+    });
+
+    if (!result.ok) {
+      return NextResponse.json({ error: result.message }, { status: 400 });
+    }
+
+    return NextResponse.json({
+      status: result.status,
+      message: result.message,
+      reference: result.reference,
+      apiConnected: !!process.env.PAYMENT_WITHDRAW_API_URL?.trim(),
+    });
+  } catch {
+    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
+  }
+}

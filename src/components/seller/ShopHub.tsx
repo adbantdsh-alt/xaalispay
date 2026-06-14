@@ -3,13 +3,14 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 
-export type ShopView = "home" | "product" | "link" | "pseudo";
+export type ShopView = "home" | "product" | "link" | "pseudo" | "edit";
 
 export function useShopView(): ShopView {
   const params = useSearchParams();
   const tab = params.get("tab");
   if (tab === "link") return "link";
   if (tab === "products" || tab === "product") return "product";
+  if (tab === "edit") return "edit";
   if (tab === "pseudo" || tab === "tag") return "pseudo";
   return "home";
 }
@@ -35,7 +36,7 @@ export function ShopActionButtons() {
           </svg>
         </span>
         <span className="shop-action-label">Créer un produit</span>
-        <span className="shop-action-hint">Photo, prix, livraison</span>
+        <span className="shop-action-hint">Image, prix, lien auto</span>
       </Link>
 
       <Link href="/create?tab=link" className="shop-action-card shop-action-card-link">

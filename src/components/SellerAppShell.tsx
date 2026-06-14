@@ -1,10 +1,5 @@
-import { MobileBottomNav } from "./MobileBottomNav";
+import { SellerShellClient } from "./SellerShellClient";
 
 export function SellerAppShell({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="seller-app seller-shell">
-      <main className="seller-content">{children}</main>
-      <MobileBottomNav />
-    </div>
-  );
+  return <SellerShellClient>{children}</SellerShellClient>;
 }

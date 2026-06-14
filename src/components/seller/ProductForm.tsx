@@ -27,12 +27,26 @@ export const emptyProductForm = (): ProductFormValues => ({
   image: "",
 });
 
+export function productToFormValues(product: Product): ProductFormValues {
+  return {
+    name: product.name,
+    price: String(product.price),
+    deliveryCost: String(product.deliveryCost || 0),
+    deliveryHours: String(product.deliveryHours),
+    note: product.note || "",
+    description: product.description || "",
+    image: product.image || "",
+  };
+}
+
 export function ProductFields({
   form,
   onChange,
+  showDescription = true,
 }: {
   form: ProductFormValues;
   onChange: (next: ProductFormValues) => void;
+  showDescription?: boolean;
 }) {
   const [imageError, setImageError] = useState("");
   const fileId = useId();
@@ -127,8 +141,21 @@ export function ProductFields({
         />
       </label>
 
+      {showDescription && (
+        <label className="field-block">
+          <span className="field-block-label">Description (optionnel)</span>
+          <textarea
+            className="input-field input-compact form-textarea-sm"
+            placeholder="Décrivez votre produit…"
+            value={form.description}
+            onChange={(e) => onChange({ ...form, description: e.target.value })}
+            rows={2}
+          />
+        </label>
+      )}
+
       <label className="field-block">
-        <span className="field-block-label">Note (optionnel)</span>
+        <span className="field-block-label">Note interne (optionnel)</span>
         <textarea
           className="input-field input-compact form-textarea-sm"
           placeholder="Couleur, taille, précisions…"
@@ -144,10 +171,14 @@ export function ProductFields({
 export function ProductListItem({
   product,
   onToggle,
+  onEdit,
 }: {
   product: Product;
   onToggle: () => void;
+  onEdit: () => void;
 }) {
+  const payUrl = buildProductPaymentUrl(product);
+
   return (
     <article className="product-row">
       {product.image ? (
@@ -163,18 +194,20 @@ export function ProductListItem({
           {" · "}
           {formatDeliveryHours(product.deliveryHours)}
         </p>
-        {product.note && <p className="product-row-note">{product.note}</p>}
+        {product.description && (
+          <p className="product-row-note">{product.description}</p>
+        )}
+        {product.note && <p className="product-row-note text-muted">{product.note}</p>}
         {product.paymentSlug && (
-          <div className="product-row-link">
-            <span className="product-row-link-label">Lien paiement</span>
-            <span className="product-row-link-url">
-              {formatPublicUrl(buildProductPaymentUrl(product))}
-            </span>
+          <div className="product-row-actions">
             <CopyButton
-              text={buildProductPaymentUrl(product)}
-              label="Copier"
-              className="btn-secondary btn-compact"
+              text={payUrl}
+              label="Copier le lien"
+              className="btn-seller-primary btn-compact product-copy-link"
             />
+            <button type="button" className="btn-secondary btn-compact" onClick={onEdit}>
+              Modifier
+            </button>
           </div>
         )}
       </div>

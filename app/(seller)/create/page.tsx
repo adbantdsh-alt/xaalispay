@@ -2,6 +2,7 @@
 
 import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import type { Product, Profile } from "@/lib/types";
 import { slugifyUsername, isValidUsername } from "@/lib/utils";
 import {
@@ -13,6 +14,7 @@ import {
   ProductFields,
   ProductListItem,
   emptyProductForm,
+  productToFormValues,
   type ProductFormValues,
 } from "@/components/seller/ProductForm";
 import {
@@ -25,6 +27,9 @@ import { CopyButton } from "@/components/ui/CopyButton";
 
 function CreatePageContent() {
   const view = useShopView();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const editProductId = searchParams.get("id");
   const [profile, setProfile] = useState<Profile | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -42,6 +47,8 @@ function CreatePageContent() {
   const [pseudo, setPseudo] = useState("");
   const [pseudoSaving, setPseudoSaving] = useState(false);
   const [canCreateProducts, setCanCreateProducts] = useState(true);
+  const [editForm, setEditForm] = useState<ProductFormValues>(emptyProductForm());
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
 
   const load = async () => {
     const [dashRes, prodRes] = await Promise.all([
@@ -82,6 +89,18 @@ function CreatePageContent() {
     setSuccess("");
     if (view !== "link") setCreatedPayUrl("");
   }, [view]);
+
+  useEffect(() => {
+    if (view !== "edit" || !editProductId) {
+      setEditingProduct(null);
+      return;
+    }
+    const product = products.find((p) => p.id === editProductId);
+    if (product) {
+      setEditingProduct(product);
+      setEditForm(productToFormValues(product));
+    }
+  }, [view, editProductId, products]);
 
   const shopUrl = profile ? buildShopUrl(profile.username) : "";
 
@@ -201,6 +220,40 @@ function CreatePageContent() {
     load();
   };
 
+  const handleEditProduct = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingProduct) return;
+    resetMessages();
+    setSaving(true);
+
+    const res = await fetch("/api/products", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        id: editingProduct.id,
+        name: editForm.name,
+        description: editForm.description,
+        price: Number(editForm.price),
+        deliveryCost: Number(editForm.deliveryCost) || 0,
+        deliveryHours: Number(editForm.deliveryHours),
+        note: editForm.note,
+        image: editForm.image,
+      }),
+    });
+
+    const data = await res.json();
+    setSaving(false);
+
+    if (!res.ok) {
+      setError(data.error || "Modification impossible");
+      return;
+    }
+
+    setSuccess("Produit mis à jour");
+    load();
+    router.push("/create");
+  };
+
   const handlePseudoSave = async (e: React.FormEvent) => {
     e.preventDefault();
     resetMessages();
@@ -240,13 +293,17 @@ function CreatePageContent() {
         <>
           <header className="shop-page-head">
             <div>
-              <h1 className="shop-page-title">Boutique</h1>
+              <h1 className="shop-page-title">Mes produits</h1>
               {profile && <p className="shop-page-sub text-muted">@{profile.username}</p>}
             </div>
             <Link href="/create?tab=tag" className="shop-pseudo-link">
               Mon XaalisTag
             </Link>
           </header>
+
+          <p className="shop-hub-desc text-muted">
+            Gérez vos produits et leurs liens de paiement uniques. Chaque produit créé génère automatiquement son lien à partager.
+          </p>
 
           {shopUrl && (
             <div className="shop-url-chip">
@@ -287,6 +344,7 @@ function CreatePageContent() {
                     key={product.id}
                     product={product}
                     onToggle={() => toggleActive(product)}
+                    onEdit={() => router.push(`/create?tab=edit&id=${product.id}`)}
                   />
                 ))}
               </div>
@@ -363,6 +421,24 @@ function CreatePageContent() {
             onReset={resetLinkForm}
             onActivateProduct={activateProductForLink}
           />
+        </>
+      )}
+
+      {view === "edit" && editingProduct && (
+        <>
+          <ShopBackBar title="Modifier le produit" />
+          {error && <p className="alert-danger">{error}</p>}
+          {success && <p className="toast-success" role="status">{success}</p>}
+          <form onSubmit={handleEditProduct} className="shop-card form-stack">
+            <p className="shop-card-desc text-muted">
+              Le lien de paiement reste le même :{" "}
+              <strong>{formatPublicUrl(buildProductPaymentUrl(editingProduct))}</strong>
+            </p>
+            <ProductFields form={editForm} onChange={setEditForm} />
+            <button type="submit" disabled={saving} className="btn-seller-primary btn-compact btn-inline">
+              {saving ? "Enregistrement…" : "Enregistrer les modifications"}
+            </button>
+          </form>
         </>
       )}
 

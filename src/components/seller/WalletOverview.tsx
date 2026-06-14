@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { formatCurrency } from "@/lib/utils";
 import type { WalletBreakdown } from "@/lib/wallet-breakdown";
 import { ReleaseCountdown } from "@/components/ReleaseCountdown";
@@ -26,7 +27,10 @@ export function WalletOverview({
     <section className="wallet-card-blue">
       <div className="wallet-card-blue-inner">
         <p className="wallet-card-blue-label">Solde disponible</p>
-        <p className="wallet-card-blue-amount">{formatCurrency(breakdown.available)}</p>
+        <Link href="/wallet" className="wallet-balance-link" aria-label="Voir le portefeuille">
+          <p className="wallet-card-blue-amount">{formatCurrency(breakdown.available)}</p>
+          <span className="wallet-balance-link-hint">Appuyez pour retirer →</span>
+        </Link>
 
         <div className="wallet-funds-grid">
           <div className="wallet-funds-item">

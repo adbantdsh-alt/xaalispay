@@ -7,7 +7,6 @@ import { computeWalletBreakdown } from "@/lib/wallet-breakdown";
 import { SellerOnboarding } from "@/components/seller/SellerOnboarding";
 import { ActionRequiredCard } from "@/components/seller/ActionRequiredCard";
 import { DashboardSkeleton } from "@/components/ui/Skeleton";
-import { SellerHeader } from "@/components/seller/SellerHeader";
 import { WalletOverview } from "@/components/seller/WalletOverview";
 import { AssetRow } from "@/components/seller/AssetRow";
 import { buildShopUrl } from "@/lib/site-url";
@@ -111,11 +110,6 @@ export default function DashboardPage() {
 
   return (
     <div className="seller-dashboard">
-      <SellerHeader
-        displayName={data.profile.displayName}
-        username={data.profile.username}
-      />
-
       <WalletOverview
         breakdown={breakdown}
         shopUrl={shopUrl}

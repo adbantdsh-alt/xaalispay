@@ -2,7 +2,11 @@ import fs from "fs";
 import path from "path";
 import type { Database } from "./types";
 import { ensureProductPaymentSlugs } from "./utils";
-import { isRemoteStoreEnabled, loadRemoteDatabase, saveRemoteDatabase } from "./data-store";
+import {
+  isRemoteStoreEnabled,
+  loadRemoteDatabase,
+  saveRemoteDatabase,
+} from "./data-store";
 
 const DATA_DIR = process.env.VERCEL
   ? path.join("/tmp", "xaalispay-data")
@@ -57,8 +61,7 @@ function finalizeDb(db: Database): Database {
 }
 
 function loadDefaultDb(): Database {
-  memoryDb = structuredClone(defaultDb);
-  return memoryDb;
+  return structuredClone(defaultDb);
 }
 
 function loadLocalDatabase(): Database {
@@ -72,9 +75,7 @@ function loadLocalDatabase(): Database {
   if (!fs.existsSync(DB_PATH)) {
     if (fs.existsSync(BACKUP_PATH)) {
       try {
-        const db = finalizeDb(JSON.parse(fs.readFileSync(BACKUP_PATH, "utf-8")) as Database);
-        memoryDb = db;
-        return db;
+        return finalizeDb(JSON.parse(fs.readFileSync(BACKUP_PATH, "utf-8")) as Database);
       } catch {
         /* ignore */
       }
@@ -85,9 +86,7 @@ function loadLocalDatabase(): Database {
   try {
     const raw = fs.readFileSync(DB_PATH, "utf-8").trim();
     if (!raw) return loadDefaultDb();
-    const db = finalizeDb(JSON.parse(raw) as Database);
-    memoryDb = db;
-    return db;
+    return finalizeDb(JSON.parse(raw) as Database);
   } catch (err) {
     console.error("db.json illisible:", err);
     return loadDefaultDb();
@@ -110,43 +109,82 @@ function saveLocalDatabase(db: Database) {
   }
 }
 
+async function loadRemoteOrDefault(): Promise<Database> {
+  const remote = await loadRemoteDatabase();
+  if (remote) return finalizeDb(remote);
+
+  const fresh = loadDefaultDb();
+  const saved = await saveRemoteDatabase(fresh);
+  if (!saved) {
+    throw new Error(
+      "Base Supabase inaccessible. Exécutez supabase/app_state.sql et configurez SUPABASE_SERVICE_ROLE_KEY sur Vercel."
+    );
+  }
+  return fresh;
+}
+
 async function hydrateDatabase(): Promise<Database> {
   if (isRemoteStoreEnabled()) {
-    const remote = await loadRemoteDatabase();
-    if (remote) {
-      memoryDb = finalizeDb(remote);
-      return memoryDb;
-    }
-    memoryDb = loadDefaultDb();
-    await saveRemoteDatabase(memoryDb);
-    return memoryDb;
+    return loadRemoteOrDefault();
   }
+  const local = loadLocalDatabase();
+  memoryDb = local;
+  return local;
+}
 
-  return loadLocalDatabase();
+/** En prod serverless, recharger Supabase à chaque appel pour éviter les données fantômes. */
+async function fetchDatabase(): Promise<Database> {
+  if (isRemoteStoreEnabled()) {
+    return loadRemoteOrDefault();
+  }
+  if (memoryDb) return memoryDb;
+  return hydrateDatabase();
 }
 
 export async function getDb(): Promise<Database> {
+  if (isRemoteStoreEnabled() && process.env.VERCEL) {
+    memoryDb = await fetchDatabase();
+    return memoryDb;
+  }
+
   if (memoryDb) return memoryDb;
   if (!loadPromise) {
-    loadPromise = hydrateDatabase().finally(() => {
-      loadPromise = null;
-    });
+    loadPromise = hydrateDatabase()
+      .then((db) => {
+        memoryDb = db;
+        return db;
+      })
+      .finally(() => {
+        loadPromise = null;
+      });
   }
   return loadPromise;
 }
 
 export async function updateDb(mutator: (db: Database) => void): Promise<Database> {
-  const db = await getDb();
+  const db = structuredClone(await fetchDatabase());
   mutator(db);
-  memoryDb = finalizeDb(structuredClone(db));
+  memoryDb = finalizeDb(db);
 
   if (isRemoteStoreEnabled()) {
-    await saveRemoteDatabase(memoryDb);
+    const saved = await saveRemoteDatabase(memoryDb);
+    if (!saved) {
+      memoryDb = null;
+      throw new Error(
+        "Sauvegarde impossible. Vérifiez la table app_state dans Supabase et SUPABASE_SERVICE_ROLE_KEY."
+      );
+    }
   } else {
     saveLocalDatabase(memoryDb);
   }
 
   return memoryDb;
+}
+
+export function getDbStorageMode(): "remote" | "local" | "memory" {
+  if (isRemoteStoreEnabled()) return "remote";
+  if (process.env.VERCEL) return "memory";
+  return "local";
 }
 
 /** @deprecated Utiliser getDb() — conservé pour scripts locaux */

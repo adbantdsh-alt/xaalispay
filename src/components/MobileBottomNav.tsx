@@ -6,7 +6,8 @@ import { usePathname } from "next/navigation";
 const TABS = [
   { href: "/dashboard", label: "Accueil", icon: "home" },
   { href: "/create", label: "Boutique", icon: "shop" },
-  { href: "/profile", label: "Profil", icon: "user" },
+  { href: "/wallet", label: "Portefeuille", icon: "wallet" },
+  { href: "/history", label: "Historique", icon: "history" },
 ] as const;
 
 function TabIcon({ type }: { type: (typeof TABS)[number]["icon"] }) {
@@ -24,9 +25,16 @@ function TabIcon({ type }: { type: (typeof TABS)[number]["icon"] }) {
       </svg>
     );
   }
+  if (type === "wallet") {
+    return (
+      <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+      </svg>
+    );
+  }
   return (
     <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
     </svg>
   );
 }
@@ -36,12 +44,11 @@ export function MobileBottomNav() {
 
   return (
     <div className="floating-nav-wrap">
-      <nav className="floating-nav" aria-label="Navigation vendeur">
+      <nav className="floating-nav floating-nav-4" aria-label="Navigation vendeur">
         {TABS.map((tab) => {
           const active =
             pathname === tab.href ||
-            (tab.href === "/create" && pathname.startsWith("/dashboard/products")) ||
-            (tab.href === "/dashboard" && pathname === "/wallet");
+            (tab.href === "/create" && pathname.startsWith("/dashboard/products"));
 
           return (
             <Link

@@ -15,5 +15,7 @@ export const config = {
     "/create/:path*",
     "/profile",
     "/profile/:path*",
+    "/history",
+    "/history/:path*",
   ],
 };
