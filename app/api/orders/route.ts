@@ -28,7 +28,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Produit introuvable" }, { status: 404 });
     }
 
-    const order = createOrderFromProduct(product, "", "");
+    const order = createOrderFromProduct(product, {});
 
     return NextResponse.json({
       order: { id: order.id, slug: order.slug },

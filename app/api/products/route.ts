@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
-import { getSessionUser } from "@/lib/supabase/server";
+import { getSessionUser } from "@/lib/session";
 import {
   createProduct,
   getProductsBySeller,
   updateProduct,
 } from "@/lib/orders";
+import { normalizeProductFields } from "@/lib/product-form";
 
 export async function GET() {
   const user = await getSessionUser();
@@ -23,23 +24,17 @@ export async function POST(request: Request) {
   }
 
   try {
-    const { name, description, price, deliveryHours, image } = await request.json();
+    const body = await request.json();
+    const fields = normalizeProductFields(body);
 
-    if (!name?.trim() || price === undefined || !deliveryHours) {
+    if (!fields.name || fields.price <= 0 || fields.deliveryHours <= 0) {
       return NextResponse.json(
-        { error: "Nom, prix et délai de livraison requis" },
+        { error: "Nom, prix et délai livraison requis" },
         { status: 400 }
       );
     }
 
-    const product = createProduct(user.id, {
-      name: name.trim(),
-      description: (description || "").trim(),
-      price: Number(price),
-      deliveryHours: Number(deliveryHours),
-      image: image || "",
-    });
-
+    const product = createProduct(user.id, fields);
     return NextResponse.json({ product });
   } catch {
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
@@ -53,18 +48,17 @@ export async function PATCH(request: Request) {
   }
 
   try {
-    const { id, ...data } = await request.json();
+    const { id, ...raw } = await request.json();
     if (!id) {
       return NextResponse.json({ error: "ID produit requis" }, { status: 400 });
     }
 
-    const product = updateProduct(id, user.id, {
-      ...data,
-      price: data.price !== undefined ? Number(data.price) : undefined,
-      deliveryHours:
-        data.deliveryHours !== undefined ? Number(data.deliveryHours) : undefined,
-    });
+    const data: Record<string, unknown> = { ...raw };
+    if (raw.price !== undefined) data.price = Number(raw.price);
+    if (raw.deliveryCost !== undefined) data.deliveryCost = Number(raw.deliveryCost);
+    if (raw.deliveryHours !== undefined) data.deliveryHours = Number(raw.deliveryHours);
 
+    const product = updateProduct(id, user.id, data);
     if (!product) {
       return NextResponse.json({ error: "Produit introuvable" }, { status: 404 });
     }

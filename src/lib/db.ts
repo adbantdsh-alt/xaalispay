@@ -6,6 +6,7 @@ const DATA_DIR = path.join(process.cwd(), "data");
 const DB_PATH = path.join(DATA_DIR, "db.json");
 
 const defaultDb: Database = {
+  authUsers: [],
   profiles: [],
   products: [],
   orders: [],
@@ -23,8 +24,33 @@ export function readDb(): Database {
     fs.writeFileSync(DB_PATH, JSON.stringify(defaultDb, null, 2));
     return structuredClone(defaultDb);
   }
-  const raw = fs.readFileSync(DB_PATH, "utf-8");
-  return JSON.parse(raw) as Database;
+
+  try {
+    const raw = fs.readFileSync(DB_PATH, "utf-8").trim();
+    if (!raw) {
+      fs.writeFileSync(DB_PATH, JSON.stringify(defaultDb, null, 2));
+      return structuredClone(defaultDb);
+    }
+    const db = JSON.parse(raw) as Database;
+    if (!db.authUsers) db.authUsers = [];
+    if (!db.products) db.products = [];
+    if (!db.profiles) db.profiles = [];
+    if (!db.orders) db.orders = [];
+    for (const p of db.products) {
+      if (p.deliveryCost === undefined) p.deliveryCost = 0;
+      if (p.note === undefined) p.note = "";
+      if (p.image === undefined) p.image = "";
+    }
+    for (const o of db.orders) {
+      if (o.deliveryCost === undefined) o.deliveryCost = 0;
+      if (o.clientFirstName === undefined) o.clientFirstName = "";
+      if (o.clientNote === undefined) o.clientNote = "";
+    }
+    return db;
+  } catch {
+    fs.writeFileSync(DB_PATH, JSON.stringify(defaultDb, null, 2));
+    return structuredClone(defaultDb);
+  }
 }
 
 export function writeDb(db: Database) {

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import {
   getOrderBySlug,
+  getProductById,
   getProfileById,
   openDispute,
   processOrderMaintenance,
@@ -23,14 +24,21 @@ export async function GET(
   }
 
   const seller = getProfileById(order.sellerId);
+  const product = getProductById(order.productId);
 
   return NextResponse.json({
     order: {
       productName: order.productName,
       productPrice: order.productPrice,
+      deliveryCost: order.deliveryCost || 0,
+      productImage: product?.image || "",
       deliveryHours: order.deliveryHours,
       status: order.status,
       slug: order.slug,
+      clientName: order.clientName,
+      clientFirstName: order.clientFirstName,
+      clientPhone: order.clientPhone,
+      clientNote: order.clientNote,
       pin:
         order.status === "paid" || order.status === "protection"
           ? order.pin
@@ -40,6 +48,8 @@ export async function GET(
       seller: {
         displayName: seller?.displayName || "Vendeur",
         username: seller?.username || "",
+        businessName: seller?.businessName,
+        phone: seller?.phone,
       },
     },
     protectionMinutes: getProtectionDurationMinutes(),

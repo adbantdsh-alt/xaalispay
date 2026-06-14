@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getSessionUser } from "@/lib/supabase/server";
+import { getSessionUser } from "@/lib/session";
 import {
   getOrdersBySeller,
   getProfileById,

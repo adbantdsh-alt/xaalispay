@@ -2,14 +2,16 @@ export const MOBILE_MONEY_METHODS = [
   {
     id: "wave" as const,
     name: "Wave",
-    icon: "🌊",
-    color: "bg-[#1DA1F2]",
+    shortName: "Wave",
+    btnClass: "pay-method-wave",
+    color: "#00D4FF",
   },
   {
     id: "orange" as const,
     name: "Orange Money",
-    icon: "🟠",
-    color: "bg-[#FF6600]",
+    shortName: "Orange",
+    btnClass: "pay-method-orange",
+    color: "#FF6600",
   },
 ];
 

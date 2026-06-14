@@ -22,8 +22,10 @@ export function generatePin(): string {
   return pinAlphabet();
 }
 
-export function getOrderTotal(order: Pick<Order, "productPrice">): number {
-  return order.productPrice;
+export function getOrderTotal(
+  order: Pick<Order, "productPrice" | "deliveryCost">
+): number {
+  return order.productPrice + (order.deliveryCost || 0);
 }
 
 export function formatDeliveryHours(hours: number): string {

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { createProfile, isUsernameTaken } from "@/lib/orders";
+import { createProfile, getProfileById, isUsernameTaken, updateProfileUsername } from "@/lib/orders";
+import { getSessionUser } from "@/lib/session";
 import { isValidUsername } from "@/lib/utils";
 
 export async function POST(request: Request) {
@@ -12,6 +13,11 @@ export async function POST(request: Request) {
         { error: "Champs obligatoires manquants" },
         { status: 400 }
       );
+    }
+
+    const existing = getProfileById(userId);
+    if (existing) {
+      return NextResponse.json({ profile: existing });
     }
 
     if (!isValidUsername(username)) {
@@ -37,6 +43,38 @@ export async function POST(request: Request) {
     });
 
     return NextResponse.json({ profile });
+  } catch (err) {
+    console.error("Profile creation error:", err);
+    return NextResponse.json(
+      {
+        error:
+          err instanceof Error
+            ? err.message
+            : "Erreur lors de la création du profil",
+      },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PATCH(request: Request) {
+  const user = await getSessionUser();
+  if (!user) {
+    return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+  }
+
+  try {
+    const { username } = await request.json();
+    if (!username?.trim()) {
+      return NextResponse.json({ error: "Pseudo requis" }, { status: 400 });
+    }
+
+    const result = updateProfileUsername(user.id, username);
+    if ("error" in result) {
+      return NextResponse.json({ error: result.error }, { status: 400 });
+    }
+
+    return NextResponse.json({ profile: result.profile });
   } catch {
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }

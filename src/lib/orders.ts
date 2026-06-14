@@ -9,6 +9,7 @@ import {
   generatePaymentSlug,
   generatePin,
   getOrderTotal,
+  isValidUsername,
 } from "./utils";
 import type { WalletSequesteredItem } from "./wallet-breakdown";
 import { computeWalletBreakdown } from "./wallet-breakdown";
@@ -30,6 +31,9 @@ export function getProfileById(id: string): Profile | undefined {
 }
 
 export function createProfile(data: Omit<Profile, "createdAt">): Profile {
+  const existing = getProfileById(data.id);
+  if (existing) return existing;
+
   const profile: Profile = { ...data, createdAt: new Date().toISOString() };
   updateDb((db) => {
     db.profiles.push(profile);
@@ -44,6 +48,48 @@ export function isUsernameTaken(username: string, excludeId?: string): boolean {
       p.username.toLowerCase() === username.toLowerCase() &&
       p.id !== excludeId
   );
+}
+
+const USERNAME_CHANGE_COOLDOWN_MS = 30 * 24 * 60 * 60 * 1000;
+
+export function updateProfileUsername(
+  userId: string,
+  username: string
+): { profile: Profile } | { error: string } {
+  const clean = username.toLowerCase().trim();
+  if (!isValidUsername(clean)) {
+    return { error: "Pseudo invalide (3-20 caractères, lettres/chiffres/_)" };
+  }
+  if (isUsernameTaken(clean, userId)) {
+    return { error: "Ce pseudo est déjà pris" };
+  }
+
+  const profile = getProfileById(userId);
+  if (!profile) return { error: "Profil introuvable" };
+
+  if (profile.username === clean) {
+    return { profile };
+  }
+
+  if (profile.usernameChangedAt) {
+    const elapsed = Date.now() - new Date(profile.usernameChangedAt).getTime();
+    if (elapsed < USERNAME_CHANGE_COOLDOWN_MS) {
+      const daysLeft = Math.ceil(
+        (USERNAME_CHANGE_COOLDOWN_MS - elapsed) / (24 * 60 * 60 * 1000)
+      );
+      return { error: `Modification possible dans ${daysLeft} jour(s)` };
+    }
+  }
+
+  updateDb((db) => {
+    const p = db.profiles.find((x) => x.id === userId);
+    if (p) {
+      p.username = clean;
+      p.usernameChangedAt = new Date().toISOString();
+    }
+  });
+
+  return { profile: getProfileById(userId)! };
 }
 
 export function getProductsBySeller(sellerId: string, activeOnly = false): Product[] {
@@ -82,7 +128,19 @@ export function createProduct(
 export function updateProduct(
   productId: string,
   sellerId: string,
-  data: Partial<Pick<Product, "name" | "description" | "price" | "deliveryHours" | "image" | "active">>
+  data: Partial<
+    Pick<
+      Product,
+      | "name"
+      | "description"
+      | "price"
+      | "deliveryCost"
+      | "deliveryHours"
+      | "note"
+      | "image"
+      | "active"
+    >
+  >
 ): Product | null {
   let updated: Product | null = null;
   updateDb((db) => {
@@ -113,11 +171,20 @@ export function getOrderById(id: string): Order | undefined {
   return readDb().orders.find((o) => o.id === id);
 }
 
+export interface CreateOrderClient {
+  firstName?: string;
+  lastName?: string;
+  phone?: string;
+  note?: string;
+}
+
 export function createOrderFromProduct(
   product: Product,
-  clientName: string,
-  clientPhone: string
+  client: CreateOrderClient = {}
 ): Order {
+  const firstName = (client.firstName || "").trim();
+  const lastName = (client.lastName || "").trim();
+  const fullName = [firstName, lastName].filter(Boolean).join(" ").trim();
   const now = new Date().toISOString();
   const order: Order = {
     id: crypto.randomUUID(),
@@ -125,10 +192,13 @@ export function createOrderFromProduct(
     productId: product.id,
     slug: generatePaymentSlug(),
     pin: generatePin(),
-    clientName,
-    clientPhone,
+    clientName: fullName,
+    clientFirstName: firstName,
+    clientPhone: (client.phone || "").trim(),
+    clientNote: (client.note || "").trim(),
     productName: product.name,
     productPrice: product.price,
+    deliveryCost: product.deliveryCost || 0,
     deliveryHours: product.deliveryHours,
     status: "pending_payment",
     createdAt: now,

@@ -12,6 +12,14 @@ export interface Profile {
   displayName: string;
   businessName: string;
   phone?: string;
+  usernameChangedAt?: string;
+  createdAt: string;
+}
+
+export interface AuthUser {
+  id: string;
+  email: string;
+  passwordHash: string;
   createdAt: string;
 }
 
@@ -21,7 +29,9 @@ export interface Product {
   name: string;
   description: string;
   price: number;
+  deliveryCost: number;
   deliveryHours: number;
+  note: string;
   image: string;
   active: boolean;
   createdAt: string;
@@ -35,9 +45,12 @@ export interface Order {
   slug: string;
   pin: string;
   clientName: string;
+  clientFirstName: string;
   clientPhone: string;
+  clientNote: string;
   productName: string;
   productPrice: number;
+  deliveryCost: number;
   deliveryHours: number;
   status: OrderStatus;
   paymentMethod?: string;
@@ -52,6 +65,7 @@ export interface Order {
 }
 
 export interface Database {
+  authUsers: AuthUser[];
   profiles: Profile[];
   products: Product[];
   orders: Order[];

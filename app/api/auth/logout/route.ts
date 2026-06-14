@@ -1,15 +1,19 @@
 import { NextResponse } from "next/server";
+import { clearSessionCookie } from "@/lib/auth-local";
 import { createClient } from "@/lib/supabase/server";
+import { isSupabaseConfigured } from "@/lib/session";
 
 export async function POST() {
-  if (
-    !process.env.NEXT_PUBLIC_SUPABASE_URL ||
-    !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-  ) {
-    return NextResponse.json({ success: true });
+  await clearSessionCookie();
+
+  if (isSupabaseConfigured()) {
+    try {
+      const supabase = await createClient();
+      await supabase.auth.signOut();
+    } catch {
+      // ignore
+    }
   }
 
-  const supabase = await createClient();
-  await supabase.auth.signOut();
   return NextResponse.json({ success: true });
 }
