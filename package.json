@@ -9,6 +9,8 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@supabase/ssr": "^0.6.1",
+    "@supabase/supabase-js": "^2.49.8",
     "bcryptjs": "^3.0.3",
     "jose": "^6.2.3",
     "nanoid": "^5.1.11",

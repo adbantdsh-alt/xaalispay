@@ -1,0 +1,154 @@
+@import "tailwindcss";
+
+:root {
+  --primary: #0f1f66;
+  --accent: #0fd5c7;
+  --bg: #f4f6fb;
+  --card: #ffffff;
+  --muted: #5a6478;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--primary);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+input,
+button,
+textarea,
+select {
+  font: inherit;
+}
+
+.touch-target {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 48px;
+  padding: 0.75rem 1.25rem;
+  border: none;
+  border-radius: 1rem;
+  background: linear-gradient(135deg, #0f1f66, #1a3078);
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-primary:active:not(:disabled) {
+  opacity: 0.9;
+}
+
+.btn-outline {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 48px;
+  padding: 0.75rem 1.25rem;
+  border: 2px solid rgba(15, 31, 102, 0.12);
+  border-radius: 1rem;
+  background: white;
+  color: var(--primary);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-accent {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  padding: 0.75rem 1.25rem;
+  border: none;
+  border-radius: 1rem;
+  background: var(--accent);
+  color: var(--primary);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.card {
+  background: var(--card);
+  border-radius: 1.25rem;
+  border: 1px solid rgba(15, 31, 102, 0.08);
+  box-shadow: 0 4px 24px rgba(15, 31, 102, 0.06);
+}
+
+.input-field {
+  width: 100%;
+  min-height: 48px;
+  padding: 0.75rem 1rem;
+  border: 1.5px solid rgba(15, 31, 102, 0.12);
+  border-radius: 0.875rem;
+  background: white;
+  color: var(--primary);
+  outline: none;
+}
+
+.input-field:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(15, 213, 199, 0.2);
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.badge-verified {
+  background: #d1fae5;
+  color: #047857;
+}
+
+.badge-status {
+  background: rgba(15, 31, 102, 0.08);
+  color: var(--primary);
+}
+
+.page-shell {
+  min-height: 100dvh;
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 1rem 1rem 2rem;
+}
+
+.page-shell-wide {
+  min-height: 100dvh;
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 1rem 1rem 2rem;
+}
