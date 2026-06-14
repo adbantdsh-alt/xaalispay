@@ -3,8 +3,8 @@ import type { Profile } from "./types";
 export const SUPER_ADMIN_EMAIL = "adbaxgoat@gmail.com";
 
 export const SUPER_ADMIN_DEFAULT_PROFILE = {
-  username: "adba",
-  displayName: "adba",
+  username: "xaalistag",
+  displayName: "xaalistag",
   businessName: "XaalisPay",
   phone: undefined as string | undefined,
 };

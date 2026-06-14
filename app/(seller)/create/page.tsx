@@ -21,6 +21,7 @@ import {
 } from "@/lib/share";
 import { buildShopUrl, buildProductPaymentUrl, formatPublicUrl } from "@/lib/site-url";
 import { PaymentLinkForm } from "@/components/seller/PaymentLinkForm";
+import { CopyButton } from "@/components/ui/CopyButton";
 
 function CreatePageContent() {
   const view = useShopView();
@@ -250,18 +251,21 @@ function CreatePageContent() {
           {shopUrl && (
             <div className="shop-url-chip">
               <span className="shop-url-text">{formatPublicUrl(shopUrl)}</span>
-              <button
-                type="button"
-                className="shop-url-share"
-                onClick={() =>
-                  window.open(
-                    buildWhatsAppUrl(buildShopShareMessage(shopUrl, profile!.username)),
-                    "_blank"
-                  )
-                }
-              >
-                Partager
-              </button>
+              <div className="shop-url-actions">
+                <CopyButton text={shopUrl} label="Copier" className="shop-url-copy" />
+                <button
+                  type="button"
+                  className="shop-url-share"
+                  onClick={() =>
+                    window.open(
+                      buildWhatsAppUrl(buildShopShareMessage(shopUrl, profile!.username)),
+                      "_blank"
+                    )
+                  }
+                >
+                  Partager
+                </button>
+              </div>
             </div>
           )}
 

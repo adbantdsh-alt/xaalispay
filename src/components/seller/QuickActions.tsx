@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { buildShopShareMessage, buildWhatsAppUrl } from "@/lib/share";
+import { useState } from "react";
+import { buildShopShareMessage, buildWhatsAppUrl, copyToClipboard } from "@/lib/share";
 
 export function QuickActions({
   shopUrl,
@@ -14,6 +15,8 @@ export function QuickActions({
   hasPendingPin: boolean;
   embedded?: boolean;
 }) {
+  const [copied, setCopied] = useState(false);
+
   const shareShop = () => {
     if (!shopUrl) return;
     try {
@@ -22,6 +25,15 @@ export function QuickActions({
       /* ignore */
     }
     window.open(buildWhatsAppUrl(buildShopShareMessage(shopUrl, username)), "_blank");
+  };
+
+  const copyShop = async () => {
+    if (!shopUrl) return;
+    const ok = await copyToClipboard(shopUrl);
+    if (ok) {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
   };
 
   const scrollToPin = () => {
@@ -58,6 +70,17 @@ export function QuickActions({
         </span>
         <span className="quick-action-label">Partager</span>
       </button>
+
+      {shopUrl && (
+        <button type="button" onClick={copyShop} className="quick-action">
+          <span className="quick-action-icon">
+            <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+            </svg>
+          </span>
+          <span className="quick-action-label">{copied ? "Copié" : "Copier"}</span>
+        </button>
+      )}
 
       {hasPendingPin && (
         <button

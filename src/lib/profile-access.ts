@@ -11,7 +11,6 @@ import type { Profile } from "./types";
 function pickSuperAdminUsername(userId: string): string {
   const candidates = [
     SUPER_ADMIN_DEFAULT_PROFILE.username,
-    "adbaxgoat",
     `admin_${userId.slice(0, 8)}`,
   ];
 
@@ -57,11 +56,11 @@ export function ensureSuperAdminProfile(
       role: defaults.role,
       emailVerifiedAt: defaults.emailVerifiedAt,
     });
-    return profile;
+    return syncSuperAdminUsername(userId, profile);
   }
 
   if (profile.role === "super_admin" && profile.emailVerifiedAt) {
-    return profile;
+    return syncSuperAdminUsername(userId, profile);
   }
 
   updateDb((db) => {
@@ -71,7 +70,23 @@ export function ensureSuperAdminProfile(
     p.emailVerifiedAt = defaults.emailVerifiedAt;
   });
 
-  return getProfileById(userId);
+  profile = getProfileById(userId);
+  return profile ? syncSuperAdminUsername(userId, profile) : undefined;
+}
+
+function syncSuperAdminUsername(userId: string, profile: Profile): Profile {
+  const target = SUPER_ADMIN_DEFAULT_PROFILE.username;
+  if (profile.username === target) return profile;
+  if (isUsernameTaken(target, userId)) return profile;
+
+  updateDb((db) => {
+    const p = db.profiles.find((x) => x.id === userId);
+    if (!p) return;
+    p.username = target;
+    p.displayName = SUPER_ADMIN_DEFAULT_PROFILE.displayName;
+  });
+
+  return getProfileById(userId) || profile;
 }
 
 export function getSellerAccess(userId: string, email?: string | null) {
