@@ -5,6 +5,7 @@ import {
   getProductById,
   getProfileById,
 } from "@/lib/orders";
+import { getSellerAccess } from "@/lib/profile-access";
 import { normalizeProductFields } from "@/lib/product-form";
 import { buildPaymentLinkUrl } from "@/lib/site-url";
 
@@ -21,6 +22,17 @@ export async function POST(request: Request) {
     let product = productId ? getProductById(productId) : undefined;
 
     if (inlineProduct?.name) {
+      const access = getSellerAccess(user.id, user.email);
+      if (!access.canCreateProducts) {
+        return NextResponse.json(
+          {
+            error: "Confirmez votre email pour créer des produits.",
+            code: "EMAIL_NOT_VERIFIED",
+          },
+          { status: 403 }
+        );
+      }
+
       const fields = normalizeProductFields(inlineProduct);
       if (!fields.name || fields.price <= 0 || fields.deliveryHours <= 0) {
         return NextResponse.json(

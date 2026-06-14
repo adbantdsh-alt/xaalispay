@@ -2,11 +2,11 @@ import { NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/session";
 import {
   getOrdersBySeller,
-  getProfileById,
   getWalletData,
   processOrderMaintenance,
   validateDelivery,
 } from "@/lib/orders";
+import { getSellerAccess } from "@/lib/profile-access";
 import { getProtectionDurationMinutes } from "@/lib/protection";
 
 export async function GET() {
@@ -16,8 +16,8 @@ export async function GET() {
   }
 
   processOrderMaintenance();
-  const profile = getProfileById(user.id);
-  if (!profile) {
+  const access = getSellerAccess(user.id, user.email);
+  if (!access.profile) {
     return NextResponse.json({ error: "Profil vendeur introuvable" }, { status: 404 });
   }
 
@@ -25,10 +25,13 @@ export async function GET() {
   const orders = getOrdersBySeller(user.id);
 
   return NextResponse.json({
-    profile,
+    profile: access.profile,
     wallet,
     orders,
     protectionMinutes: getProtectionDurationMinutes(),
+    canCreateProducts: access.canCreateProducts,
+    emailVerified: access.emailVerified,
+    isSuperAdmin: access.isSuperAdmin,
   });
 }
 

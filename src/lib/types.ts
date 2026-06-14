@@ -12,6 +12,8 @@ export interface Profile {
   displayName: string;
   businessName: string;
   phone?: string;
+  role?: "super_admin" | "seller";
+  emailVerifiedAt?: string;
   usernameChangedAt?: string;
   createdAt: string;
 }

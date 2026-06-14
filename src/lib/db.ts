@@ -36,6 +36,9 @@ function normalizeDb(db: Database): Database {
     if (p.image === undefined) p.image = "";
     if (p.paymentSlug === undefined) p.paymentSlug = "";
   }
+  for (const p of db.profiles) {
+    if (p.role === undefined) p.role = "seller";
+  }
   for (const o of db.orders) {
     if (o.deliveryCost === undefined) o.deliveryCost = 0;
     if (o.clientFirstName === undefined) o.clientFirstName = "";

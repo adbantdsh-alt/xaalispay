@@ -40,6 +40,7 @@ function CreatePageContent() {
 
   const [pseudo, setPseudo] = useState("");
   const [pseudoSaving, setPseudoSaving] = useState(false);
+  const [canCreateProducts, setCanCreateProducts] = useState(true);
 
   const load = async () => {
     const [dashRes, prodRes] = await Promise.all([
@@ -54,6 +55,7 @@ function CreatePageContent() {
       const dash = await dashRes.json();
       setProfile(dash.profile);
       setPseudo(dash.profile.username);
+      setCanCreateProducts(dash.canCreateProducts !== false);
     }
     if (prodRes.ok) {
       const data = await prodRes.json();
@@ -110,7 +112,11 @@ function CreatePageContent() {
     setSaving(false);
 
     if (!res.ok) {
-      setError(data.error || "Erreur");
+      setError(
+        data.code === "EMAIL_NOT_VERIFIED"
+          ? "Confirmez votre email pour créer des produits (lien dans votre boîte mail)."
+          : data.error || "Erreur"
+      );
       return;
     }
 
@@ -290,6 +296,13 @@ function CreatePageContent() {
           <ShopBackBar title="Nouveau produit" />
           {error && <p className="alert-danger">{error}</p>}
           {success && !createdPayUrl && <p className="toast-success" role="status">{success}</p>}
+          {!canCreateProducts && (
+            <p className="alert-danger" role="status">
+              Email non vérifié — connectez-vous et cliquez le lien reçu par mail pour publier des produits.
+              {" "}
+              <Link href="/auth" className="shop-inline-link-btn">Renvoyer le lien</Link>
+            </p>
+          )}
           {createdPayUrl ? (
             <div className="link-success-panel">
               <div className="link-success-icon">✓</div>
@@ -318,7 +331,7 @@ function CreatePageContent() {
                 Chaque produit reçoit automatiquement son lien de paiement XaalisPay.
               </p>
               <ProductFields form={productForm} onChange={setProductForm} />
-              <button type="submit" disabled={saving} className="btn-seller-primary btn-compact btn-inline">
+              <button type="submit" disabled={saving || !canCreateProducts} className="btn-seller-primary btn-compact btn-inline">
                 {saving ? "Enregistrement…" : "Créer le produit"}
               </button>
             </form>

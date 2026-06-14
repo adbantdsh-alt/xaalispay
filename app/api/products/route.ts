@@ -5,6 +5,7 @@ import {
   getProductsBySeller,
   updateProduct,
 } from "@/lib/orders";
+import { getSellerAccess } from "@/lib/profile-access";
 import { normalizeProductFields } from "@/lib/product-form";
 import { buildPaymentLinkUrl } from "@/lib/site-url";
 
@@ -22,6 +23,18 @@ export async function POST(request: Request) {
   const user = await getSessionUser();
   if (!user) {
     return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+  }
+
+  const access = getSellerAccess(user.id, user.email);
+  if (!access.canCreateProducts) {
+    return NextResponse.json(
+      {
+        error:
+          "Confirmez votre email pour créer des produits. Vérifiez votre boîte mail ou renvoyez le lien depuis la page connexion.",
+        code: "EMAIL_NOT_VERIFIED",
+      },
+      { status: 403 }
+    );
   }
 
   try {

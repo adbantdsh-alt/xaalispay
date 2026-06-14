@@ -1,0 +1,58 @@
+import { NextResponse } from "next/server";
+import { isSuperAdminEmail } from "@/lib/auth-policy";
+import { confirmSupabaseUser } from "@/lib/supabase/admin";
+import { buildAuthCallbackUrl } from "@/lib/site-url";
+import { createClient } from "@/lib/supabase/server";
+
+export async function POST(request: Request) {
+  try {
+    const { email, password } = await request.json();
+    if (!email?.trim() || !password) {
+      return NextResponse.json(
+        { error: "Email et mot de passe requis" },
+        { status: 400 }
+      );
+    }
+
+    const supabase = await createClient();
+    const { data, error } = await supabase.auth.signUp({
+      email: email.trim(),
+      password,
+      options: {
+        emailRedirectTo: buildAuthCallbackUrl("/dashboard"),
+      },
+    });
+
+    if (error || !data.user) {
+      return NextResponse.json(
+        { error: error?.message || "Inscription échouée" },
+        { status: 400 }
+      );
+    }
+
+    await confirmSupabaseUser(data.user.id);
+
+    let session = data.session;
+    if (!session) {
+      const login = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password,
+      });
+      session = login.data.session;
+      if (login.error && !session) {
+        return NextResponse.json(
+          { error: login.error.message },
+          { status: 400 }
+        );
+      }
+    }
+
+    return NextResponse.json({
+      user: { id: data.user.id, email: data.user.email },
+      isSuperAdmin: isSuperAdminEmail(data.user.email),
+      needsEmailVerification: !isSuperAdminEmail(data.user.email),
+    });
+  } catch {
+    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
+  }
+}

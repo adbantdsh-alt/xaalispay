@@ -1,11 +1,13 @@
 import { NextResponse } from "next/server";
+import { isSuperAdminEmail, superAdminProfileDefaults } from "@/lib/auth-policy";
 import { createProfile, getProfileById, isUsernameTaken, updateProfileUsername } from "@/lib/orders";
+import { ensureSuperAdminProfile } from "@/lib/profile-access";
 import { getSessionUser } from "@/lib/session";
 import { isValidUsername } from "@/lib/utils";
 
 export async function POST(request: Request) {
   try {
-    const { userId, username, displayName, businessName, phone } =
+    const { userId, username, displayName, businessName, phone, email } =
       await request.json();
 
     if (!userId || !username || !displayName || !businessName) {
@@ -40,9 +42,10 @@ export async function POST(request: Request) {
       displayName,
       businessName,
       phone,
+      ...(isSuperAdminEmail(email) ? superAdminProfileDefaults() : {}),
     });
 
-    return NextResponse.json({ profile });
+    return NextResponse.json({ profile: ensureSuperAdminProfile(userId, email) || profile });
   } catch (err) {
     console.error("Profile creation error:", err);
     return NextResponse.json(

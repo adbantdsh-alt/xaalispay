@@ -170,23 +170,14 @@ function AuthForm() {
         return;
       }
 
-      const supabase = createClient();
-
       if (mode === "login") {
-        const { error: authError } = await supabase.auth.signInWithPassword({
-          email,
-          password,
+        const res = await fetch("/api/auth/supabase-login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password }),
         });
-        if (authError) {
-          const msg = authError.message.toLowerCase();
-          if (msg.includes("email not confirmed") || msg.includes("not verified")) {
-            setPendingEmail(email);
-            throw new Error(
-              "Email non confirmé. Utilisez le bouton ci-dessous pour recevoir un nouveau lien sur xaalispay.com."
-            );
-          }
-          throw authError;
-        }
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Connexion échouée");
         router.push(searchParams.get("redirect") || "/dashboard");
         router.refresh();
         return;
@@ -199,21 +190,20 @@ function AuthForm() {
         );
       }
 
-      const { data, error: authError } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          emailRedirectTo: authRedirect,
-        },
+      const signupRes = await fetch("/api/auth/supabase-signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
       });
-      if (authError) throw authError;
-      if (!data.user) throw new Error("Inscription échouée");
+      const signupData = await signupRes.json();
+      if (!signupRes.ok) throw new Error(signupData.error || "Inscription échouée");
 
       const profileRes = await fetch("/api/auth/profile", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          userId: data.user.id,
+          userId: signupData.user.id,
+          email: signupData.user.email,
           username: cleanUsername,
           displayName,
           businessName,
@@ -226,13 +216,10 @@ function AuthForm() {
         throw new Error(profileData.error || "Profil vendeur non créé");
       }
 
-      if (!data.session) {
-        setPendingEmail(email);
+      if (signupData.needsEmailVerification) {
         setSuccess(
-          `Compte créé ! Ouvrez l'email envoyé à ${email} et cliquez le lien de confirmation (xaalispay.com).`
+          "Compte créé et connecté. Confirmez votre email pour publier des produits (lien envoyé par mail)."
         );
-        setMode("login");
-        return;
       }
 
       router.push("/dashboard");
@@ -370,7 +357,7 @@ function AuthForm() {
             disabled={resending}
             className="btn-secondary"
           >
-            {resending ? "Envoi…" : "Renvoyer l'email de confirmation"}
+            {resending ? "Envoi…" : "Renvoyer le lien de vérification (pour publier des produits)"}
           </button>
         )}
 
