@@ -41,6 +41,12 @@ export interface Product {
   updatedAt: string;
 }
 
+export interface DisputeMedia {
+  type: "image" | "video";
+  url: string;
+  name?: string;
+}
+
 export interface Order {
   id: string;
   sellerId: string;
@@ -64,6 +70,7 @@ export interface Order {
   protectionEndsAt?: string;
   disputeReason?: string;
   disputePhotos?: string[];
+  disputeMedia?: DisputeMedia[];
   disputeOpenedAt?: string;
   releasedAt?: string;
   refundedAt?: string;

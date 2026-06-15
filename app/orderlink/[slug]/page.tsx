@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
 import { useParams } from "next/navigation";
 import { getBuyerTimeline, getBuyerHumanStatus } from "@/lib/order-timeline";
 import { MoneyTimeline } from "@/components/ui/MoneyTimeline";
@@ -48,9 +49,6 @@ export default function PayPage() {
   const [pin, setPin] = useState("");
   const [pinConsent, setPinConsent] = useState(false);
   const [protectionMinutes, setProtectionMinutes] = useState(30);
-  const [showDispute, setShowDispute] = useState(false);
-  const [disputeReason, setDisputeReason] = useState("");
-  const [disputeError, setDisputeError] = useState("");
   const [error, setError] = useState("");
 
   const pollSlug = trackingSlug || slug;
@@ -123,32 +121,13 @@ export default function PayPage() {
     if (data.orderSlug) {
       setTrackingSlug(data.orderSlug);
       setIsProductLink(false);
+      window.history.replaceState(null, "", `/orderlink/${data.orderSlug}`);
       const trackRes = await fetch(`/api/pay/${data.orderSlug}`);
       if (trackRes.ok) {
         const trackData = await trackRes.json();
         setOrder(trackData.order);
       }
     }
-  };
-
-  const handleDispute = async () => {
-    setDisputeError("");
-    if (!disputeReason.trim()) {
-      setDisputeError("Décrivez le problème");
-      return;
-    }
-    const res = await fetch(`/api/pay/${pollSlug}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "dispute", reason: disputeReason }),
-    });
-    const data = await res.json();
-    if (!res.ok) {
-      setDisputeError(data.error || "Litige impossible");
-      return;
-    }
-    setShowDispute(false);
-    fetchOrder();
   };
 
   if (loading) {
@@ -229,7 +208,7 @@ export default function PayPage() {
                   border: "none",
                 }}
               >
-                Partager sur WhatsApp
+                WhatsApp
               </a>
             </div>
           </PinConsentGate>
@@ -241,37 +220,9 @@ export default function PayPage() {
                 minutes={protectionMinutes}
                 onExpire={handleMaintenance}
               />
-              {!showDispute ? (
-                <button
-                  type="button"
-                  onClick={() => setShowDispute(true)}
-                  className="btn-ghost dispute-link"
-                >
-                  Signaler un problème
-                </button>
-              ) : (
-                <div className="dispute-form">
-                  <textarea
-                    className="input-field dispute-textarea"
-                    placeholder="Décrivez le problème…"
-                    value={disputeReason}
-                    onChange={(e) => setDisputeReason(e.target.value)}
-                  />
-                  {disputeError && <p className="alert-danger">{disputeError}</p>}
-                  <div className="dispute-actions">
-                    <button type="button" onClick={handleDispute} className="btn-primary">
-                      Envoyer
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setShowDispute(false)}
-                      className="btn-secondary"
-                    >
-                      Annuler
-                    </button>
-                  </div>
-                </div>
-              )}
+              <Link href={`/litige?pin=${encodeURIComponent(pin)}`} className="btn-ghost dispute-link">
+                Ouvrir un litige
+              </Link>
             </div>
           )}
         </div>

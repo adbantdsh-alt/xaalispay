@@ -4,7 +4,7 @@ import {
   computeProtectionEndsAt,
   getProtectionDurationMinutes,
 } from "./protection";
-import type { Order, OrderStatus, Product, Profile } from "./types";
+import type { DisputeMedia, Order, OrderStatus, Product, Profile } from "./types";
 import {
   collectUsedPins,
   generateUniquePaymentSlug,
@@ -200,7 +200,7 @@ export async function getOrderById(id: string): Promise<Order | undefined> {
   return db.orders.find((o) => o.id === id);
 }
 
-const DISPUTABLE_STATUSES: OrderStatus[] = ["paid", "protection", "dispute"];
+const DISPUTABLE_STATUSES: OrderStatus[] = ["protection", "dispute"];
 
 export async function getDisputableOrderByPin(pin: string): Promise<Order | null> {
   const clean = pin.trim();
@@ -313,17 +313,19 @@ export async function validateDelivery(
 
 export async function openDispute(
   slug: string,
-  data: { reason?: string; photos?: string[] } = {}
+  data: { reason?: string; photos?: string[]; media?: DisputeMedia[] } = {}
 ): Promise<boolean> {
   let ok = false;
   const now = new Date().toISOString();
 
   await updateDb((db) => {
     const order = db.orders.find((o) => o.slug === slug);
-    if (!order || !["paid", "protection"].includes(order.status)) return;
+    if (!order || order.status !== "protection") return;
     order.status = "dispute";
     order.disputeReason = (data.reason || "").trim();
-    order.disputePhotos = data.photos || [];
+    order.disputeMedia = data.media || (data.photos || []).map((url) => ({ type: "image", url }));
+    order.disputePhotos =
+      data.photos || order.disputeMedia.filter((item) => item.type === "image").map((item) => item.url);
     order.disputeOpenedAt = now;
     order.updatedAt = now;
     ok = true;
@@ -334,7 +336,7 @@ export async function openDispute(
 
 export async function openDisputeByPin(
   pin: string,
-  data: { reason: string; photos: string[] }
+  data: { reason: string; photos?: string[]; media?: DisputeMedia[] }
 ): Promise<Order | null> {
   const order = await getDisputableOrderByPin(pin);
   if (!order) return null;

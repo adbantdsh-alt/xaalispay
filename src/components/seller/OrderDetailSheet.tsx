@@ -130,14 +130,24 @@ export function OrderDetailSheet({
             )}
             <div className="profile-sheet-row">
               <span className="text-muted">Preuves photo</span>
-              <span>{order.disputePhotos?.length || 0} photo(s)</span>
+              <span>{order.disputeMedia?.length || order.disputePhotos?.length || 0} preuve(s)</span>
             </div>
           </div>
-          {!!order.disputePhotos?.length && (
+          {!!(order.disputeMedia?.length || order.disputePhotos?.length) && (
             <div className="order-sheet-photo-grid" aria-label="Photos du litige">
-              {order.disputePhotos.slice(0, 10).map((photo, index) => (
-                <img key={`${photo.slice(0, 32)}-${index}`} src={photo} alt={`Preuve ${index + 1}`} />
-              ))}
+              {(order.disputeMedia || order.disputePhotos?.map((url) => ({ type: "image" as const, url })) || [])
+                .slice(0, 10)
+                .map((media, index) =>
+                  media.type === "video" ? (
+                    <video key={`${media.url.slice(0, 32)}-${index}`} src={media.url} controls />
+                  ) : (
+                    <img
+                      key={`${media.url.slice(0, 32)}-${index}`}
+                      src={media.url}
+                      alt={`Preuve ${index + 1}`}
+                    />
+                  )
+                )}
             </div>
           )}
         </div>

@@ -1,16 +1,19 @@
 import { NextResponse } from "next/server";
 import {
   getDisputableOrderByPin,
+  getProductById,
   getProfileById,
   openDisputeByPin,
 } from "@/lib/orders";
 import { getOrderTotal } from "@/lib/utils";
-import type { Order } from "@/lib/types";
+import type { DisputeMedia, Order, Product } from "@/lib/types";
 
-function serializeOrder(order: Order, sellerName = "Vendeur") {
+function serializeOrder(order: Order, sellerName = "Vendeur", product?: Product) {
   return {
     id: order.id,
     productName: order.productName,
+    productImage: product?.image || "",
+    productDescription: product?.description || "",
     sellerName,
     clientName: order.clientName,
     amount: getOrderTotal(order),
@@ -21,12 +24,36 @@ function serializeOrder(order: Order, sellerName = "Vendeur") {
   };
 }
 
-function isValidPhotoDataUrl(value: unknown): value is string {
-  return (
-    typeof value === "string" &&
-    /^data:image\/(jpeg|jpg|png|webp);base64,/i.test(value) &&
-    value.length <= 1_500_000
-  );
+const MAX_MEDIA_ITEMS = 10;
+const MAX_IMAGE_BYTES = 2_000_000;
+const MAX_VIDEO_BYTES = 8_000_000;
+
+function approxBytesFromDataUrl(url: string): number {
+  const base64 = url.split(",")[1] || "";
+  return Math.floor((base64.length * 3) / 4);
+}
+
+function normalizeMedia(value: unknown): DisputeMedia | null {
+  if (!value || typeof value !== "object") return null;
+  const item = value as Partial<DisputeMedia>;
+  if (item.type !== "image" && item.type !== "video") return null;
+  if (typeof item.url !== "string") return null;
+
+  const imageOk =
+    item.type === "image" && /^data:image\/(jpeg|jpg|png|webp);base64,/i.test(item.url);
+  const videoOk =
+    item.type === "video" && /^data:video\/(mp4|webm|quicktime);base64,/i.test(item.url);
+  if (!imageOk && !videoOk) return null;
+
+  const bytes = approxBytesFromDataUrl(item.url);
+  if (item.type === "image" && bytes > MAX_IMAGE_BYTES) return null;
+  if (item.type === "video" && bytes > MAX_VIDEO_BYTES) return null;
+
+  return {
+    type: item.type,
+    url: item.url,
+    name: typeof item.name === "string" ? item.name.slice(0, 80) : undefined,
+  };
 }
 
 export async function POST(request: Request) {
@@ -51,20 +78,22 @@ export async function POST(request: Request) {
     }
 
     const seller = await getProfileById(order.sellerId);
+    const product = await getProductById(order.productId);
 
     if (action === "lookup") {
       return NextResponse.json({
-        order: serializeOrder(order, seller?.businessName || seller?.displayName),
+        order: serializeOrder(order, seller?.businessName || seller?.displayName, product),
       });
     }
 
     if (action === "submit") {
       const reason = String(body?.reason || "").trim();
-      const photos = Array.isArray(body?.photos) ? body.photos : [];
+      const submittedMedia = Array.isArray(body?.media) ? body.media : [];
+      const media = submittedMedia.map(normalizeMedia).filter(Boolean) as DisputeMedia[];
 
       if (order.status === "dispute") {
         return NextResponse.json({
-          order: serializeOrder(order, seller?.businessName || seller?.displayName),
+          order: serializeOrder(order, seller?.businessName || seller?.displayName, product),
           alreadyOpen: true,
         });
       }
@@ -76,24 +105,28 @@ export async function POST(request: Request) {
         );
       }
 
-      if (photos.length < 2 || photos.length > 10 || !photos.every(isValidPhotoDataUrl)) {
+      if (media.length < 1 || media.length > MAX_MEDIA_ITEMS) {
         return NextResponse.json(
-          { error: "Ajoutez entre 2 et 10 photos valides (PNG, JPG ou WebP)." },
+          { error: "Ajoutez entre 1 et 10 preuves (image ou vidéo courte)." },
           { status: 400 }
         );
       }
 
-      const disputed = await openDisputeByPin(pin, { reason, photos });
+      const disputed = await openDisputeByPin(pin, {
+        reason,
+        media,
+        photos: media.filter((item) => item.type === "image").map((item) => item.url),
+      });
       if (!disputed) {
         return NextResponse.json(
-          { error: "Impossible d'ouvrir le litige pour cette commande." },
+          { error: "Le litige n'est possible qu'après validation de la livraison." },
           { status: 400 }
         );
       }
 
       return NextResponse.json({
         success: true,
-        order: serializeOrder(disputed, seller?.businessName || seller?.displayName),
+        order: serializeOrder(disputed, seller?.businessName || seller?.displayName, product),
       });
     }
 
