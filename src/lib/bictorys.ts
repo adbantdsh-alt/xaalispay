@@ -29,8 +29,8 @@ export function mapPaymentMethodToOperator(method: MobileMoneyMethod): "Wave" | 
   return method === "wave" ? "Wave" : "Orange Money";
 }
 
-export function mapPaymentMethodToPaymentType(method: MobileMoneyMethod): "wave" | "orange_money" {
-  return method === "wave" ? "wave" : "orange_money";
+export function mapPaymentMethodToPaymentType(method: MobileMoneyMethod): "wave_money" | "orange_money" {
+  return method === "wave" ? "wave_money" : "orange_money";
 }
 
 export function normalizeSenegalPhone(phone: string): string {
@@ -60,22 +60,20 @@ export async function createBictorysMobileMoneyCharge({
   const phone = normalizeSenegalPhone(order.clientPhone);
 
   const payload = {
-    type: "mobile_money",
     amount,
-    reference,
+    merchantReference: reference,
     paymentReference: reference,
     currency: "XOF",
     country: "SN",
-    customer: {
+    customerObject: {
       name: customerName,
       email: "client@xaalispay.com",
       phoneNumber: phone,
-      country: "SN",
-      locale: "fr-FR",
+      phone,
     },
-    phone,
-    operator: mapPaymentMethodToOperator(method),
-    settlementDestination: "wallet",
+    allowUpdateCustomer: false,
+    successRedirectUrl: buildPaymentLinkUrl(order.slug),
+    errorRedirectUrl: buildPaymentLinkUrl(order.slug),
     callbackUrl: buildPaymentLinkUrl(order.slug),
     orderDetails: [
       {
@@ -110,12 +108,26 @@ export async function createBictorysMobileMoneyCharge({
     }
   );
 
-  const raw = await res.json().catch(() => ({}));
+  const rawText = await res.text();
+  let raw: unknown = {};
+  try {
+    raw = rawText ? JSON.parse(rawText) : {};
+  } catch {
+    raw = { message: rawText };
+  }
   if (!res.ok) {
+    console.error("Bictorys charge failed", {
+      status: res.status,
+      paymentType: mapPaymentMethodToPaymentType(method),
+      response: raw,
+    });
+    const rawObject = raw && typeof raw === "object" ? (raw as Record<string, unknown>) : {};
     const message =
-      (raw as { message?: string; error?: string })?.message ||
-      (raw as { message?: string; error?: string })?.error ||
-      "Paiement Bictorys refusé";
+      (typeof rawObject.message === "string" && rawObject.message) ||
+      (typeof rawObject.error === "string" && rawObject.error) ||
+      (typeof rawObject.detail === "string" && rawObject.detail) ||
+      (typeof rawObject.title === "string" && rawObject.title) ||
+      `Paiement Bictorys refusé (HTTP ${res.status})`;
     throw new Error(message);
   }
 
