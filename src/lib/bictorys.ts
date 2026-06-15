@@ -89,8 +89,8 @@ export async function createBictorysMobileMoneyCharge({
       phone,
     },
     allowUpdateCustomer: false,
-    successRedirectUrl: buildPaymentLinkUrl(order.slug),
-    errorRedirectUrl: buildPaymentLinkUrl(order.slug),
+    successRedirectUrl: `${buildPaymentLinkUrl(order.slug)}?payment=success`,
+    errorRedirectUrl: `${buildPaymentLinkUrl(order.slug)}?payment=failed`,
     callbackUrl: buildPaymentLinkUrl(order.slug),
     orderDetails: [
       {
@@ -112,17 +112,18 @@ export async function createBictorysMobileMoneyCharge({
     ],
   };
 
-  // Sans payment_type, Bictorys renvoie une page checkout utilisable par le client.
-  // C'est plus fiable que la requête directe si le PSP ne fournit pas de deep-link mobile.
-  const res = await fetch(`${getBaseUrl()}/pay/v1/charges`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-Api-Key": getPublicKey(),
-      "Request-Id": crypto.randomUUID(),
-    },
-    body: JSON.stringify(payload),
-  });
+  const res = await fetch(
+    `${getBaseUrl()}/pay/v1/charges?payment_type=${mapPaymentMethodToPaymentType(method)}`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Api-Key": getPublicKey(),
+        "Request-Id": crypto.randomUUID(),
+      },
+      body: JSON.stringify(payload),
+    }
+  );
 
   const rawText = await res.text();
   let raw: unknown = {};

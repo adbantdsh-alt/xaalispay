@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { getBuyerTimeline, getBuyerHumanStatus } from "@/lib/order-timeline";
 import { MoneyTimeline } from "@/components/ui/MoneyTimeline";
@@ -39,6 +39,7 @@ interface PayOrder {
 export default function PayPage() {
   const { slug } = useParams<{ slug: string }>();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [order, setOrder] = useState<PayOrder | null>(null);
   const [clientFirstName, setClientFirstName] = useState("");
   const [clientLastName, setClientLastName] = useState("");
@@ -158,6 +159,7 @@ export default function PayPage() {
   }
 
   const status = order.status as OrderStatus;
+  const paymentReturn = searchParams.get("payment");
 
   if (["dispute", "refunded", "released"].includes(status)) {
     const meta = {
@@ -184,16 +186,29 @@ export default function PayPage() {
   const showPin = visiblePin && (status === "paid" || canDispute);
 
   if (!order.isProductLink && status === "pending_payment") {
+    const returnedAfterPayment = paymentReturn === "success";
+    const paymentFailed = paymentReturn === "failed";
+
     return (
       <div className="page-shell status-screen">
         <BrandMark />
         <p className="status-screen-icon" aria-hidden="true">
-          <IconLock size={36} />
+          {paymentFailed ? <IconAlert size={36} /> : returnedAfterPayment ? <IconCheck size={36} /> : <IconLock size={36} />}
         </p>
-        <h2 className="status-screen-title">Paiement en attente</h2>
+        <h2 className="status-screen-title">
+          {paymentFailed
+            ? "Paiement non finalisé"
+            : returnedAfterPayment
+              ? "Paiement reçu"
+              : "Paiement en attente"}
+        </h2>
         <p className="status-screen-desc">
-          {order.paymentProviderMessage ||
-            "Confirmez la demande de paiement sur votre téléphone. Le code livraison s'affichera ici après confirmation."}
+          {paymentFailed
+            ? "Le paiement n'a pas été confirmé. Vous pouvez revenir au lien de paiement et réessayer."
+            : returnedAfterPayment
+              ? "Nous confirmons la transaction. Le code livraison va s'afficher automatiquement dans quelques instants."
+              : order.paymentProviderMessage ||
+                "Confirmez la demande de paiement sur votre téléphone. Le code livraison s'affichera ici après confirmation."}
         </p>
         <MoneyTimeline steps={getBuyerTimeline(status)} />
       </div>
