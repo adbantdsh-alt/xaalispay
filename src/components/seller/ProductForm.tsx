@@ -200,8 +200,12 @@ export function ProductListItem({
 
   return (
     <article className="product-row">
-      {product.image ? (
-        <img src={product.image} alt="" className="product-row-img" />
+      {product.image || product.hasImage ? (
+        product.image ? (
+          <img src={product.image} alt="" className="product-row-img" />
+        ) : (
+          <div className="product-row-img product-row-img-empty" aria-hidden />
+        )
       ) : (
         <div className="product-row-img product-row-img-empty">
           <IconPackage size={22} />

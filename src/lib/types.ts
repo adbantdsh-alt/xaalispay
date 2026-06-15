@@ -43,6 +43,7 @@ export interface Product {
   deliveryHours: number;
   note: string;
   image: string;
+  hasImage?: boolean;
   active: boolean;
   createdAt: string;
   updatedAt: string;

@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/session";
 import {
-  getOrdersBySeller,
   getWalletData,
   processOrderMaintenance,
   validateDelivery,
@@ -21,13 +20,17 @@ export async function GET() {
     return NextResponse.json({ error: "Profil vendeur introuvable" }, { status: 404 });
   }
 
-  const wallet = await getWalletData(user.id);
-  const orders = await getOrdersBySeller(user.id);
+  const wallet = await getWalletData(user.id, { skipMaintenance: true });
 
   return NextResponse.json({
     profile: access.profile,
-    wallet,
-    orders,
+    wallet: {
+      available: wallet.available,
+      sequestered: wallet.sequestered,
+      sequesteredTotal: wallet.sequesteredTotal,
+      breakdown: wallet.breakdown,
+    },
+    orders: wallet.orders,
     protectionMinutes: getProtectionDurationMinutes(),
     canCreateProducts: access.canCreateProducts,
     emailVerified: access.emailVerified,

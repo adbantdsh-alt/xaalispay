@@ -1,10 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import type { Order, OrderStatus } from "@/lib/types";
 import { formatCurrency, getOrderTotal } from "@/lib/utils";
 import { AssetRow } from "@/components/seller/AssetRow";
 import { OrderDetailSheet } from "@/components/seller/OrderDetailSheet";
+import { DashboardSkeleton } from "@/components/ui/Skeleton";
+import { useSellerData } from "@/components/seller/SellerDataProvider";
 
 type FilterKey = "all" | "active" | "released" | "issue";
 
@@ -16,34 +18,12 @@ const FILTERS: { key: FilterKey; label: string; match: (s: OrderStatus) => boole
 ];
 
 export default function HistoryPage() {
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data, loading } = useSellerData();
+  const orders = data?.orders ?? [];
   const [selected, setSelected] = useState<Order | null>(null);
   const [filter, setFilter] = useState<FilterKey>("all");
 
-  useEffect(() => {
-    fetch("/api/dashboard")
-      .then(async (res) => {
-        if (res.status === 401) {
-          window.location.href = "/auth";
-          return;
-        }
-        if (res.ok) {
-          const data = await res.json();
-          setOrders(data.orders || []);
-        }
-        setLoading(false);
-      })
-      .catch(() => setLoading(false));
-  }, []);
-
-  if (loading) {
-    return (
-      <div className="flex min-h-[50dvh] items-center justify-center">
-        <div className="spinner" />
-      </div>
-    );
-  }
+  if (loading && !data) return <DashboardSkeleton />;
 
   const paidOrders = orders.filter((o) => o.status !== "pending_payment");
   const totalSales = paidOrders.reduce((sum, o) => sum + getOrderTotal(o), 0);

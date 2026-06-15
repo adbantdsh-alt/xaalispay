@@ -1,46 +1,21 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { computeWalletBreakdown } from "@/lib/wallet-breakdown";
 import { formatCurrency } from "@/lib/utils";
 import { PayMethodButtons } from "@/components/pay/PayMethodButtons";
 import type { Order } from "@/lib/types";
-
-interface WalletPageData {
-  wallet: {
-    available: number;
-    sequestered: Array<{
-      orderId: string;
-      productName: string;
-      amount: number;
-      status: string;
-    }>;
-  };
-}
+import { DashboardSkeleton } from "@/components/ui/Skeleton";
+import { useSellerData } from "@/components/seller/SellerDataProvider";
 
 export default function WalletPage() {
-  const [data, setData] = useState<WalletPageData | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { data, loading, refresh } = useSellerData();
   const [amount, setAmount] = useState("");
   const [phone, setPhone] = useState("");
   const [withdrawing, setWithdrawing] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-
-  const load = async () => {
-    const res = await fetch("/api/dashboard");
-    if (res.status === 401) {
-      window.location.href = "/auth";
-      return;
-    }
-    if (res.ok) setData(await res.json());
-    setLoading(false);
-  };
-
-  useEffect(() => {
-    load();
-  }, []);
 
   const handleWithdraw = async (method: string) => {
     setError("");
@@ -67,22 +42,18 @@ export default function WalletPage() {
 
     setSuccess(result.message);
     setAmount("");
-    load();
+    await refresh({ silent: true });
   };
 
-  if (loading) {
-    return (
-      <div className="flex min-h-[50dvh] items-center justify-center">
-        <div className="spinner" />
-      </div>
-    );
-  }
+  if (loading && !data) return <DashboardSkeleton />;
 
   if (!data) {
     return (
       <div className="seller-dashboard seller-dashboard-empty">
         <p className="text-muted">Impossible de charger le portefeuille</p>
-        <Link href="/dashboard" className="btn-seller-primary">Accueil</Link>
+        <Link href="/dashboard" className="btn-seller-primary">
+          Accueil
+        </Link>
       </div>
     );
   }
@@ -160,7 +131,11 @@ export default function WalletPage() {
         </div>
 
         {error && <p className="alert-danger">{error}</p>}
-        {success && <p className="toast-success" role="status">{success}</p>}
+        {success && (
+          <p className="toast-success" role="status">
+            {success}
+          </p>
+        )}
       </section>
     </div>
   );

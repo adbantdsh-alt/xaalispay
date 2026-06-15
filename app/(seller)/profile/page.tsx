@@ -1,43 +1,20 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Link from "next/link";
 import { buildShopPath } from "@/lib/site-url";
-
-interface ProfileData {
-  username: string;
-  displayName: string;
-  businessName: string;
-  phone?: string;
-}
+import { DashboardSkeleton } from "@/components/ui/Skeleton";
+import { useSellerData } from "@/components/seller/SellerDataProvider";
 
 export default function ProfilePage() {
-  const [profile, setProfile] = useState<ProfileData | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetch("/api/dashboard").then(async (res) => {
-      if (res.status === 401) {
-        window.location.href = "/auth";
-        return;
-      }
-      if (res.ok) setProfile((await res.json()).profile);
-      setLoading(false);
-    });
-  }, []);
+  const { data, loading } = useSellerData();
+  const profile = data?.profile ?? null;
 
   const logout = async () => {
     await fetch("/api/auth/logout", { method: "POST" });
     window.location.href = "/auth";
   };
 
-  if (loading) {
-    return (
-      <div className="flex min-h-[60dvh] items-center justify-center">
-        <div className="spinner" />
-      </div>
-    );
-  }
+  if (loading && !profile) return <DashboardSkeleton />;
 
   if (!profile) return null;
 

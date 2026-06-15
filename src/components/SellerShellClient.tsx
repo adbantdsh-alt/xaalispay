@@ -1,26 +1,17 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { MobileBottomNav } from "./MobileBottomNav";
 import { SellerHeader } from "./seller/SellerHeader";
 import { ProfileSheet, type ProfileSheetData } from "./seller/ProfileSheet";
 import { SettingsSheet } from "./seller/SettingsSheet";
+import { SellerDataProvider, useSellerData } from "./seller/SellerDataProvider";
 
-export function SellerShellClient({ children }: { children: React.ReactNode }) {
-  const [profile, setProfile] = useState<ProfileSheetData | null>(null);
+function SellerShellInner({ children }: { children: React.ReactNode }) {
+  const { data: dashboard } = useSellerData();
+  const profile = dashboard?.profile ?? null;
   const [profileOpen, setProfileOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
-
-  useEffect(() => {
-    fetch("/api/dashboard")
-      .then(async (res) => {
-        if (res.ok) {
-          const data = await res.json();
-          setProfile(data.profile);
-        }
-      })
-      .catch(() => {});
-  }, []);
 
   const logout = async () => {
     await fetch("/api/auth/logout", { method: "POST" });
@@ -55,5 +46,13 @@ export function SellerShellClient({ children }: { children: React.ReactNode }) {
         onLogout={logout}
       />
     </div>
+  );
+}
+
+export function SellerShellClient({ children }: { children: React.ReactNode }) {
+  return (
+    <SellerDataProvider>
+      <SellerShellInner>{children}</SellerShellInner>
+    </SellerDataProvider>
   );
 }

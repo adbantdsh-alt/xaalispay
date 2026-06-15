@@ -460,9 +460,14 @@ export async function processOrderMaintenance(): Promise<boolean> {
   return changed;
 }
 
-export async function getWalletData(sellerId: string) {
-  await processOrderMaintenance();
-  const orders = await getOrdersBySeller(sellerId);
+export async function getWalletData(
+  sellerId: string,
+  options?: { skipMaintenance?: boolean; orders?: Order[] }
+) {
+  if (!options?.skipMaintenance) {
+    await processOrderMaintenance();
+  }
+  const orders = options?.orders ?? (await getOrdersBySeller(sellerId));
 
   let available = 0;
   const sequestered: WalletSequesteredItem[] = [];

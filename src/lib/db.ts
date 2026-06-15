@@ -15,6 +15,7 @@ const DB_PATH = path.join(DATA_DIR, "db.json");
 
 let memoryDb: Database | null = null;
 let loadPromise: Promise<Database> | null = null;
+let inflightDb: Promise<Database> | null = null;
 
 const defaultDb: Database = {
   authUsers: [],
@@ -282,19 +283,42 @@ async function hydrateDatabase(): Promise<Database> {
   return local;
 }
 
-/** En prod serverless, recharger Supabase à chaque appel pour éviter les données fantômes. */
-async function fetchDatabase(): Promise<Database> {
-  if (isRemoteStoreEnabled()) {
-    return loadRemoteOrDefault();
-  }
-  if (memoryDb) return memoryDb;
-  return hydrateDatabase();
+/** Recharge Supabase ; réutilise le cache mémoire dans la même invocation serverless. */
+async function fetchDatabase(force = false): Promise<Database> {
+  if (!force && memoryDb) return memoryDb;
+  if (!force && inflightDb) return inflightDb;
+
+  const load = async (): Promise<Database> => {
+    if (isRemoteStoreEnabled()) {
+      return loadRemoteOrDefault();
+    }
+    if (memoryDb) return memoryDb;
+    return hydrateDatabase();
+  };
+
+  inflightDb = load()
+    .then((db) => {
+      memoryDb = db;
+      inflightDb = null;
+      return db;
+    })
+    .catch((error) => {
+      inflightDb = null;
+      throw error;
+    });
+
+  return inflightDb;
+}
+
+export function invalidateDbCache() {
+  memoryDb = null;
+  inflightDb = null;
+  loadPromise = null;
 }
 
 export async function getDb(): Promise<Database> {
   if (isRemoteStoreEnabled() && process.env.VERCEL) {
-    memoryDb = await fetchDatabase();
-    return memoryDb;
+    return fetchDatabase();
   }
 
   if (memoryDb) return memoryDb;
@@ -312,7 +336,8 @@ export async function getDb(): Promise<Database> {
 }
 
 export async function updateDb(mutator: (db: Database) => void): Promise<Database> {
-  const db = structuredClone(await fetchDatabase());
+  invalidateDbCache();
+  const db = structuredClone(await fetchDatabase(true));
   mutator(db);
   memoryDb = finalizeDb(db);
 

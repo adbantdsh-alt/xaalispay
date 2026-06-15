@@ -152,8 +152,12 @@ export function PaymentLinkForm({
                           }
                         }}
                       >
-                        {product.image ? (
-                          <img src={product.image} alt="" className="product-pick-img" />
+                        {product.image || product.hasImage ? (
+                          product.image ? (
+                            <img src={product.image} alt="" className="product-pick-img" />
+                          ) : (
+                            <div className="product-pick-img product-pick-img-empty" aria-hidden />
+                          )
                         ) : (
                           <div className="product-pick-img product-pick-img-empty">
                             <IconPackage size={20} />

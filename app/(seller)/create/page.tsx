@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import type { Product, Profile } from "@/lib/types";
+import type { Product } from "@/lib/types";
 import { slugifyUsername, isValidUsername } from "@/lib/utils";
 import {
   ShopActionButtons,
@@ -25,13 +25,16 @@ import { buildShopUrl, buildProductPaymentUrl, formatPublicUrl } from "@/lib/sit
 import { PaymentLinkForm } from "@/components/seller/PaymentLinkForm";
 import { PaymentLinkSuccessPanel } from "@/components/seller/PaymentLinkSuccessPanel";
 import { CopyButton } from "@/components/ui/CopyButton";
+import { useSellerData } from "@/components/seller/SellerDataProvider";
 
 function CreatePageContent() {
   const view = useShopView();
   const router = useRouter();
   const searchParams = useSearchParams();
   const editProductId = searchParams.get("id");
-  const [profile, setProfile] = useState<Profile | null>(null);
+  const { data: sellerData, refresh: refreshSeller } = useSellerData();
+  const profile = sellerData?.profile ?? null;
+  const canCreateProducts = sellerData?.canCreateProducts !== false;
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -47,27 +50,13 @@ function CreatePageContent() {
 
   const [pseudo, setPseudo] = useState("");
   const [pseudoSaving, setPseudoSaving] = useState(false);
-  const [canCreateProducts, setCanCreateProducts] = useState(true);
   const [editForm, setEditForm] = useState<ProductFormValues>(emptyProductForm());
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [editSaved, setEditSaved] = useState(false);
   const [editLoading, setEditLoading] = useState(false);
 
-  const load = async () => {
-    const [dashRes, prodRes] = await Promise.all([
-      fetch("/api/dashboard"),
-      fetch("/api/products"),
-    ]);
-    if (dashRes.status === 401) {
-      window.location.href = "/auth";
-      return;
-    }
-    if (dashRes.ok) {
-      const dash = await dashRes.json();
-      setProfile(dash.profile);
-      setPseudo(dash.profile.username);
-      setCanCreateProducts(dash.canCreateProducts !== false);
-    }
+  const loadProducts = async () => {
+    const prodRes = await fetch("/api/products");
     if (prodRes.ok) {
       const data = await prodRes.json();
       const list = data.products || [];
@@ -84,8 +73,12 @@ function CreatePageContent() {
   };
 
   useEffect(() => {
-    load();
+    loadProducts();
   }, []);
+
+  useEffect(() => {
+    if (profile) setPseudo(profile.username);
+  }, [profile?.username]);
 
   useEffect(() => {
     if (view !== "link") setCreatedPayUrl("");
@@ -180,7 +173,7 @@ function CreatePageContent() {
     setCreatedPayUrl(data.payUrl || buildProductPaymentUrl(data.product));
     setCreatedProductName(data.product.name);
     setSuccess("Produit créé — lien de paiement prêt");
-    load();
+    loadProducts();
   };
 
   const resetLinkForm = () => {
@@ -197,7 +190,7 @@ function CreatePageContent() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id: product.id, active: !product.active }),
     });
-    load();
+    loadProducts();
   };
 
   const activateProductForLink = async (product: Product) => {
@@ -207,7 +200,7 @@ function CreatePageContent() {
       body: JSON.stringify({ id: product.id, active: true }),
     });
     setSelectedProductId(product.id);
-    load();
+    loadProducts();
   };
 
   const handleCreatePaymentLink = async (e: React.FormEvent) => {
@@ -253,7 +246,7 @@ function CreatePageContent() {
     setCreatedPayUrl(data.order.payUrl);
     setCreatedProductName(data.order.productName);
     setSuccess("Lien prêt à envoyer");
-    load();
+    loadProducts();
   };
 
   const handleEditProduct = async (e: React.FormEvent) => {
@@ -295,7 +288,7 @@ function CreatePageContent() {
     setEditingProduct(updated);
     setEditSaved(true);
     setSuccess("Produit mis à jour");
-    load();
+    loadProducts();
   };
 
   const handlePseudoSave = async (e: React.FormEvent) => {
@@ -318,9 +311,9 @@ function CreatePageContent() {
       setError(data.error || "Modification impossible");
       return;
     }
-    setProfile(data.profile);
     setPseudo(data.profile.username);
     setSuccess("XaalisTag mis à jour");
+    await refreshSeller({ silent: true });
   };
 
   if (loading) {

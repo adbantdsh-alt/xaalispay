@@ -10,50 +10,22 @@ import { DashboardSkeleton } from "@/components/ui/Skeleton";
 import { WalletOverview } from "@/components/seller/WalletOverview";
 import { AssetRow } from "@/components/seller/AssetRow";
 import { buildShopUrl } from "@/lib/site-url";
-
-interface DashboardData {
-  profile: { username: string; displayName: string };
-  wallet: {
-    available: number;
-    sequestered: Array<{
-      orderId: string;
-      productName: string;
-      amount: number;
-      status: string;
-      protectionEndsAt?: string;
-    }>;
-  };
-  orders: Order[];
-  protectionMinutes: number;
-}
+import { useSellerData } from "@/components/seller/SellerDataProvider";
 
 export default function DashboardPage() {
-  const [data, setData] = useState<DashboardData | null>(null);
+  const { data, loading, refresh } = useSellerData();
   const [productCount, setProductCount] = useState(0);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const load = async () => {
-    const [dashRes, prodRes] = await Promise.all([
-      fetch("/api/dashboard"),
-      fetch("/api/products"),
-    ]);
-    if (dashRes.status === 401) {
-      window.location.href = "/auth";
-      return;
-    }
-    if (dashRes.ok) setData(await dashRes.json());
-    if (prodRes.ok) {
-      const p = await prodRes.json();
-      setProductCount((p.products || []).length);
-    }
-    setLoading(false);
-  };
-
   useEffect(() => {
-    load();
-    const interval = setInterval(load, 5000);
-    return () => clearInterval(interval);
+    fetch("/api/products")
+      .then(async (res) => {
+        if (res.ok) {
+          const p = await res.json();
+          setProductCount((p.products || []).length);
+        }
+      })
+      .catch(() => {});
   }, []);
 
   const validateDelivery = async (orderId: string, pin: string) => {
@@ -68,10 +40,10 @@ export default function DashboardPage() {
       setError(result.error || "Validation impossible");
       return;
     }
-    load();
+    await refresh({ silent: true });
   };
 
-  if (loading) return <DashboardSkeleton />;
+  if (loading && !data) return <DashboardSkeleton />;
 
   if (!data) {
     return (
@@ -134,7 +106,7 @@ export default function DashboardPage() {
             : undefined
         }
         protectionMinutes={data.protectionMinutes}
-        onCountdownExpire={load}
+        onCountdownExpire={() => refresh({ silent: true })}
       />
 
       <SellerOnboarding
