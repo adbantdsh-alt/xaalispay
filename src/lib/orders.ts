@@ -304,7 +304,36 @@ export async function getOrderByPaymentReference(
   reference: string
 ): Promise<Order | undefined> {
   const db = await getDb();
-  return db.orders.find((o) => o.paymentReference === reference || o.slug === reference);
+  return db.orders.find(
+    (o) =>
+      o.paymentReference === reference ||
+      o.slug === reference ||
+      o.paymentProviderId === reference
+  );
+}
+
+export async function markOrderRefundedByReference(
+  reference: string
+): Promise<Order | null> {
+  let result: Order | null = null;
+  const now = new Date().toISOString();
+
+  await updateDb((db) => {
+    const order = db.orders.find(
+      (o) =>
+        o.paymentReference === reference ||
+        o.slug === reference ||
+        o.paymentProviderId === reference
+    );
+    if (!order || order.status === "refunded" || order.status === "released") return;
+    order.status = "refunded";
+    order.refundedAt = now;
+    order.updatedAt = now;
+    refundEscrowForOrder(db, order);
+    result = order;
+  });
+
+  return result;
 }
 
 export async function markPaymentInitiated(

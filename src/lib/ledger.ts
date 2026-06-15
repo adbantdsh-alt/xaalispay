@@ -173,6 +173,19 @@ export function debitAvailableForPayout(db: Database, payout: Payout) {
   });
 }
 
+export function reverseFailedPayout(db: Database, payout: Payout) {
+  return appendLedgerEntry(db, {
+    sellerId: payout.sellerId,
+    payoutId: payout.id,
+    type: "payout_reversal",
+    pocket: "available",
+    direction: "credit",
+    amount: payout.amount,
+    reference: `payout:${payout.id}:available_reversal`,
+    description: "Annulation retrait vendeur échoué",
+  });
+}
+
 export async function recordPaymentAttempt(
   order: Order,
   data: {

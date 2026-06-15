@@ -95,7 +95,8 @@ export type LedgerEntryType =
   | "escrow_release"
   | "dispute_hold"
   | "refund_debit"
-  | "payout_debit";
+  | "payout_debit"
+  | "payout_reversal";
 
 export type LedgerPocket = "escrow" | "available" | "blocked" | "paid_out";
 

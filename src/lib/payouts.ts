@@ -1,5 +1,6 @@
 import { getDb, updateDb } from "./db";
-import { debitAvailableForPayout } from "./ledger";
+import { createBictorysPayout } from "./bictorys";
+import { debitAvailableForPayout, reverseFailedPayout } from "./ledger";
 import { getWalletData } from "./orders";
 import type { Payout, Profile } from "./types";
 
@@ -42,6 +43,51 @@ function getAutomaticPayoutAmount(profile: Profile, available: number) {
   return available;
 }
 
+function normalizePayoutStatus(status?: string): Payout["status"] {
+  const clean = (status || "").toLowerCase();
+  if (clean.includes("success") || clean.includes("complete") || clean === "paid") return "success";
+  if (clean.includes("fail") || clean.includes("error") || clean.includes("cancel")) return "failed";
+  return "processing";
+}
+
+export async function updatePayoutFromProvider({
+  reference,
+  providerId,
+  status,
+  message,
+}: {
+  reference?: string | null;
+  providerId?: string;
+  status?: string;
+  message?: string;
+}): Promise<Payout | null> {
+  let updated: Payout | null = null;
+  const nextStatus = normalizePayoutStatus(status);
+  const now = new Date().toISOString();
+
+  await updateDb((db) => {
+    const payout = db.payouts.find(
+      (item) =>
+        item.id === reference ||
+        item.providerId === reference ||
+        (providerId && item.providerId === providerId)
+    );
+    if (!payout) return;
+
+    const wasFailed = payout.status === "failed";
+    payout.status = nextStatus;
+    payout.providerId = providerId || payout.providerId;
+    payout.failureReason = nextStatus === "failed" ? message : undefined;
+    payout.updatedAt = now;
+    if (nextStatus === "failed" && !wasFailed) {
+      reverseFailedPayout(db, payout);
+    }
+    updated = payout;
+  });
+
+  return updated;
+}
+
 export async function createPayoutRequest({
   sellerId,
   amount,
@@ -80,6 +126,27 @@ export async function createPayoutRequest({
     debitAvailableForPayout(db, payout);
     created = payout;
   });
+
+  if (created) {
+    try {
+      const provider = await createBictorysPayout(created);
+      const updated = await updatePayoutFromProvider({
+        reference: created.id,
+        providerId: provider.id,
+        status: provider.status,
+        message: provider.message,
+      });
+      if (updated) created = updated;
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Retrait Bictorys impossible";
+      await updatePayoutFromProvider({
+        reference: created.id,
+        status: "failed",
+        message,
+      });
+      return { ok: false, payout: created, message };
+    }
+  }
 
   return {
     ok: true,
