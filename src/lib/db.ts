@@ -37,6 +37,7 @@ function normalizeDb(db: Database): Database {
   if (!db.profiles) db.profiles = [];
   if (!db.orders) db.orders = [];
   for (const p of db.products) {
+    if (p.active === undefined) p.active = true;
     if (p.deliveryCost === undefined) p.deliveryCost = 0;
     if (p.note === undefined) p.note = "";
     if (p.image === undefined) p.image = "";

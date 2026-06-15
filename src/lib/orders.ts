@@ -108,7 +108,7 @@ export async function getProductsBySeller(
 ): Promise<Product[]> {
   const db = await getDb();
   return db.products
-    .filter((p) => p.sellerId === sellerId && (!activeOnly || p.active))
+    .filter((p) => p.sellerId === sellerId && (!activeOnly || p.active !== false))
     .sort(
       (a, b) =>
         new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()

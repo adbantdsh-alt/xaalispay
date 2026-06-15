@@ -8,6 +8,7 @@ import {
   markPaymentInitiated,
   openDispute,
   processOrderMaintenance,
+  processPayment,
 } from "@/lib/orders";
 import { createBictorysMobileMoneyCharge } from "@/lib/bictorys";
 import { getProtectionDurationMinutes } from "@/lib/protection";
@@ -78,13 +79,19 @@ async function buildOrderPayPayload(order: Order) {
 }
 
 export async function GET(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ slug: string }> }
 ) {
   const { slug } = await params;
   await processOrderMaintenance();
+  const paymentReturn = new URL(request.url).searchParams.get("payment");
 
-  const order = await getOrderBySlug(slug);
+  let order = await getOrderBySlug(slug);
+  if (order && paymentReturn === "success" && order.status === "pending_payment") {
+    await processPayment(order.slug, order.paymentMethod || "bictorys");
+    order = await getOrderBySlug(slug);
+  }
+
   if (order) {
     return NextResponse.json({
       order: await buildOrderPayPayload(order),

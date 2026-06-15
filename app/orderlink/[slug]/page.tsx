@@ -56,9 +56,11 @@ export default function PayPage() {
   const [error, setError] = useState("");
 
   const pollSlug = trackingSlug || slug;
+  const paymentReturn = searchParams.get("payment");
 
   const fetchOrder = useCallback(async () => {
-    const res = await fetch(`/api/pay/${pollSlug}`);
+    const query = paymentReturn ? `?payment=${encodeURIComponent(paymentReturn)}` : "";
+    const res = await fetch(`/api/pay/${pollSlug}${query}`);
     if (res.ok) {
       const data = await res.json();
       setOrder(data.order);
@@ -78,7 +80,7 @@ export default function PayPage() {
       }
     }
     setLoading(false);
-  }, [pollSlug, trackingSlug]);
+  }, [paymentReturn, pollSlug, trackingSlug]);
 
   useEffect(() => {
     fetchOrder();
@@ -159,7 +161,6 @@ export default function PayPage() {
   }
 
   const status = order.status as OrderStatus;
-  const paymentReturn = searchParams.get("payment");
 
   if (["dispute", "refunded", "released"].includes(status)) {
     const meta = {
