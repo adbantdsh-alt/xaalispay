@@ -50,6 +50,7 @@ function normalizeDb(db: Database): Database {
     if (o.clientFirstName === undefined) o.clientFirstName = "";
     if (o.clientAddress === undefined) o.clientAddress = "";
     if (o.clientNote === undefined) o.clientNote = "";
+    if (o.paymentReference === undefined) o.paymentReference = o.slug;
     if (o.disputePhotos === undefined) o.disputePhotos = [];
     if (o.disputeMedia === undefined) {
       o.disputeMedia = o.disputePhotos.map((url) => ({ type: "image", url }));

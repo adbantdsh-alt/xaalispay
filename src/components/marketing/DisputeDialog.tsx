@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import { AlertTriangle, CheckCircle2, ImagePlus, Search, Trash2, X } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
@@ -42,20 +42,21 @@ export function DisputeDialog({
   open,
   onClose,
   initialPin = "",
-  embedded = false,
+  variant = "modal",
 }: {
   open: boolean;
   onClose: () => void;
   initialPin?: string;
-  embedded?: boolean;
+  variant?: "modal" | "page";
 }) {
-  const [pin, setPin] = useState(initialPin.replace(/\D/g, "").slice(0, 4));
+  const [pin, setPin] = useState("");
   const [order, setOrder] = useState<PublicDisputeOrder | null>(null);
   const [reason, setReason] = useState("");
   const [media, setMedia] = useState<EvidenceMedia[]>([]);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
+  const autoLookupRef = useRef("");
 
   const lookupPin = async (targetPin: string) => {
     setError("");
@@ -79,16 +80,16 @@ export function DisputeDialog({
   };
 
   useEffect(() => {
-    if (!open || embedded) return;
+    if (!open) return;
     const previous = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
+    if (variant === "modal") document.body.style.overflow = "hidden";
     return () => {
       document.body.style.overflow = previous;
     };
-  }, [open, embedded]);
+  }, [open, variant]);
 
   useEffect(() => {
-    if (open || embedded) return;
+    if (open) return;
     setPin("");
     setOrder(null);
     setReason("");
@@ -96,22 +97,23 @@ export function DisputeDialog({
     setError("");
     setSuccess("");
     setLoading(false);
-  }, [open, embedded]);
+  }, [open]);
 
   useEffect(() => {
-    if (!open && !embedded) return;
+    if (!open) return;
     const clean = initialPin.replace(/\D/g, "").slice(0, 4);
-    if (clean.length !== 4) return;
+    if (!clean) return;
     setPin(clean);
-    lookupPin(clean);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialPin, open, embedded]);
-
-  if (!open && !embedded) return null;
+    if (clean.length === 4 && autoLookupRef.current !== clean) {
+      autoLookupRef.current = clean;
+      lookupPin(clean);
+    }
+  }, [initialPin, open]);
 
   const lookup = async (e: FormEvent) => {
     e.preventDefault();
-    lookupPin(pin);
+    autoLookupRef.current = pin;
+    await lookupPin(pin);
   };
 
   const handleFiles = async (files: FileList | null) => {
@@ -181,15 +183,17 @@ export function DisputeDialog({
     }
   };
 
-  const dialog = (
+  if (!open) return null;
+
+  const content = (
       <section
-        className={`lp-dispute-dialog ${embedded ? "lp-dispute-dialog-embedded" : ""}`}
+        className={`lp-dispute-dialog ${variant === "page" ? "lp-dispute-dialog-page" : ""}`}
         role="dialog"
         aria-modal="true"
         aria-labelledby="dispute-title"
-        onClick={(e) => e.stopPropagation()}
+        onClick={(e) => variant === "modal" && e.stopPropagation()}
       >
-        {!embedded && (
+        {variant === "modal" && (
           <button type="button" className="lp-dispute-close" onClick={onClose} aria-label="Fermer">
             <X size={18} strokeWidth={1.5} />
           </button>
@@ -309,11 +313,11 @@ export function DisputeDialog({
       </section>
   );
 
-  if (embedded) return dialog;
+  if (variant === "page") return content;
 
   return (
     <div className="lp-dispute-overlay" role="presentation" onClick={onClose}>
-      {dialog}
+      {content}
     </div>
   );
 }

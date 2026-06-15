@@ -1,8 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { useParams } from "next/navigation";
 import { getBuyerTimeline, getBuyerHumanStatus } from "@/lib/order-timeline";
 import { MoneyTimeline } from "@/components/ui/MoneyTimeline";
 import { CopyButton } from "@/components/ui/CopyButton";
@@ -31,11 +31,14 @@ interface PayOrder {
   clientPhone?: string;
   clientAddress?: string;
   clientNote?: string;
+  paymentProviderStatus?: string;
+  paymentProviderMessage?: string;
   seller: { displayName: string; username: string; phone?: string };
 }
 
 export default function PayPage() {
   const { slug } = useParams<{ slug: string }>();
+  const router = useRouter();
   const [order, setOrder] = useState<PayOrder | null>(null);
   const [clientFirstName, setClientFirstName] = useState("");
   const [clientLastName, setClientLastName] = useState("");
@@ -67,7 +70,10 @@ export default function PayPage() {
       }
       if (data.order.status !== "pending_payment") {
         setPaid(true);
-        if (data.order.pin) setPin(data.order.pin);
+        if (data.order.pin) {
+          setPin(data.order.pin);
+          setPinConsent(true);
+        }
       }
     }
     setLoading(false);
@@ -115,19 +121,20 @@ export default function PayPage() {
       setError(data.error || "Paiement impossible");
       return;
     }
-    setPaid(true);
-    setPin(data.pin);
+    setPaid(false);
+    setPin("");
     setPinConsent(false);
     if (data.orderSlug) {
       setTrackingSlug(data.orderSlug);
       setIsProductLink(false);
-      window.history.replaceState(null, "", `/orderlink/${data.orderSlug}`);
+      router.replace(`/orderlink/${data.orderSlug}`);
       const trackRes = await fetch(`/api/pay/${data.orderSlug}`);
       if (trackRes.ok) {
         const trackData = await trackRes.json();
         setOrder(trackData.order);
       }
     }
+    if (data.message) setError(data.message);
   };
 
   if (loading) {
@@ -169,7 +176,25 @@ export default function PayPage() {
   }
 
   const canDispute = status === "protection" && !!order.protectionEndsAt;
-  const showPin = pin && (status === "paid" || canDispute);
+  const visiblePin = pin || order.pin || "";
+  const showPin = visiblePin && (status === "paid" || canDispute);
+
+  if (!order.isProductLink && status === "pending_payment") {
+    return (
+      <div className="page-shell status-screen">
+        <BrandMark />
+        <p className="status-screen-icon" aria-hidden="true">
+          <IconLock size={36} />
+        </p>
+        <h2 className="status-screen-title">Paiement en attente</h2>
+        <p className="status-screen-desc">
+          {order.paymentProviderMessage ||
+            "Confirmez la demande de paiement sur votre téléphone. Le code livraison s'affichera ici après confirmation."}
+        </p>
+        <MoneyTimeline steps={getBuyerTimeline(status)} />
+      </div>
+    );
+  }
 
   if (paid && showPin) {
     return (
@@ -188,7 +213,7 @@ export default function PayPage() {
           <PinConsentGate accepted={pinConsent} onAcceptChange={setPinConsent}>
             <div className="pay-pin-block">
               <p className="pay-pin-label">Code Livraison</p>
-              <p className="pay-pin-code">{pin}</p>
+              <p className="pay-pin-code">{visiblePin}</p>
             </div>
 
             <p className="pay-pin-hint">
@@ -196,12 +221,12 @@ export default function PayPage() {
             </p>
 
             <div className="share-buttons">
-              <CopyButton text={pin} label="Copier le code" className="btn-primary" />
+              <CopyButton text={visiblePin} label="Copier" className="btn-primary pay-code-action" />
               <a
-                href={buildWhatsAppUrl(buildPinShareMessage(pin, order.productName))}
+                href={buildWhatsAppUrl(buildPinShareMessage(visiblePin, order.productName))}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="btn-secondary share-btn-whatsapp"
+                className="btn-secondary share-btn-whatsapp pay-code-action"
                 style={{
                   background: "linear-gradient(135deg,#25d366,#128c7e)",
                   color: "#fff",
@@ -220,7 +245,7 @@ export default function PayPage() {
                 minutes={protectionMinutes}
                 onExpire={handleMaintenance}
               />
-              <Link href={`/litige?pin=${encodeURIComponent(pin)}`} className="btn-ghost dispute-link">
+              <Link href={`/litige?code=${visiblePin}`} className="btn-ghost dispute-link">
                 Ouvrir un litige
               </Link>
             </div>

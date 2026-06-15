@@ -1,0 +1,148 @@
+import type { MobileMoneyMethod } from "./payment-methods";
+import { buildPaymentLinkUrl } from "./site-url";
+import type { Order } from "./types";
+import { getOrderTotal } from "./utils";
+
+export interface BictorysChargeResult {
+  id?: string;
+  reference?: string;
+  status?: string;
+  message?: string;
+  raw: unknown;
+}
+
+function getBaseUrl(): string {
+  return (process.env.BICTORYS_BASE_URL || "https://api.test.bictorys.com").replace(/\/$/, "");
+}
+
+function getPublicKey(): string {
+  const key = process.env.BICTORYS_PUBLIC_KEY?.trim();
+  if (!key) throw new Error("BICTORYS_PUBLIC_KEY manquante");
+  return key;
+}
+
+export function getWebhookSecret(): string | undefined {
+  return process.env.BICTORYS_WEBHOOK_SECRET?.trim() || undefined;
+}
+
+export function mapPaymentMethodToOperator(method: MobileMoneyMethod): "Wave" | "Orange Money" {
+  return method === "wave" ? "Wave" : "Orange Money";
+}
+
+export function mapPaymentMethodToPaymentType(method: MobileMoneyMethod): "wave" | "orange_money" {
+  return method === "wave" ? "wave" : "orange_money";
+}
+
+export function normalizeSenegalPhone(phone: string): string {
+  const digits = phone.replace(/\D/g, "");
+  if (digits.startsWith("221")) return digits;
+  return `221${digits.replace(/^0+/, "")}`;
+}
+
+function extractChargePayload(raw: unknown): Record<string, unknown> {
+  if (!raw || typeof raw !== "object") return {};
+  const obj = raw as Record<string, unknown>;
+  const data = obj.data;
+  if (data && typeof data === "object") return data as Record<string, unknown>;
+  return obj;
+}
+
+export async function createBictorysMobileMoneyCharge({
+  order,
+  method,
+}: {
+  order: Order;
+  method: MobileMoneyMethod;
+}): Promise<BictorysChargeResult> {
+  const reference = order.paymentReference || order.slug;
+  const amount = getOrderTotal(order);
+  const customerName = order.clientName || order.clientFirstName || "Client XaalisPay";
+  const phone = normalizeSenegalPhone(order.clientPhone);
+
+  const payload = {
+    type: "mobile_money",
+    amount,
+    reference,
+    paymentReference: reference,
+    currency: "XOF",
+    country: "SN",
+    customer: {
+      name: customerName,
+      email: "client@xaalispay.com",
+      phoneNumber: phone,
+      country: "SN",
+      locale: "fr-FR",
+    },
+    phone,
+    operator: mapPaymentMethodToOperator(method),
+    settlementDestination: "wallet",
+    callbackUrl: buildPaymentLinkUrl(order.slug),
+    orderDetails: [
+      {
+        name: order.productName,
+        price: order.productPrice,
+        quantity: 1,
+        taxRate: 0,
+      },
+      ...(order.deliveryCost
+        ? [
+            {
+              name: "Livraison",
+              price: order.deliveryCost,
+              quantity: 1,
+              taxRate: 0,
+            },
+          ]
+        : []),
+    ],
+  };
+
+  const res = await fetch(
+    `${getBaseUrl()}/pay/v1/charges?payment_type=${mapPaymentMethodToPaymentType(method)}`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Api-Key": getPublicKey(),
+        "Request-Id": crypto.randomUUID(),
+      },
+      body: JSON.stringify(payload),
+    }
+  );
+
+  const raw = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const message =
+      (raw as { message?: string; error?: string })?.message ||
+      (raw as { message?: string; error?: string })?.error ||
+      "Paiement Bictorys refusé";
+    throw new Error(message);
+  }
+
+  const data = extractChargePayload(raw);
+  return {
+    id: data.id !== undefined ? String(data.id) : undefined,
+    reference: typeof data.reference === "string" ? data.reference : reference,
+    status: typeof data.status === "string" ? data.status : undefined,
+    message:
+      typeof data.message === "string"
+        ? data.message.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim()
+        : (raw as { message?: string })?.message,
+    raw,
+  };
+}
+
+export function isBictorysSuccessEvent(payload: unknown): boolean {
+  if (!payload || typeof payload !== "object") return false;
+  const obj = payload as Record<string, unknown>;
+  const data = (obj.data && typeof obj.data === "object" ? obj.data : obj) as Record<string, unknown>;
+  return obj.event === "charge.successful" || data.status === "success";
+}
+
+export function getBictorysReference(payload: unknown): string | null {
+  if (!payload || typeof payload !== "object") return null;
+  const obj = payload as Record<string, unknown>;
+  const data = (obj.data && typeof obj.data === "object" ? obj.data : obj) as Record<string, unknown>;
+  const ref = data.reference || data.paymentReference || data.merchantReference;
+  return typeof ref === "string" ? ref : null;
+}

@@ -1,4 +1,4 @@
-﻿@import "tailwindcss";
+@import "tailwindcss";
 
 :root {
   --bg: #FAFAF7;
@@ -977,17 +977,16 @@ input, button, textarea, select { font: inherit; color: var(--text); }
 .alert-info { padding: 1rem; border-radius: var(--radius); background: rgba(0,212,255,0.1); color: var(--blue); font-size: 0.875rem; }
 .toast-success { margin-top: 0.75rem; padding: 0.875rem; border-radius: var(--radius); background: rgba(15,213,199,0.2); color: var(--blue); font-weight: 700; text-align: center; }
 
-.share-buttons {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.625rem;
-  margin-top: 1rem;
+.share-buttons { display: flex; flex-direction: column; gap: 0.625rem; margin-top: 1rem; }
+.pay-success-card .share-buttons {
+  flex-direction: row;
+  gap: 0.7rem;
 }
-.share-buttons .btn-primary,
-.share-buttons .btn-secondary {
-  min-height: 48px;
-  padding: 0 0.8rem;
-  font-size: 0.9rem;
+.pay-code-action {
+  flex: 1;
+  min-height: 50px;
+  padding-inline: 0.8rem;
+  font-size: 0.92rem;
 }
 .share-btn-whatsapp { background: linear-gradient(135deg, #25d366, #128c7e) !important; box-shadow: 0 4px 20px rgba(37,211,102,0.35) !important; }
 
@@ -1049,7 +1048,7 @@ input, button, textarea, select { font: inherit; color: var(--text); }
 .shop-subtitle { margin-top: 0.375rem; font-size: 0.9375rem; }
 .shop-username { margin-top: 0.5rem; font-weight: 800; font-size: 1.125rem; color: var(--blue); }
 
-.dispute-link { width: 100%; margin-top: 0.75rem; }
+.dispute-link { width: 100%; margin-top: 0.75rem; text-align: center; }
 .dispute-form { margin-top: 1rem; text-align: left; width: 100%; }
 .dispute-textarea { min-height: 88px; }
 .dispute-actions { display: flex; gap: 0.5rem; margin-top: 0.75rem; }
@@ -3983,11 +3982,11 @@ input, button, textarea, select { font: inherit; color: var(--text); }
   padding: 1.45rem;
   animation: fadeUp 0.24s var(--mk-ease);
 }
-.lp-dispute-dialog-embedded {
-  margin: 0 auto;
+.lp-dispute-dialog-page {
+  width: min(100%, 38rem);
   max-height: none;
   overflow: visible;
-  box-shadow: 0 18px 50px rgba(15, 31, 102, 0.12);
+  box-shadow: 0 20px 70px rgba(15, 31, 102, 0.12);
 }
 .lp-dispute-close {
   position: absolute;
@@ -4211,31 +4210,23 @@ input, button, textarea, select { font: inherit; color: var(--text); }
   }
 }
 
-.lp-dispute-page {
-  min-height: 78dvh;
-  padding: 8.5rem 0 5rem;
+.dispute-page {
+  min-height: 100dvh;
   background:
-    radial-gradient(circle at 80% 0%, rgba(15, 213, 199, 0.1), transparent 32rem),
+    radial-gradient(ellipse 90% 50% at 50% -10%, rgba(15, 31, 102, 0.08), transparent 62%),
     var(--brand-offwhite);
 }
-.lp-dispute-page-head {
-  max-width: 42rem;
-  margin: 0 auto 1.6rem;
-  text-align: center;
+.dispute-page-header {
+  width: min(100% - 2rem, 68rem);
+  margin: 0 auto;
+  padding: 1rem 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
-.lp-dispute-page-head h1 {
-  margin: 0.9rem 0 0;
-  color: var(--brand-navy);
-  font-size: clamp(3rem, 8vw, 5.4rem);
-  font-weight: 400;
-  letter-spacing: -0.025em;
-}
-.lp-dispute-page-head p {
-  margin: 1rem auto 0;
-  max-width: 34rem;
-  color: var(--brand-muted);
-  font-size: 1.04rem;
-  line-height: 1.6;
+.dispute-page-shell {
+  width: min(100% - 2rem, 42rem);
+  margin: 1.5rem auto 4rem;
 }
 
 /* ── Hero mockup iPhone ──────────────────────────────────── */

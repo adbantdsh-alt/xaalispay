@@ -5,10 +5,11 @@ import {
   getProductById,
   getProductByPaymentSlug,
   getProfileById,
+  markPaymentInitiated,
   openDispute,
   processOrderMaintenance,
-  processPayment,
 } from "@/lib/orders";
+import { createBictorysMobileMoneyCharge } from "@/lib/bictorys";
 import { getProtectionDurationMinutes } from "@/lib/protection";
 import { isMobileMoneyMethod } from "@/lib/payment-methods";
 import { updateDb } from "@/lib/db";
@@ -64,6 +65,8 @@ async function buildOrderPayPayload(order: Order) {
     clientPhone: order.clientPhone,
     clientAddress: order.clientAddress,
     clientNote: order.clientNote,
+    paymentProviderStatus: order.paymentProviderStatus,
+    paymentProviderMessage: order.paymentProviderMessage,
     pin:
       order.status === "paid" || order.status === "protection"
         ? order.pin
@@ -165,15 +168,30 @@ export async function POST(
         });
       }
 
-      const paid = await processPayment(order.slug, paymentMethod);
-      if (!paid) {
-        return NextResponse.json({ error: "Paiement impossible" }, { status: 400 });
+      const payableOrder = await getOrderBySlug(order.slug);
+      if (!payableOrder) {
+        return NextResponse.json({ error: "Commande introuvable" }, { status: 404 });
       }
 
+      const charge = await createBictorysMobileMoneyCharge({
+        order: payableOrder,
+        method: paymentMethod,
+      });
+
+      await markPaymentInitiated(payableOrder.slug, {
+        method: paymentMethod,
+        providerId: charge.id,
+        providerStatus: charge.status,
+        providerMessage: charge.message,
+      });
+
       return NextResponse.json({
-        pin: paid.pin,
-        status: paid.status,
-        orderSlug: paid.slug,
+        pending: true,
+        status: "pending_payment",
+        orderSlug: payableOrder.slug,
+        message:
+          charge.message ||
+          "Confirmez le paiement sur votre téléphone. Le code livraison s'affichera après confirmation.",
       });
     }
 
@@ -192,7 +210,10 @@ export async function POST(
     }
 
     return NextResponse.json({ error: "Action inconnue" }, { status: 400 });
-  } catch {
-    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
+  } catch (err) {
+    return NextResponse.json(
+      { error: err instanceof Error ? err.message : "Erreur serveur" },
+      { status: 500 }
+    );
   }
 }

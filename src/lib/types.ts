@@ -64,6 +64,11 @@ export interface Order {
   deliveryHours: number;
   status: OrderStatus;
   paymentMethod?: string;
+  paymentReference?: string;
+  paymentProvider?: "bictorys";
+  paymentProviderId?: string;
+  paymentProviderStatus?: string;
+  paymentProviderMessage?: string;
   paidAt?: string;
   deliveryDeadlineAt?: string;
   deliveryValidatedAt?: string;

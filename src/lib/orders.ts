@@ -253,6 +253,7 @@ export async function createOrderFromProduct(
     deliveryCost: product.deliveryCost || 0,
     deliveryHours: product.deliveryHours,
     status: "pending_payment",
+    paymentReference: `XP-${Date.now()}-${generateUniquePaymentSlug(used)}`,
     createdAt: now,
     updatedAt: now,
   };
@@ -275,11 +276,46 @@ export async function processPayment(
 
     order.status = "paid";
     order.paymentMethod = paymentMethod;
+    order.paymentProviderStatus = "success";
     order.paidAt = now;
     order.deliveryDeadlineAt = computeDeliveryDeadlineAt(
       order.deliveryHours,
       new Date(now)
     );
+    order.updatedAt = now;
+    result = order;
+  });
+
+  return result;
+}
+
+export async function getOrderByPaymentReference(
+  reference: string
+): Promise<Order | undefined> {
+  const db = await getDb();
+  return db.orders.find((o) => o.paymentReference === reference || o.slug === reference);
+}
+
+export async function markPaymentInitiated(
+  slug: string,
+  data: {
+    method: string;
+    providerId?: string;
+    providerStatus?: string;
+    providerMessage?: string;
+  }
+): Promise<Order | null> {
+  let result: Order | null = null;
+  const now = new Date().toISOString();
+
+  await updateDb((db) => {
+    const order = db.orders.find((o) => o.slug === slug);
+    if (!order || order.status !== "pending_payment") return;
+    order.paymentMethod = data.method;
+    order.paymentProvider = "bictorys";
+    order.paymentProviderId = data.providerId;
+    order.paymentProviderStatus = data.providerStatus || "initiated";
+    order.paymentProviderMessage = data.providerMessage;
     order.updatedAt = now;
     result = order;
   });
