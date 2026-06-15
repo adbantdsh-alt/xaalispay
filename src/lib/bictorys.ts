@@ -33,49 +33,54 @@ function firstEnvValue(names: string[]): string | undefined {
   return undefined;
 }
 
+const BICTORYS_PAYOUT_KEY_NAMES = [
+  "BICTORYS_PAYOUT_API_KEY",
+  "BICTORYS_API_KEY",
+  "BICTORYS_SECRET_KEY",
+  "bictorys_payout_key",
+  "bictorys_xaalispay_encaissement",
+] as const;
+
+const BICTORYS_REFUND_KEY_NAMES = [
+  "BICTORYS_REFUND_API_KEY",
+  "BICTORYS_API_KEY",
+  "BICTORYS_SECRET_KEY",
+  "BICTORYS_PAYOUT_API_KEY",
+  "bictorys_refund_key",
+  "bictorys_payout_key",
+] as const;
+
 function getPublicKey(): string {
-  const key = firstEnvValue(["BICTORYS_PUBLIC_KEY"]);
+  const key = firstEnvValue([
+    "BICTORYS_PUBLIC_KEY",
+    "bictorys_xaalispay_encaissement",
+  ]);
   if (!key) throw new Error("BICTORYS_PUBLIC_KEY manquante");
   return key;
 }
 
 function getPayoutKey(): string {
-  const key = firstEnvValue([
-    "BICTORYS_PAYOUT_API_KEY",
-    "BICTORYS_API_KEY",
-    "BICTORYS_SECRET_KEY",
-  ]);
+  const key = firstEnvValue([...BICTORYS_PAYOUT_KEY_NAMES]);
   if (!key) {
     throw new Error(
-      "Clé Bictorys payout non configurée. Ajoutez BICTORYS_PAYOUT_API_KEY (clé privée Bictorys) dans Vercel → Environment Variables → Production, puis redéployez."
+      "Clé Bictorys payout introuvable. Vérifiez BICTORYS_PAYOUT_API_KEY ou bictorys_payout_key dans Vercel, puis redéployez."
     );
   }
   return key;
 }
 
 function getRefundKey(): string {
-  const key = firstEnvValue([
-    "BICTORYS_REFUND_API_KEY",
-    "BICTORYS_API_KEY",
-    "BICTORYS_SECRET_KEY",
-    "BICTORYS_PAYOUT_API_KEY",
-  ]);
+  const key = firstEnvValue([...BICTORYS_REFUND_KEY_NAMES]);
   if (!key) {
     throw new Error(
-      "Clé Bictorys remboursement non configurée. Ajoutez BICTORYS_REFUND_API_KEY ou BICTORYS_API_KEY dans Vercel."
+      "Clé Bictorys remboursement introuvable. Vérifiez BICTORYS_REFUND_API_KEY ou bictorys_refund_key dans Vercel."
     );
   }
   return key;
 }
 
 export function isBictorysPayoutConfigured(): boolean {
-  return Boolean(
-    firstEnvValue([
-      "BICTORYS_PAYOUT_API_KEY",
-      "BICTORYS_API_KEY",
-      "BICTORYS_SECRET_KEY",
-    ])
-  );
+  return Boolean(firstEnvValue([...BICTORYS_PAYOUT_KEY_NAMES]));
 }
 
 export function getWebhookSecret(): string | undefined {
