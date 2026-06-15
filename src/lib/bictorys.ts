@@ -25,22 +25,57 @@ function getBaseUrl(): string {
   return (process.env.BICTORYS_BASE_URL || "https://api.test.bictorys.com").replace(/\/$/, "");
 }
 
+function firstEnvValue(names: string[]): string | undefined {
+  for (const name of names) {
+    const value = process.env[name]?.trim();
+    if (value) return value;
+  }
+  return undefined;
+}
+
 function getPublicKey(): string {
-  const key = process.env.BICTORYS_PUBLIC_KEY?.trim();
+  const key = firstEnvValue(["BICTORYS_PUBLIC_KEY"]);
   if (!key) throw new Error("BICTORYS_PUBLIC_KEY manquante");
   return key;
 }
 
 function getPayoutKey(): string {
-  const key = process.env.BICTORYS_PAYOUT_API_KEY?.trim();
-  if (!key) throw new Error("BICTORYS_PAYOUT_API_KEY manquante");
+  const key = firstEnvValue([
+    "BICTORYS_PAYOUT_API_KEY",
+    "BICTORYS_API_KEY",
+    "BICTORYS_SECRET_KEY",
+  ]);
+  if (!key) {
+    throw new Error(
+      "Clé Bictorys payout non configurée. Ajoutez BICTORYS_PAYOUT_API_KEY (clé privée Bictorys) dans Vercel → Environment Variables → Production, puis redéployez."
+    );
+  }
   return key;
 }
 
 function getRefundKey(): string {
-  const key = process.env.BICTORYS_REFUND_API_KEY?.trim();
-  if (!key) throw new Error("BICTORYS_REFUND_API_KEY manquante");
+  const key = firstEnvValue([
+    "BICTORYS_REFUND_API_KEY",
+    "BICTORYS_API_KEY",
+    "BICTORYS_SECRET_KEY",
+    "BICTORYS_PAYOUT_API_KEY",
+  ]);
+  if (!key) {
+    throw new Error(
+      "Clé Bictorys remboursement non configurée. Ajoutez BICTORYS_REFUND_API_KEY ou BICTORYS_API_KEY dans Vercel."
+    );
+  }
   return key;
+}
+
+export function isBictorysPayoutConfigured(): boolean {
+  return Boolean(
+    firstEnvValue([
+      "BICTORYS_PAYOUT_API_KEY",
+      "BICTORYS_API_KEY",
+      "BICTORYS_SECRET_KEY",
+    ])
+  );
 }
 
 export function getWebhookSecret(): string | undefined {

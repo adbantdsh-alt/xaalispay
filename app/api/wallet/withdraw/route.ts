@@ -51,7 +51,7 @@ export async function POST(request: Request) {
       status: result.payout?.status || "pending",
       message: result.message,
       reference: result.payout?.id,
-      apiConnected: false,
+      apiConnected: result.payout?.providerId ? true : result.payout?.status !== "failed",
     });
   } catch {
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
