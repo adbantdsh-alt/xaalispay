@@ -8,6 +8,8 @@ export interface BictorysChargeResult {
   reference?: string;
   status?: string;
   message?: string;
+  paymentUrl?: string;
+  qrCode?: string;
   raw: unknown;
 }
 
@@ -133,9 +135,26 @@ export async function createBictorysMobileMoneyCharge({
 
   const data = extractChargePayload(raw);
   return {
-    id: data.id !== undefined ? String(data.id) : undefined,
-    reference: typeof data.reference === "string" ? data.reference : reference,
+    id:
+      data.id !== undefined
+        ? String(data.id)
+        : data.transactionId !== undefined
+          ? String(data.transactionId)
+          : undefined,
+    reference:
+      typeof data.reference === "string"
+        ? data.reference
+        : typeof data.merchantReference === "string"
+          ? data.merchantReference
+          : reference,
     status: typeof data.status === "string" ? data.status : undefined,
+    paymentUrl:
+      typeof data.link === "string"
+        ? data.link
+        : typeof data.redirectUrl === "string"
+          ? data.redirectUrl
+          : undefined,
+    qrCode: typeof data.qrCode === "string" ? data.qrCode : undefined,
     message:
       typeof data.message === "string"
         ? data.message.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim()

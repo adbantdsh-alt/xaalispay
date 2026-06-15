@@ -121,6 +121,10 @@ export default function PayPage() {
       setError(data.error || "Paiement impossible");
       return;
     }
+    if (data.paymentUrl) {
+      window.location.href = data.paymentUrl;
+      return;
+    }
     setPaid(false);
     setPin("");
     setPinConsent(false);

@@ -189,6 +189,8 @@ export async function POST(
         pending: true,
         status: "pending_payment",
         orderSlug: payableOrder.slug,
+        paymentUrl: charge.paymentUrl,
+        qrCode: charge.qrCode,
         message:
           charge.message ||
           "Confirmez le paiement sur votre téléphone. Le code livraison s'affichera après confirmation.",
