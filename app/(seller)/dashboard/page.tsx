@@ -110,20 +110,21 @@ export default function DashboardPage() {
 
   return (
     <div className="seller-dashboard">
-      {actionOrder && (
-        <div id="pin-action">
-          <ActionRequiredCard
-            order={actionOrder}
-            onValidate={validateDelivery}
-            error={error}
-          />
-        </div>
-      )}
-
       <WalletOverview
         breakdown={breakdown}
         shopUrl={shopUrl}
         username={data.profile.username}
+        actionSlot={
+          actionOrder ? (
+            <div id="pin-action">
+              <ActionRequiredCard
+                order={actionOrder}
+                onValidate={validateDelivery}
+                error={error}
+              />
+            </div>
+          ) : undefined
+        }
         releasing={
           releasing?.protectionEndsAt
             ? {

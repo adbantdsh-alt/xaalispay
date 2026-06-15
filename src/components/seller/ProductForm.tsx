@@ -4,7 +4,6 @@ import { useId, useRef, useState } from "react";
 import type { Product } from "@/lib/types";
 import { formatCurrency, formatDeliveryHours } from "@/lib/utils";
 import { fileToDataUrl } from "@/lib/product-form";
-import { CopyButton } from "@/components/ui/CopyButton";
 import { IconCheck, IconPackage } from "@/components/ui/AppIcon";
 import { copyToClipboard } from "@/lib/share";
 import { buildProductPaymentUrl, formatPublicUrl } from "@/lib/site-url";
@@ -239,12 +238,6 @@ export function ProductListItem({
                 )}
               </span>
             </button>
-            <CopyButton
-              text={payUrl}
-              label="Copier le lien"
-              copiedLabel="✓ Copié"
-              className="btn-seller-primary btn-compact product-copy-link"
-            />
             <button type="button" className="btn-secondary btn-compact" onClick={onEdit}>
               Modifier
             </button>
@@ -254,9 +247,9 @@ export function ProductListItem({
       <button
         type="button"
         onClick={onToggle}
-        className={`chip-toggle ${product.active ? "chip-toggle-on" : ""}`}
+        className={`chip-toggle product-publish-toggle ${product.active ? "chip-toggle-on" : ""}`}
       >
-        {product.active ? "Actif" : "Off"}
+        {product.active ? "Dépublier" : "Publier"}
       </button>
     </article>
   );

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
 import { formatCurrency } from "@/lib/utils";
 import type { WalletBreakdown } from "@/lib/wallet-breakdown";
 import { ReleaseCountdown } from "@/components/ReleaseCountdown";
@@ -8,6 +9,7 @@ export function WalletOverview({
   breakdown,
   shopUrl,
   username,
+  actionSlot,
   releasing,
   protectionMinutes,
   onCountdownExpire,
@@ -15,6 +17,7 @@ export function WalletOverview({
   breakdown: WalletBreakdown;
   shopUrl: string;
   username: string;
+  actionSlot?: ReactNode;
   releasing?: { protectionEndsAt: string; productName: string };
   protectionMinutes: number;
   onCountdownExpire?: () => void;
@@ -47,6 +50,8 @@ export function WalletOverview({
             <span className="wallet-funds-hint">Litige en cours</span>
           </div>
         </div>
+
+        {actionSlot && <div className="wallet-action-slot">{actionSlot}</div>}
 
         {releasing?.protectionEndsAt && (
           <div className="wallet-countdown">
