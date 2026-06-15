@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getWalletData } from "@/lib/orders";
 import { isMobileMoneyMethod } from "@/lib/payment-methods";
+import { toBictorysPayoutPhone } from "@/lib/bictorys";
 import { getSessionUser } from "@/lib/session";
 import { createPayoutRequest } from "@/lib/payouts";
 
@@ -13,7 +14,7 @@ export async function POST(request: Request) {
   try {
     const { amount, method, phone } = await request.json();
     const parsedAmount = Number(amount);
-    const cleanPhone = String(phone || "").trim();
+    const cleanPhone = toBictorysPayoutPhone(String(phone || ""));
 
     if (!parsedAmount || parsedAmount <= 0) {
       return NextResponse.json({ error: "Montant invalide" }, { status: 400 });

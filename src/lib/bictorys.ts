@@ -104,9 +104,22 @@ export function mapPaymentMethodToPaymentType(method: MobileMoneyMethod): "wave_
 }
 
 export function normalizeSenegalPhone(phone: string): string {
-  const digits = phone.replace(/\D/g, "");
+  let digits = phone.replace(/\D/g, "");
+  while (digits.startsWith("221") && digits.length > 9) {
+    digits = digits.slice(3);
+  }
+  digits = digits.replace(/^0+/, "");
   if (digits.startsWith("221")) return digits;
-  return `221${digits.replace(/^0+/, "")}`;
+  return `221${digits}`;
+}
+
+/** Numéro local Sénégal pour payout Bictorys (sans 221 — l'API ajoute +221). */
+export function toBictorysPayoutPhone(phone: string): string {
+  let digits = phone.replace(/\D/g, "");
+  while (digits.startsWith("221") && digits.length > 9) {
+    digits = digits.slice(3);
+  }
+  return digits.replace(/^0+/, "");
 }
 
 function extractChargePayload(raw: unknown): Record<string, unknown> {
@@ -275,7 +288,7 @@ export async function createBictorysPayout(payout: Payout): Promise<BictorysPayo
     merchantReference: payout.id,
     customerObject: {
       name: "Vendeur XaalisPay",
-      phone: normalizeSenegalPhone(payout.phone),
+      phone: toBictorysPayoutPhone(payout.phone),
       country: "SN",
       locale: "fr-FR",
     },
