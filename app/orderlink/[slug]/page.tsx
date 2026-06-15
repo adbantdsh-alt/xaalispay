@@ -2,15 +2,13 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import { MOBILE_MONEY_METHODS } from "@/lib/payment-methods";
-import { formatCurrency, getOrderTotal } from "@/lib/utils";
 import { getBuyerTimeline, getBuyerHumanStatus } from "@/lib/order-timeline";
 import { MoneyTimeline } from "@/components/ui/MoneyTimeline";
 import { CopyButton } from "@/components/ui/CopyButton";
 import { BrandMark } from "@/components/ui/BrandMark";
-import { PayMethodLogo } from "@/components/ui/PayMethodLogo";
 import { PaySkeleton } from "@/components/ui/Skeleton";
 import { buildPinShareMessage, buildWhatsAppUrl } from "@/lib/share";
+import { PayOrderSummary, PayProtectionBlock, PayClientFields, PayMethodButtons, PayCheckoutSection, PinConsentGate } from "@/components/pay/PayPageSections";
 import type { OrderStatus } from "@/lib/types";
 
 interface PayOrder {
@@ -31,7 +29,7 @@ interface PayOrder {
   clientPhone?: string;
   clientAddress?: string;
   clientNote?: string;
-  seller: { displayName: string; username: string };
+  seller: { displayName: string; username: string; phone?: string };
 }
 
 export default function PayPage() {
@@ -47,6 +45,7 @@ export default function PayPage() {
   const [paying, setPaying] = useState(false);
   const [paid, setPaid] = useState(false);
   const [pin, setPin] = useState("");
+  const [pinConsent, setPinConsent] = useState(false);
   const [protectionMinutes, setProtectionMinutes] = useState(30);
   const [showDispute, setShowDispute] = useState(false);
   const [disputeReason, setDisputeReason] = useState("");
@@ -119,6 +118,7 @@ export default function PayPage() {
     }
     setPaid(true);
     setPin(data.pin);
+    setPinConsent(false);
     if (data.orderSlug) {
       setTrackingSlug(data.orderSlug);
       setIsProductLink(false);
@@ -201,29 +201,35 @@ export default function PayPage() {
           <p className="pay-success-sub">{getBuyerHumanStatus(status)}</p>
           <MoneyTimeline steps={getBuyerTimeline(status)} />
 
-          <div className="pay-pin-block">
-            <p className="pay-pin-label">Code Livraison</p>
-            <p className="pay-pin-code">{pin}</p>
-          </div>
+          <PinConsentGate accepted={pinConsent} onAcceptChange={setPinConsent}>
+            <div className="pay-pin-block">
+              <p className="pay-pin-label">Code Livraison</p>
+              <p className="pay-pin-code">{pin}</p>
+            </div>
 
-          <p className="pay-pin-hint">
-            Donnez ce code au livreur après vérification du colis.
-          </p>
+            <p className="pay-pin-hint">
+              Donnez ce code au livreur après vérification du colis.
+            </p>
 
-          <div className="share-buttons">
-            <CopyButton text={pin} label="Copier le code" className="btn-primary" />
-            <a
-              href={buildWhatsAppUrl(buildPinShareMessage(pin, order.productName))}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="btn-secondary share-btn-whatsapp"
-              style={{ background: "linear-gradient(135deg,#25d366,#128c7e)", color: "#fff", border: "none" }}
-            >
-              Partager sur WhatsApp
-            </a>
-          </div>
+            <div className="share-buttons">
+              <CopyButton text={pin} label="Copier le code" className="btn-primary" />
+              <a
+                href={buildWhatsAppUrl(buildPinShareMessage(pin, order.productName))}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn-secondary share-btn-whatsapp"
+                style={{
+                  background: "linear-gradient(135deg,#25d366,#128c7e)",
+                  color: "#fff",
+                  border: "none",
+                }}
+              >
+                Partager sur WhatsApp
+              </a>
+            </div>
+          </PinConsentGate>
 
-          {canDispute && (
+          {canDispute && pinConsent && (
             <div className="pay-dispute-minimal">
               <ReleaseCountdownInline
                 endsAt={order.protectionEndsAt!}
@@ -231,7 +237,11 @@ export default function PayPage() {
                 onExpire={handleMaintenance}
               />
               {!showDispute ? (
-                <button type="button" onClick={() => setShowDispute(true)} className="btn-ghost dispute-link">
+                <button
+                  type="button"
+                  onClick={() => setShowDispute(true)}
+                  className="btn-ghost dispute-link"
+                >
                   Signaler un problème
                 </button>
               ) : (
@@ -244,8 +254,16 @@ export default function PayPage() {
                   />
                   {disputeError && <p className="alert-danger">{disputeError}</p>}
                   <div className="dispute-actions">
-                    <button type="button" onClick={handleDispute} className="btn-primary">Envoyer</button>
-                    <button type="button" onClick={() => setShowDispute(false)} className="btn-secondary">Annuler</button>
+                    <button type="button" onClick={handleDispute} className="btn-primary">
+                      Envoyer
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowDispute(false)}
+                      className="btn-secondary"
+                    >
+                      Annuler
+                    </button>
                   </div>
                 </div>
               )}
@@ -260,19 +278,15 @@ export default function PayPage() {
     return (
       <div className="pay-success-screen">
         <div className="pay-success-card animate-fade-up">
-          <div className="pay-success-ring"><div className="pay-success-check">✓</div></div>
+          <div className="pay-success-ring">
+            <div className="pay-success-check">✓</div>
+          </div>
           <h1 className="pay-success-title">Paiement confirmé</h1>
           <p className="pay-success-sub">{getBuyerHumanStatus(status)}</p>
         </div>
       </div>
     );
   }
-
-  const initial = order.seller.displayName.charAt(0).toUpperCase();
-  const total = getOrderTotal({
-    productPrice: order.productPrice,
-    deliveryCost: order.deliveryCost || 0,
-  });
 
   return (
     <div className="pay-app">
@@ -281,41 +295,18 @@ export default function PayPage() {
         <span className="pay-secure-pill">🔒 Sécurisé</span>
       </header>
 
-      <div className="pay-hero animate-fade-up">
-        {order.productImage ? (
-          <img src={order.productImage} alt={order.productName} className="pay-hero-img" />
-        ) : (
-          <div className="pay-hero-placeholder">📦</div>
-        )}
-        <div className="pay-hero-gradient" />
-        <div className="pay-hero-content">
-          <p className="pay-hero-title">{order.productName}</p>
-          <p className="pay-hero-price">{formatCurrency(total)}</p>
-          {(order.deliveryCost || 0) > 0 && (
-            <p className="pay-hero-subprice">
-              {formatCurrency(order.productPrice)} + {formatCurrency(order.deliveryCost)} livraison
-            </p>
-          )}
-        </div>
-      </div>
-
-      <div className="pay-sheet animate-fade-up-d1">
+      <div className="pay-sheet pay-sheet-flat animate-fade-up">
         <div className="pay-sheet-handle" />
 
-        <div className="pay-vendor-row">
-          <div className="pay-vendor-avatar">{initial}</div>
-          <div>
-            <p className="pay-vendor-name">{order.seller.displayName}</p>
-            <p className="pay-vendor-meta">@{order.seller.username} · Vendeur vérifié</p>
-          </div>
-        </div>
+        <PayOrderSummary
+          productName={order.productName}
+          productImage={order.productImage}
+          productPrice={order.productPrice}
+          deliveryCost={order.deliveryCost || 0}
+          seller={order.seller}
+        />
 
-        <p className="pay-reassurance">
-          <span>🛡️</span>
-          Votre argent reste bloqué chez XaalisPay jusqu&apos;à réception du colis.
-        </p>
-
-        <MoneyTimeline steps={getBuyerTimeline("pending_payment")} />
+        <PayProtectionBlock protectionMinutes={protectionMinutes} />
 
         {(order.productDescription || order.productNote) && (
           <div className="pay-product-details">
@@ -336,68 +327,24 @@ export default function PayPage() {
           </p>
         ) : null}
 
-        {order.clientNote && (
-          <p className="pay-client-note">
-            <span>Message pour vous :</span> {order.clientNote}
-          </p>
-        )}
+        <PayCheckoutSection>
+          <PayClientFields
+            values={{
+              firstName: clientFirstName,
+              lastName: clientLastName,
+              phone: clientPhone,
+              address: clientAddress,
+            }}
+            onChange={(v) => {
+              setClientFirstName(v.firstName);
+              setClientLastName(v.lastName);
+              setClientPhone(v.phone);
+              setClientAddress(v.address);
+            }}
+          />
+        </PayCheckoutSection>
 
-        <div className="pay-coords-block">
-          <p className="pay-coords-label">Vos informations</p>
-          <div className="pay-coords-fields">
-            <div className="field-row">
-              <input
-                className="input-field"
-                placeholder="Prénom"
-                value={clientFirstName}
-                onChange={(e) => setClientFirstName(e.target.value)}
-                aria-label="Prénom"
-              />
-              <input
-                className="input-field"
-                placeholder="Nom"
-                value={clientLastName}
-                onChange={(e) => setClientLastName(e.target.value)}
-                aria-label="Nom"
-              />
-            </div>
-            <div className="phone-input-row">
-              <span className="phone-prefix">+221</span>
-              <input
-                className="input-field phone-input"
-                type="tel"
-                placeholder="77 123 45 67"
-                value={clientPhone}
-                onChange={(e) => setClientPhone(e.target.value)}
-                aria-label="Téléphone"
-              />
-            </div>
-            <textarea
-              className="input-field form-textarea-sm"
-              placeholder="Adresse de livraison"
-              value={clientAddress}
-              onChange={(e) => setClientAddress(e.target.value)}
-              rows={2}
-              aria-label="Adresse"
-            />
-          </div>
-        </div>
-
-        <div className="pay-methods-stack">
-          {MOBILE_MONEY_METHODS.map((method) => (
-            <button
-              key={method.id}
-              type="button"
-              onClick={() => handlePay(method.id)}
-              disabled={paying}
-              className={`pay-method ${method.btnClass}`}
-            >
-              <PayMethodLogo method={method.id} />
-              <span className="pay-method-text">Payer avec {method.name}</span>
-              <span className="pay-method-arrow">→</span>
-            </button>
-          ))}
-        </div>
+        <PayMethodButtons onPay={handlePay} paying={paying} />
 
         {error && <p className="alert-danger">{error}</p>}
       </div>

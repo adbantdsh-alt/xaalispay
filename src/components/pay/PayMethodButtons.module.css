@@ -1,0 +1,103 @@
+/* Boutons PayMethodButtons — design validé, ne pas modifier. */
+
+.stack {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.625rem;
+  margin-bottom: 1.25rem;
+}
+
+.payBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  min-height: 48px;
+  padding: 0.5rem 0.625rem;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
+}
+
+.payBtn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  filter: brightness(1.05);
+}
+
+.payBtn:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.payBtn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* Wave — fond bleu, favicon + texte */
+.wave {
+  background: linear-gradient(180deg, #3dd5ff 0%, #00b8f0 100%);
+  box-shadow: 0 4px 16px rgba(0, 184, 240, 0.35);
+}
+
+.waveFavicon {
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  overflow: hidden;
+  flex-shrink: 0;
+  display: block;
+  line-height: 0;
+}
+
+.waveFavicon img {
+  height: 32px;
+  width: auto;
+  display: block;
+  margin-left: 0;
+}
+
+.waveName {
+  font-size: 1.125rem;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  color: #0a1628;
+  line-height: 1;
+  text-transform: lowercase;
+}
+
+/* Orange Money — fond noir, logo blanc/orange */
+.orange {
+  background: #000;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+}
+
+.orangeLogo {
+  height: 34px;
+  width: auto;
+  max-width: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+.sectionLabel {
+  margin: 0 0 0.75rem;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #8b9bb4;
+}
+
+.coordsBlock {
+  padding-top: 1.125rem;
+  margin-top: 0.25rem;
+  border-top: 1px dashed rgba(15, 31, 102, 0.12);
+}
+
+@media (max-width: 340px) {
+  .stack {
+    grid-template-columns: 1fr;
+  }
+}

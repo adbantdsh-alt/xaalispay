@@ -1,0 +1,81 @@
+/* Bloc PayClientFields — design validé, ne pas modifier. */
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.label {
+  display: block;
+  margin-bottom: 0.35rem;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #8b9bb4;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.625rem;
+}
+
+.field {
+  min-width: 0;
+}
+
+.input,
+.textarea {
+  width: 100%;
+  padding: 0.75rem 0.875rem;
+  border: 1px solid rgba(15, 31, 102, 0.1);
+  border-radius: 14px;
+  background: #fff;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: #0a1628;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.input::placeholder,
+.textarea::placeholder {
+  color: #b0bdd0;
+}
+
+.input:focus,
+.textarea:focus {
+  border-color: rgba(26, 79, 214, 0.45);
+  box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.15);
+}
+
+.phoneRow {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.prefix {
+  display: flex;
+  align-items: center;
+  padding: 0 0.875rem;
+  border-radius: 14px;
+  background: #f4f7fb;
+  border: 1px solid rgba(15, 31, 102, 0.08);
+  font-size: 0.875rem;
+  font-weight: 800;
+  color: #0f1f66;
+  flex-shrink: 0;
+}
+
+.phoneInput {
+  flex: 1;
+  min-width: 0;
+}
+
+.textarea {
+  min-height: 72px;
+  resize: vertical;
+  line-height: 1.45;
+}

@@ -11,7 +11,7 @@ export const MOBILE_MONEY_METHODS = [
     name: "Orange Money",
     shortName: "Orange",
     btnClass: "pay-method-orange",
-    color: "#FF6600",
+    color: "#FF7900",
   },
 ];
 

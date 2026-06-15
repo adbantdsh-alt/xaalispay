@@ -1,0 +1,24 @@
+---
+description: Zone checkout figée — produit jusqu'aux boutons paiement
+globs: src/components/pay/PayOrderSummary.tsx, src/components/pay/PayOrderSummary.module.css, src/components/pay/PayProtectionBlock.tsx, src/components/pay/PayProtectionBlock.module.css, src/components/pay/PayClientFields.tsx, src/components/pay/PayClientFields.module.css, src/components/pay/PayMethodButtons.tsx, src/components/pay/PayMethodButtons.module.css, src/components/pay/PaymentBrandLogos.tsx
+alwaysApply: false
+---
+
+# Zone checkout page paiement — ne pas toucher
+
+Du bloc produit jusqu'aux boutons Wave / Orange Money : **tout est validé**. Ne rien modifier.
+
+## PayOrderSummary (+ .module.css)
+- Produit + vendeur : image gauche, infos droite.
+
+## PayProtectionBlock (+ .module.css)
+- Garantie anti-arnaque XaalisPay, étapes, copywriting.
+
+## PayClientFields (+ .module.css) + PayCheckoutSection
+- Formulaire : prénom, nom, téléphone, adresse.
+
+## PayMethodButtons (+ .module.css) + PaymentBrandLogos
+- Boutons Wave (fond bleu, favicon + texte) et Orange Money (fond noir, logo officiel).
+- Grille 2 colonnes, hauteur compacte.
+
+Pour toute évolution, travailler **en dehors** de cette zone (header, écran succès / PIN, logique API…), jamais dedans.
