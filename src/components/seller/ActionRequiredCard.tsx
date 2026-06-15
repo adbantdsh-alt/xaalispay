@@ -37,7 +37,7 @@ export function ActionRequiredCard({
         {order.productName} · {order.clientName || "Client"} · {formatCurrency(order.productPrice)}
       </p>
       <p className="action-card-hint">
-        Demandez le code PIN au client après livraison du colis.
+        Demandez le PIN au client après livraison.
       </p>
       <form onSubmit={handleSubmit} className="action-card-form">
         <input

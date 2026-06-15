@@ -1,4 +1,4 @@
-import { DisputeDialog } from "@/components/marketing/DisputeDialog";
+import { DisputePageClient } from "@/components/marketing/DisputePageClient";
 
 export default async function DisputePage({
   searchParams,
@@ -10,7 +10,7 @@ export default async function DisputePage({
   return (
     <section className="dispute-page">
       <div className="dispute-page-shell">
-        <DisputeDialog open onClose={() => undefined} initialPin={code} variant="page" />
+        <DisputePageClient initialPin={code} />
       </div>
     </section>
   );

@@ -75,7 +75,6 @@ export default function PayPage() {
         setPaid(true);
         if (data.order.pin) {
           setPin(data.order.pin);
-          setPinConsent(true);
         }
       }
     }

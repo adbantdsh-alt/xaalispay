@@ -110,11 +110,20 @@ export default function DashboardPage() {
 
   return (
     <div className="seller-dashboard">
+      {actionOrder && (
+        <div id="pin-action">
+          <ActionRequiredCard
+            order={actionOrder}
+            onValidate={validateDelivery}
+            error={error}
+          />
+        </div>
+      )}
+
       <WalletOverview
         breakdown={breakdown}
         shopUrl={shopUrl}
         username={data.profile.username}
-        hasPendingPin={!!actionOrder}
         releasing={
           releasing?.protectionEndsAt
             ? {
@@ -132,16 +141,6 @@ export default function DashboardPage() {
         orderCount={data.orders.length}
         hasValidatedDelivery={hasValidatedDelivery}
       />
-
-      {actionOrder && (
-        <div id="pin-action">
-          <ActionRequiredCard
-            order={actionOrder}
-            onValidate={validateDelivery}
-            error={error}
-          />
-        </div>
-      )}
 
       {showEmpty ? (
         <section className="seller-tip-card animate-fade-up-d2">

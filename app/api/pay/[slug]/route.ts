@@ -8,12 +8,12 @@ import {
   markPaymentInitiated,
   openDispute,
   processOrderMaintenance,
-  processPayment,
 } from "@/lib/orders";
 import { createBictorysMobileMoneyCharge } from "@/lib/bictorys";
 import { getProtectionDurationMinutes } from "@/lib/protection";
 import { isMobileMoneyMethod } from "@/lib/payment-methods";
 import { updateDb } from "@/lib/db";
+import { getReusablePaymentAttempt, recordPaymentAttempt } from "@/lib/ledger";
 import type { Order, Product } from "@/lib/types";
 
 async function buildSellerPayload(sellerId: string) {
@@ -84,13 +84,7 @@ export async function GET(
 ) {
   const { slug } = await params;
   await processOrderMaintenance();
-  const paymentReturn = new URL(request.url).searchParams.get("payment");
-
-  let order = await getOrderBySlug(slug);
-  if (order && paymentReturn === "success" && order.status === "pending_payment") {
-    await processPayment(order.slug, order.paymentMethod || "bictorys");
-    order = await getOrderBySlug(slug);
-  }
+  const order = await getOrderBySlug(slug);
 
   if (order) {
     return NextResponse.json({
@@ -179,6 +173,34 @@ export async function POST(
       if (!payableOrder) {
         return NextResponse.json({ error: "Commande introuvable" }, { status: 404 });
       }
+      if (payableOrder.status !== "pending_payment") {
+        return NextResponse.json(
+          {
+            error: "Cette commande est déjà payée ou finalisée.",
+            orderSlug: payableOrder.slug,
+            status: payableOrder.status,
+          },
+          { status: 409 }
+        );
+      }
+
+      const reusableAttempt = await getReusablePaymentAttempt(
+        payableOrder.id,
+        paymentMethod
+      );
+      if (reusableAttempt?.paymentUrl) {
+        return NextResponse.json({
+          pending: true,
+          reused: true,
+          status: "pending_payment",
+          orderSlug: payableOrder.slug,
+          paymentUrl: reusableAttempt.paymentUrl,
+          qrCode: reusableAttempt.qrCode,
+          message:
+            reusableAttempt.message ||
+            "Une demande de paiement est déjà en cours. Confirmez-la sur votre téléphone.",
+        });
+      }
 
       const charge = await createBictorysMobileMoneyCharge({
         order: payableOrder,
@@ -190,6 +212,14 @@ export async function POST(
         providerId: charge.id,
         providerStatus: charge.status,
         providerMessage: charge.message,
+      });
+      await recordPaymentAttempt(payableOrder, {
+        method: paymentMethod,
+        providerId: charge.id,
+        providerStatus: charge.status,
+        providerMessage: charge.message,
+        paymentUrl: charge.paymentUrl,
+        qrCode: charge.qrCode,
       });
 
       return NextResponse.json({

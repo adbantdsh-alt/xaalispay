@@ -8,7 +8,6 @@ export function WalletOverview({
   breakdown,
   shopUrl,
   username,
-  hasPendingPin,
   releasing,
   protectionMinutes,
   onCountdownExpire,
@@ -16,7 +15,6 @@ export function WalletOverview({
   breakdown: WalletBreakdown;
   shopUrl: string;
   username: string;
-  hasPendingPin: boolean;
   releasing?: { protectionEndsAt: string; productName: string };
   protectionMinutes: number;
   onCountdownExpire?: () => void;
@@ -66,7 +64,6 @@ export function WalletOverview({
         <QuickActions
           shopUrl={shopUrl}
           username={username}
-          hasPendingPin={hasPendingPin}
           embedded
         />
       </div>

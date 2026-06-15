@@ -15,6 +15,13 @@ export interface Profile {
   role?: "super_admin" | "seller";
   emailVerifiedAt?: string;
   usernameChangedAt?: string;
+  payoutMethod?: "wave" | "orange";
+  payoutPhone?: string;
+  autoPayoutEnabled?: boolean;
+  autoPayoutMode?: "full_balance" | "fixed_amount";
+  autoPayoutMinAmount?: number;
+  autoPayoutFixedAmount?: number;
+  autoPayoutMinCompletedOrders?: number;
   createdAt: string;
 }
 
@@ -83,11 +90,90 @@ export interface Order {
   updatedAt: string;
 }
 
+export type LedgerEntryType =
+  | "escrow_credit"
+  | "escrow_release"
+  | "dispute_hold"
+  | "refund_debit"
+  | "payout_debit";
+
+export type LedgerPocket = "escrow" | "available" | "blocked" | "paid_out";
+
+export interface LedgerEntry {
+  id: string;
+  sellerId: string;
+  orderId?: string;
+  payoutId?: string;
+  webhookEventId?: string;
+  type: LedgerEntryType;
+  pocket: LedgerPocket;
+  amount: number;
+  direction: "credit" | "debit";
+  reference: string;
+  description?: string;
+  createdAt: string;
+}
+
+export interface SellerBalance {
+  sellerId: string;
+  escrowBalance: number;
+  availableBalance: number;
+  blockedBalance: number;
+  paidOutBalance: number;
+  updatedAt: string;
+}
+
+export interface PaymentAttempt {
+  id: string;
+  orderId: string;
+  orderSlug: string;
+  sellerId: string;
+  paymentReference: string;
+  paymentMethod: string;
+  provider: "bictorys";
+  providerId?: string;
+  paymentUrl?: string;
+  qrCode?: string;
+  status: "initiated" | "pending" | "success" | "failed";
+  message?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface WebhookEvent {
+  id: string;
+  provider: "bictorys";
+  eventKey: string;
+  reference?: string;
+  status: "processed" | "ignored" | "failed";
+  payload: unknown;
+  createdAt: string;
+}
+
+export interface Payout {
+  id: string;
+  sellerId: string;
+  amount: number;
+  method: "wave" | "orange";
+  phone: string;
+  status: "pending" | "processing" | "success" | "failed";
+  provider?: "bictorys";
+  providerId?: string;
+  failureReason?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface Database {
   authUsers: AuthUser[];
   profiles: Profile[];
   products: Product[];
   orders: Order[];
+  ledgerEntries: LedgerEntry[];
+  sellerBalances: SellerBalance[];
+  paymentAttempts: PaymentAttempt[];
+  webhookEvents: WebhookEvent[];
+  payouts: Payout[];
 }
 
 export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {

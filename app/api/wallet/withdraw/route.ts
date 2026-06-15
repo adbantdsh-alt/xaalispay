@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getWalletData } from "@/lib/orders";
 import { isMobileMoneyMethod } from "@/lib/payment-methods";
 import { getSessionUser } from "@/lib/session";
-import { processWithdrawal } from "@/lib/withdrawals";
+import { createPayoutRequest } from "@/lib/payouts";
 
 export async function POST(request: Request) {
   const user = await getSessionUser();
@@ -36,7 +36,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const result = await processWithdrawal({
+    const result = await createPayoutRequest({
       sellerId: user.id,
       amount: parsedAmount,
       method,
@@ -48,10 +48,10 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json({
-      status: result.status,
+      status: result.payout?.status || "pending",
       message: result.message,
-      reference: result.reference,
-      apiConnected: !!process.env.PAYMENT_WITHDRAW_API_URL?.trim(),
+      reference: result.payout?.id,
+      apiConnected: false,
     });
   } catch {
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });

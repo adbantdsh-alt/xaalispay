@@ -22,7 +22,7 @@ export function SellerShopClient({
   const router = useRouter();
 
   return (
-    <section className="seller-home">
+    <section className="seller-home shop-product-list">
       {products.length === 0 ? (
         <div className="shop-public-empty">
           <p className="shop-public-empty-title">Boutique vide pour le moment</p>
@@ -51,8 +51,7 @@ export function SellerShopClient({
               <button
                 type="button"
                 onClick={() => router.push(buildPaymentLinkPath(product.paymentSlug))}
-                className="btn-primary"
-                style={{ marginTop: "1.25rem" }}
+                className="btn-primary product-card-cta"
               >
                 Payer en sécurité
               </button>

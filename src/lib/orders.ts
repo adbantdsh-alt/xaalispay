@@ -15,6 +15,12 @@ import {
 } from "./utils";
 import type { WalletSequesteredItem } from "./wallet-breakdown";
 import { computeWalletBreakdown } from "./wallet-breakdown";
+import {
+  creditEscrowForPaidOrder,
+  holdDisputedEscrowForOrder,
+  refundEscrowForOrder,
+  releaseEscrowForOrder,
+} from "./ledger";
 
 export { getProtectionDurationMinutes } from "./protection";
 export { computeWalletBreakdown } from "./wallet-breakdown";
@@ -283,6 +289,11 @@ export async function processPayment(
       new Date(now)
     );
     order.updatedAt = now;
+    for (const attempt of db.paymentAttempts.filter((item) => item.orderId === order.id)) {
+      attempt.status = "success";
+      attempt.updatedAt = now;
+    }
+    creditEscrowForPaidOrder(db, order);
     result = order;
   });
 
@@ -364,6 +375,7 @@ export async function openDispute(
       data.photos || order.disputeMedia.filter((item) => item.type === "image").map((item) => item.url);
     order.disputeOpenedAt = now;
     order.updatedAt = now;
+    holdDisputedEscrowForOrder(db, order);
     ok = true;
   });
 
@@ -397,6 +409,7 @@ export async function processOrderMaintenance(): Promise<boolean> {
       order.status = "refunded";
       order.refundedAt = nowIso;
       order.updatedAt = order.refundedAt;
+      refundEscrowForOrder(db, order);
       changed = true;
     }
   }
@@ -409,6 +422,7 @@ export async function processOrderMaintenance(): Promise<boolean> {
       order.status = "released";
       order.releasedAt = nowIso;
       order.updatedAt = order.releasedAt;
+      releaseEscrowForOrder(db, order);
       changed = true;
     }
   }

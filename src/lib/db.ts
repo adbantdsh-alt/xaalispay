@@ -1,7 +1,7 @@
 import fs from "fs";
 import path from "path";
 import type { Database } from "./types";
-import { ensureProductPaymentSlugs } from "./utils";
+import { ensureProductPaymentSlugs, getOrderTotal } from "./utils";
 import {
   isRemoteStoreEnabled,
   loadRemoteDatabase,
@@ -21,6 +21,11 @@ const defaultDb: Database = {
   profiles: [],
   products: [],
   orders: [],
+  ledgerEntries: [],
+  sellerBalances: [],
+  paymentAttempts: [],
+  webhookEvents: [],
+  payouts: [],
 };
 
 function ensureDataDir() {
@@ -31,11 +36,144 @@ function ensureDataDir() {
 
 const BACKUP_PATH = `${DB_PATH}.bak`;
 
+function ensureLedgerEntry(
+  db: Database,
+  data: {
+    sellerId: string;
+    orderId?: string;
+    type: Database["ledgerEntries"][number]["type"];
+    pocket: Database["ledgerEntries"][number]["pocket"];
+    amount: number;
+    direction: Database["ledgerEntries"][number]["direction"];
+    reference: string;
+    createdAt: string;
+    description?: string;
+  }
+) {
+  if (db.ledgerEntries.some((entry) => entry.reference === data.reference)) return;
+  db.ledgerEntries.push({
+    id: crypto.randomUUID(),
+    ...data,
+  });
+}
+
+function rebuildSellerBalances(db: Database) {
+  db.sellerBalances = [];
+  for (const entry of db.ledgerEntries) {
+    let balance = db.sellerBalances.find((item) => item.sellerId === entry.sellerId);
+    if (!balance) {
+      balance = {
+        sellerId: entry.sellerId,
+        escrowBalance: 0,
+        availableBalance: 0,
+        blockedBalance: 0,
+        paidOutBalance: 0,
+        updatedAt: entry.createdAt,
+      };
+      db.sellerBalances.push(balance);
+    }
+    const key = {
+      escrow: "escrowBalance",
+      available: "availableBalance",
+      blocked: "blockedBalance",
+      paid_out: "paidOutBalance",
+    }[entry.pocket] as "escrowBalance" | "availableBalance" | "blockedBalance" | "paidOutBalance";
+    balance[key] += entry.direction === "credit" ? entry.amount : -entry.amount;
+    balance.updatedAt = entry.createdAt;
+  }
+}
+
+function backfillLedgerFromOrders(db: Database) {
+  for (const order of db.orders) {
+    const amount = getOrderTotal(order);
+    if (["paid", "protection", "dispute", "released", "refunded"].includes(order.status)) {
+      ensureLedgerEntry(db, {
+        sellerId: order.sellerId,
+        orderId: order.id,
+        type: "escrow_credit",
+        pocket: "escrow",
+        direction: "credit",
+        amount,
+        reference: `order:${order.id}:escrow_credit`,
+        createdAt: order.paidAt || order.updatedAt || order.createdAt,
+        description: "Migration paiement client confirmé",
+      });
+    }
+    if (order.status === "released") {
+      ensureLedgerEntry(db, {
+        sellerId: order.sellerId,
+        orderId: order.id,
+        type: "escrow_release",
+        pocket: "escrow",
+        direction: "debit",
+        amount,
+        reference: `order:${order.id}:escrow_release:debit`,
+        createdAt: order.releasedAt || order.updatedAt,
+        description: "Migration sortie du séquestre",
+      });
+      ensureLedgerEntry(db, {
+        sellerId: order.sellerId,
+        orderId: order.id,
+        type: "escrow_release",
+        pocket: "available",
+        direction: "credit",
+        amount,
+        reference: `order:${order.id}:escrow_release:credit`,
+        createdAt: order.releasedAt || order.updatedAt,
+        description: "Migration solde disponible",
+      });
+    }
+    if (order.status === "dispute") {
+      ensureLedgerEntry(db, {
+        sellerId: order.sellerId,
+        orderId: order.id,
+        type: "dispute_hold",
+        pocket: "escrow",
+        direction: "debit",
+        amount,
+        reference: `order:${order.id}:dispute_hold:debit`,
+        createdAt: order.disputeOpenedAt || order.updatedAt,
+        description: "Migration blocage litige",
+      });
+      ensureLedgerEntry(db, {
+        sellerId: order.sellerId,
+        orderId: order.id,
+        type: "dispute_hold",
+        pocket: "blocked",
+        direction: "credit",
+        amount,
+        reference: `order:${order.id}:dispute_hold:credit`,
+        createdAt: order.disputeOpenedAt || order.updatedAt,
+        description: "Migration montant bloqué",
+      });
+    }
+    if (order.status === "refunded") {
+      ensureLedgerEntry(db, {
+        sellerId: order.sellerId,
+        orderId: order.id,
+        type: "refund_debit",
+        pocket: "escrow",
+        direction: "debit",
+        amount,
+        reference: `order:${order.id}:refund_debit`,
+        createdAt: order.refundedAt || order.updatedAt,
+        description: "Migration remboursement client",
+      });
+    }
+  }
+  rebuildSellerBalances(db);
+}
+
 function normalizeDb(db: Database): Database {
   if (!db.authUsers) db.authUsers = [];
   if (!db.products) db.products = [];
   if (!db.profiles) db.profiles = [];
   if (!db.orders) db.orders = [];
+  if (!db.ledgerEntries) db.ledgerEntries = [];
+  if (!db.sellerBalances) db.sellerBalances = [];
+  if (!db.paymentAttempts) db.paymentAttempts = [];
+  if (!db.webhookEvents) db.webhookEvents = [];
+  if (!db.payouts) db.payouts = [];
   for (const p of db.products) {
     if (p.active === undefined) p.active = true;
     if (p.deliveryCost === undefined) p.deliveryCost = 0;
@@ -45,6 +183,11 @@ function normalizeDb(db: Database): Database {
   }
   for (const p of db.profiles) {
     if (p.role === undefined) p.role = "seller";
+    if (p.autoPayoutEnabled === undefined) p.autoPayoutEnabled = false;
+    if (p.autoPayoutMode === undefined) p.autoPayoutMode = "full_balance";
+    if (p.autoPayoutMinAmount === undefined) p.autoPayoutMinAmount = 5000;
+    if (p.autoPayoutFixedAmount === undefined) p.autoPayoutFixedAmount = 10000;
+    if (p.autoPayoutMinCompletedOrders === undefined) p.autoPayoutMinCompletedOrders = 3;
   }
   for (const o of db.orders) {
     if (o.deliveryCost === undefined) o.deliveryCost = 0;
@@ -57,6 +200,7 @@ function normalizeDb(db: Database): Database {
       o.disputeMedia = o.disputePhotos.map((url) => ({ type: "image", url }));
     }
   }
+  backfillLedgerFromOrders(db);
   return db;
 }
 
