@@ -89,6 +89,15 @@ export function ProductFields({
             </>
           )}
         </button>
+        {form.image && (
+          <button
+            type="button"
+            className="btn-ghost btn-compact photo-remove-btn"
+            onClick={() => onChange({ ...form, image: "" })}
+          >
+            Supprimer la photo
+          </button>
+        )}
         {imageError && <span className="field-error">{imageError}</span>}
       </div>
 

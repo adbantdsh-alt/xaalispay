@@ -2464,3 +2464,40 @@ input, button, textarea, select { font: inherit; color: var(--text); }
   font-size: 0.875rem;
   line-height: 1.5;
 }
+
+.seller-app .edit-link-strip {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.875rem 1rem;
+  border-radius: var(--radius-lg);
+  background: var(--accent-blue-dim);
+  border: 1px solid rgba(26, 79, 214, 0.15);
+}
+
+.seller-app .edit-link-strip-label {
+  margin: 0;
+  font-size: 0.6875rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--accent-blue);
+}
+
+.seller-app .edit-link-strip-url {
+  margin: 0;
+  font-size: 0.6875rem;
+  word-break: break-all;
+}
+
+.seller-app .edit-form-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+  align-items: stretch;
+}
+
+.seller-app .photo-remove-btn {
+  width: 100%;
+  font-size: 0.8125rem;
+}

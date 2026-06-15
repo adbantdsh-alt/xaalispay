@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/session";
 import {
   createProduct,
+  getProductById,
   getProductsBySeller,
   updateProduct,
 } from "@/lib/orders";
@@ -9,10 +10,19 @@ import { getSellerAccess } from "@/lib/profile-access";
 import { normalizeProductFields } from "@/lib/product-form";
 import { buildPaymentLinkUrl } from "@/lib/site-url";
 
-export async function GET() {
+export async function GET(request: Request) {
   const user = await getSessionUser();
   if (!user) {
     return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+  }
+
+  const id = new URL(request.url).searchParams.get("id");
+  if (id) {
+    const product = await getProductById(id);
+    if (!product || product.sellerId !== user.id) {
+      return NextResponse.json({ error: "Produit introuvable" }, { status: 404 });
+    }
+    return NextResponse.json({ product });
   }
 
   const products = await getProductsBySeller(user.id);

@@ -50,6 +50,8 @@ function CreatePageContent() {
   const [canCreateProducts, setCanCreateProducts] = useState(true);
   const [editForm, setEditForm] = useState<ProductFormValues>(emptyProductForm());
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [editSaved, setEditSaved] = useState(false);
+  const [editLoading, setEditLoading] = useState(false);
 
   const load = async () => {
     const [dashRes, prodRes] = await Promise.all([
@@ -86,22 +88,55 @@ function CreatePageContent() {
   }, []);
 
   useEffect(() => {
-    setError("");
-    setSuccess("");
     if (view !== "link") setCreatedPayUrl("");
+    if (view !== "edit") setEditSaved(false);
   }, [view]);
 
   useEffect(() => {
     if (view !== "edit" || !editProductId) {
       setEditingProduct(null);
+      setEditLoading(false);
       return;
     }
-    const product = products.find((p) => p.id === editProductId);
-    if (product) {
-      setEditingProduct(product);
-      setEditForm(productToFormValues(product));
+
+    const fromList = products.find((p) => p.id === editProductId);
+    if (fromList) {
+      setEditingProduct(fromList);
+      setEditForm(productToFormValues(fromList));
+      setEditLoading(false);
+      return;
     }
-  }, [view, editProductId, products]);
+
+    if (loading) {
+      setEditLoading(true);
+      return;
+    }
+
+    let cancelled = false;
+    setEditLoading(true);
+    fetch(`/api/products?id=${encodeURIComponent(editProductId)}`)
+      .then(async (res) => {
+        if (cancelled) return;
+        if (res.ok) {
+          const data = await res.json();
+          setEditingProduct(data.product);
+          setEditForm(productToFormValues(data.product));
+        } else {
+          setEditingProduct(null);
+        }
+        setEditLoading(false);
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setEditingProduct(null);
+          setEditLoading(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [view, editProductId, products, loading]);
 
   const shopUrl = profile ? buildShopUrl(profile.username) : "";
 
@@ -225,6 +260,12 @@ function CreatePageContent() {
     e.preventDefault();
     if (!editingProduct) return;
     resetMessages();
+
+    if (!editForm.name.trim() || Number(editForm.price) <= 0 || Number(editForm.deliveryHours) <= 0) {
+      setError("Nom, prix et délai livraison requis");
+      return;
+    }
+
     setSaving(true);
 
     const res = await fetch("/api/products", {
@@ -250,9 +291,11 @@ function CreatePageContent() {
       return;
     }
 
+    const updated = data.product as Product;
+    setEditingProduct(updated);
+    setEditSaved(true);
     setSuccess("Produit mis à jour");
     load();
-    router.push("/create");
   };
 
   const handlePseudoSave = async (e: React.FormEvent) => {
@@ -413,21 +456,66 @@ function CreatePageContent() {
         </>
       )}
 
-      {view === "edit" && editingProduct && (
+      {view === "edit" && (
         <>
           <ShopBackBar title="Modifier le produit" />
-          {error && <p className="alert-danger">{error}</p>}
-          {success && <p className="toast-success" role="status">{success}</p>}
-          <form onSubmit={handleEditProduct} className="shop-card form-stack">
-            <p className="shop-card-desc text-muted">
-              Le lien de paiement reste le même :{" "}
-              <strong>{formatPublicUrl(buildProductPaymentUrl(editingProduct))}</strong>
-            </p>
-            <ProductFields form={editForm} onChange={setEditForm} />
-            <button type="submit" disabled={saving} className="btn-seller-primary btn-compact btn-inline">
-              {saving ? "Enregistrement…" : "Enregistrer les modifications"}
-            </button>
-          </form>
+          {editLoading && (
+            <div className="flex min-h-[30dvh] items-center justify-center">
+              <div className="spinner" />
+            </div>
+          )}
+          {!editLoading && !editingProduct && (
+            <section className="seller-tip-card">
+              <p className="seller-tip-title">Produit introuvable</p>
+              <p className="seller-tip-desc text-muted">
+                Ce produit n&apos;existe plus ou vous n&apos;y avez pas accès.
+              </p>
+              <Link href="/create" className="btn-seller-primary">
+                Retour à mes produits
+              </Link>
+            </section>
+          )}
+          {!editLoading && editingProduct && editSaved && (
+            <PaymentLinkSuccessPanel
+              payUrl={buildProductPaymentUrl(editingProduct)}
+              productName={editingProduct.name}
+              title="Produit mis à jour !"
+              subtitle={`${editingProduct.name} — votre lien de paiement est inchangé.`}
+              autoCopy={false}
+              onReset={() => router.push("/create")}
+              resetLabel="← Retour à mes produits"
+            />
+          )}
+          {!editLoading && editingProduct && !editSaved && (
+            <form onSubmit={handleEditProduct} className="shop-card form-stack">
+              <div className="edit-link-strip">
+                <p className="edit-link-strip-label">Lien de paiement (permanent)</p>
+                <CopyButton
+                  text={buildProductPaymentUrl(editingProduct)}
+                  label="Copier le lien"
+                  copiedLabel="✓ Copié"
+                  className="btn-secondary btn-compact"
+                />
+                <p className="edit-link-strip-url text-muted">
+                  {formatPublicUrl(buildProductPaymentUrl(editingProduct))}
+                </p>
+              </div>
+              {error && <p className="alert-danger">{error}</p>}
+              <ProductFields form={editForm} onChange={setEditForm} />
+              <div className="edit-form-actions">
+                <button
+                  type="submit"
+                  disabled={saving}
+                  className="btn-seller-primary btn-compact btn-inline"
+                >
+                  {saving ? "Enregistrement…" : "Enregistrer les modifications"}
+                </button>
+                <Link href="/create" className="btn-ghost btn-inline">
+                  Annuler
+                </Link>
+              </div>
+            </form>
+          )}
         </>
       )}
 
