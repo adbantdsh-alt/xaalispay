@@ -1,10 +1,15 @@
 const fs = require("fs");
 const path = require("path");
 
-const staleTypesDir = path.join(process.cwd(), ".next", "dev", "types");
+const staleDirs = [
+  path.join(process.cwd(), ".next", "dev"),
+  path.join(process.cwd(), ".next", "dev", "types"),
+];
 
-try {
-  fs.rmSync(staleTypesDir, { recursive: true, force: true });
-} catch {
-  // The folder is generated only by local dev builds; ignore if absent.
+for (const dir of staleDirs) {
+  try {
+    fs.rmSync(dir, { recursive: true, force: true });
+  } catch {
+    // Generated only by local dev; ignore if absent.
+  }
 }

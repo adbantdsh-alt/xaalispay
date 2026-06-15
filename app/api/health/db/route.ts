@@ -10,6 +10,7 @@ export async function GET() {
     storage,
     remote,
     vercel: !!process.env.VERCEL,
+    commit: process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) || null,
     siteUrl: process.env.NEXT_PUBLIC_SITE_URL || "https://xaalispay.com",
   });
 }
