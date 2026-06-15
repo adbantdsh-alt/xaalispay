@@ -4,6 +4,7 @@ import { useState } from "react";
 import { MoneyTimeline } from "@/components/ui/MoneyTimeline";
 import { CopyButton } from "@/components/ui/CopyButton";
 import { BrandMark } from "@/components/ui/BrandMark";
+import { IconLock, IconCheck } from "@/components/ui/AppIcon";
 import { getBuyerTimeline } from "@/lib/order-timeline";
 import { generatePin } from "@/lib/utils";
 import { buildPinShareMessage, buildWhatsAppUrl } from "@/lib/share";
@@ -77,7 +78,9 @@ export default function PayPagePreview() {
         <BrandMark size="lg" />
         <div className="pay-success-card animate-fade-up" style={{ marginTop: "2rem" }}>
           <div className="pay-success-ring">
-            <div className="pay-success-check">✓</div>
+            <div className="pay-success-check">
+              <IconCheck size={24} />
+            </div>
           </div>
           <h1 className="pay-success-title">Paiement confirmé</h1>
           <p className="pay-success-sub">Argent protégé — en attente du colis</p>
@@ -124,7 +127,10 @@ export default function PayPagePreview() {
       <PreviewTabs mode={mode} onCheckout={goCheckout} onPaid={goPaidTab} />
       <header className="pay-brand-bar">
         <BrandMark />
-        <span className="pay-secure-pill">🔒 Sécurisé</span>
+        <span className="pay-secure-pill">
+          <IconLock size={14} />
+          Sécurisé
+        </span>
       </header>
       <div className="pay-sheet pay-sheet-flat animate-fade-up">
         <div className="pay-sheet-handle" />

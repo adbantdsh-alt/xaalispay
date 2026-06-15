@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { formatCurrency } from "@/lib/utils";
 import type { Order } from "@/lib/types";
+import { IconCheck } from "@/components/ui/AppIcon";
 
 export function ActionRequiredCard({
   order,
@@ -49,7 +50,15 @@ export function ActionRequiredCard({
           autoComplete="off"
         />
         <button type="submit" disabled={loading || !pin} className="btn-seller-primary btn-seller-primary-compact">
-          {success ? "✓ Validé" : loading ? "…" : "Valider"}
+          {success ? (
+            <span className="copy-btn-copied">
+              <IconCheck size={14} /> Validé
+            </span>
+          ) : loading ? (
+            "…"
+          ) : (
+            "Valider"
+          )}
         </button>
       </form>
       {error && <p className="alert-danger" style={{ marginTop: "0.75rem" }}>{error}</p>}

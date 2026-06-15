@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { formatCurrency, getOrderTotal } from "@/lib/utils";
 import { buildPaymentLinkPath } from "@/lib/site-url";
+import { IconPackage } from "@/components/ui/AppIcon";
 
 interface ShopProduct {
   id: string;
@@ -38,7 +39,9 @@ export function SellerShopClient({
             {product.image ? (
               <img src={product.image} alt={product.name} className="product-card-media" />
             ) : (
-              <div className="product-card-media-placeholder">📦</div>
+              <div className="product-card-media-placeholder">
+                <IconPackage size={32} />
+              </div>
             )}
             <div className="product-card-body">
               <p className="product-card-price">

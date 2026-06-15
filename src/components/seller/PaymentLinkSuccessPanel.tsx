@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { CopyButton } from "@/components/ui/CopyButton";
+import { IconCheck } from "@/components/ui/AppIcon";
 import { buildPaymentLinkMessage, buildWhatsAppUrl, copyToClipboard } from "@/lib/share";
 import { formatPublicUrl } from "@/lib/site-url";
 
@@ -48,13 +49,17 @@ export function PaymentLinkSuccessPanel({
 
   return (
     <div className="link-success-panel">
-      <div className="link-success-icon">✓</div>
+      <div className="link-success-icon">
+        <IconCheck size={26} />
+      </div>
       <h2 className="link-success-title">{title}</h2>
       <p className="link-success-desc text-muted">{desc}</p>
 
       {copiedHint && (
         <p className="link-auto-copied" role="status">
-          ✓ Lien copié ! Collez-le dans WhatsApp, SMS ou réseaux sociaux.
+          <span className="copy-btn-copied">
+            <IconCheck size={16} /> Lien copié ! Collez-le dans WhatsApp, SMS ou réseaux sociaux.
+          </span>
         </p>
       )}
 

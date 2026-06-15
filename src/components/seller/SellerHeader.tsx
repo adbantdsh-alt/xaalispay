@@ -1,5 +1,7 @@
 "use client";
 
+import { IconGlobe } from "@/components/ui/AppIcon";
+
 export function SellerHeader({
   displayName,
   onProfileClick,
@@ -24,7 +26,7 @@ export function SellerHeader({
 
       <div className="seller-header-pill">
         <span className="seller-header-flag" aria-hidden="true">
-          🇸🇳
+          <IconGlobe size={14} />
         </span>
         <span>FCFA</span>
       </div>

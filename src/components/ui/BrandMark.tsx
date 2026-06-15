@@ -1,26 +1,45 @@
-export function BrandMark({ size = "md" }: { size?: "sm" | "md" | "lg" }) {
+import Link from "next/link";
+import { XaalisIcon } from "./XaalisIcon";
+
+export function BrandMark({
+  size = "md",
+  variant = "full",
+  href = "/",
+}: {
+  size?: "sm" | "md" | "lg";
+  variant?: "full" | "icon";
+  /** Lien accueil — `null` pour désactiver */
+  href?: string | null;
+}) {
   const sizes = { sm: "brand-sm", md: "brand-md", lg: "brand-lg" };
-  return (
-    <div className={`brand-mark ${sizes[size]}`}>
+  const iconSizes = { sm: 24, md: 32, lg: 40 };
+
+  const inner =
+    variant === "icon" ? (
       <span className="brand-icon" aria-hidden="true">
-        <svg viewBox="0 0 32 32" fill="none">
-          <rect width="32" height="32" rx="10" fill="url(#xpGrad)" />
-          <path
-            d="M9 16.5L14 21.5L23 11.5"
-            stroke="white"
-            strokeWidth="2.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-          <defs>
-            <linearGradient id="xpGrad" x1="0" y1="0" x2="32" y2="32">
-              <stop stopColor="#1a4fd6" />
-              <stop offset="1" stopColor="#0F1F66" />
-            </linearGradient>
-          </defs>
-        </svg>
+        <XaalisIcon size={iconSizes[size]} />
       </span>
-      <span className="brand-name">XaalisPay</span>
-    </div>
-  );
+    ) : (
+      <>
+        <span className="brand-icon" aria-hidden="true">
+          <XaalisIcon size={iconSizes[size]} />
+        </span>
+        <span className="brand-name">
+          <span className="brand-name-strong">Xaalis</span>{" "}
+          <span className="brand-name-light">Pay</span>
+        </span>
+      </>
+    );
+
+  const mark = <div className={`brand-mark ${sizes[size]}`}>{inner}</div>;
+
+  if (href) {
+    return (
+      <Link href={href} className="brand-mark-link" aria-label="Xaalis Pay — Accueil">
+        {mark}
+      </Link>
+    );
+  }
+
+  return mark;
 }

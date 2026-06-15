@@ -2,7 +2,7 @@
 "use client";
 
 import type { MobileMoneyMethod } from "@/lib/payment-methods";
-import { WaveFavicon, OrangeMoneyBrandLogo } from "./PaymentBrandLogos";
+import { WaveFavicon, OrangeFavicon } from "./PaymentBrandLogos";
 import s from "./PayMethodButtons.module.css";
 
 const BUTTONS: { id: MobileMoneyMethod; label: string }[] = [
@@ -36,7 +36,12 @@ export function PayMethodButtons({
               <span className={s.waveName}>wave</span>
             </>
           ) : (
-            <OrangeMoneyBrandLogo className={s.orangeLogo} />
+            <>
+              <span className={s.orangeFaviconWrap}>
+                <OrangeFavicon className={s.orangeFavicon} />
+              </span>
+              <span className={s.orangeName}>ORANGE MONEY</span>
+            </>
           )}
         </button>
       ))}

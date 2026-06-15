@@ -6,6 +6,7 @@ import { getBuyerTimeline, getBuyerHumanStatus } from "@/lib/order-timeline";
 import { MoneyTimeline } from "@/components/ui/MoneyTimeline";
 import { CopyButton } from "@/components/ui/CopyButton";
 import { BrandMark } from "@/components/ui/BrandMark";
+import { IconLock, IconCheck, IconAlert, IconUndo } from "@/components/ui/AppIcon";
 import { PaySkeleton } from "@/components/ui/Skeleton";
 import { buildPinShareMessage, buildWhatsAppUrl } from "@/lib/share";
 import { PayOrderSummary, PayProtectionBlock, PayClientFields, PayMethodButtons, PayCheckoutSection, PinConsentGate } from "@/components/pay/PayPageSections";
@@ -170,15 +171,17 @@ export default function PayPage() {
 
   if (["dispute", "refunded", "released"].includes(status)) {
     const meta = {
-      dispute: ["⚠️", "Litige ouvert", "Examen en cours."],
-      refunded: ["↩", "Remboursé", "Votre argent vous a été rendu."],
-      released: ["✓", "Terminé", "Transaction finalisée."],
+      dispute: { Icon: IconAlert, title: "Litige ouvert", desc: "Examen en cours." },
+      refunded: { Icon: IconUndo, title: "Remboursé", desc: "Votre argent vous a été rendu." },
+      released: { Icon: IconCheck, title: "Terminé", desc: "Transaction finalisée." },
     } as const;
-    const [icon, title, desc] = meta[status as keyof typeof meta];
+    const { Icon, title, desc } = meta[status as keyof typeof meta];
     return (
       <div className="page-shell status-screen">
         <BrandMark />
-        <p className="status-screen-icon">{icon}</p>
+        <p className="status-screen-icon" aria-hidden="true">
+          <Icon size={36} />
+        </p>
         <h2 className="status-screen-title">{title}</h2>
         <p className="status-screen-desc">{desc}</p>
         <MoneyTimeline steps={getBuyerTimeline(status)} />
@@ -195,7 +198,9 @@ export default function PayPage() {
         <BrandMark size="lg" />
         <div className="pay-success-card animate-fade-up" style={{ marginTop: "2rem" }}>
           <div className="pay-success-ring">
-            <div className="pay-success-check">✓</div>
+            <div className="pay-success-check">
+              <IconCheck size={24} />
+            </div>
           </div>
           <h1 className="pay-success-title">Paiement confirmé</h1>
           <p className="pay-success-sub">{getBuyerHumanStatus(status)}</p>
@@ -279,7 +284,9 @@ export default function PayPage() {
       <div className="pay-success-screen">
         <div className="pay-success-card animate-fade-up">
           <div className="pay-success-ring">
-            <div className="pay-success-check">✓</div>
+            <div className="pay-success-check">
+              <IconCheck size={24} />
+            </div>
           </div>
           <h1 className="pay-success-title">Paiement confirmé</h1>
           <p className="pay-success-sub">{getBuyerHumanStatus(status)}</p>
@@ -292,7 +299,10 @@ export default function PayPage() {
     <div className="pay-app">
       <header className="pay-brand-bar">
         <BrandMark />
-        <span className="pay-secure-pill">🔒 Sécurisé</span>
+        <span className="pay-secure-pill">
+          <IconLock size={14} />
+          Sécurisé
+        </span>
       </header>
 
       <div className="pay-sheet pay-sheet-flat animate-fade-up">

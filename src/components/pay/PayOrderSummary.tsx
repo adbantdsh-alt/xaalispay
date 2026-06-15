@@ -2,6 +2,7 @@
 "use client";
 
 import { formatCurrency } from "@/lib/utils";
+import { IconCheck, IconPackage } from "@/components/ui/AppIcon";
 import s from "./PayOrderSummary.module.css";
 
 export function PayOrderSummary({
@@ -28,7 +29,7 @@ export function PayOrderSummary({
           <img src={productImage} alt={productName} className={s.img} />
         ) : (
           <div className={s.imgEmpty} aria-hidden="true">
-            📦
+            <IconPackage size={40} />
           </div>
         )}
       </div>
@@ -62,7 +63,9 @@ export function PayOrderSummary({
             </div>
           </div>
           <div className={s.vendorBottom}>
-            <span className={s.badge}>✓ Vendeur vérifié</span>
+            <span className={s.badge}>
+              <IconCheck size={12} /> Vendeur vérifié
+            </span>
             {seller.phone ? (
               <a
                 href={phoneDigits ? `tel:+221${phoneDigits}` : undefined}

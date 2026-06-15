@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { IconCheck } from "@/components/ui/AppIcon";
 
 const STEPS = [
   { id: "product", label: "Créer un produit", href: "/create" },
@@ -79,7 +80,9 @@ export function SellerOnboarding({
             key={step.id}
             className={`onboarding-step ${completed[step.id] ? "onboarding-step-done" : ""} ${nextStep?.id === step.id ? "onboarding-step-next" : ""}`}
           >
-            <span className="onboarding-step-icon">{completed[step.id] ? "✓" : "○"}</span>
+            <span className="onboarding-step-icon">
+              {completed[step.id] ? <IconCheck size={12} /> : <span className="onboarding-step-pending" />}
+            </span>
             {step.label}
           </li>
         ))}

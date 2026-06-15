@@ -45,17 +45,9 @@
   width: 32px;
   height: 32px;
   border-radius: 9px;
-  overflow: hidden;
+  object-fit: cover;
   flex-shrink: 0;
   display: block;
-  line-height: 0;
-}
-
-.waveFavicon img {
-  height: 32px;
-  width: auto;
-  display: block;
-  margin-left: 0;
 }
 
 .waveName {
@@ -67,18 +59,36 @@
   text-transform: lowercase;
 }
 
-/* Orange Money — fond noir, logo blanc/orange */
+/* Orange Money — fond sombre, favicon entier + texte blanc */
 .orange {
-  background: #000;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+  background: #2a2a2a;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.28);
 }
 
-.orangeLogo {
-  height: 34px;
+.orangeFaviconWrap {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 28px;
+}
+
+.orangeFavicon {
+  height: 28px;
   width: auto;
-  max-width: 100%;
+  max-width: 52px;
   object-fit: contain;
+  object-position: center;
   display: block;
+}
+
+.orangeName {
+  font-size: 0.6875rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  color: #fff;
+  line-height: 1.1;
+  text-transform: uppercase;
 }
 
 .sectionLabel {

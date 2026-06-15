@@ -38,7 +38,7 @@ export function ProfileSheet({
         {[
           ["XaalisTag", `@${profile.username}`],
           ["Boutique", profile.businessName],
-          ["Pays", "🇸🇳 Sénégal"],
+          ["Pays", "Sénégal"],
           ["Devise", "FCFA"],
           ...(profile.phone ? [["Téléphone", profile.phone] as const] : []),
         ].map(([label, value]) => (

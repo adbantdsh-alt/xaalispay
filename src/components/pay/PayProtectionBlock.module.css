@@ -23,7 +23,7 @@
   align-items: center;
   justify-content: center;
   background: linear-gradient(135deg, #0f1f66, #1a4fd6);
-  font-size: 1rem;
+  color: #fff;
   line-height: 1;
   box-shadow: 0 4px 12px rgba(15, 31, 102, 0.16);
 }

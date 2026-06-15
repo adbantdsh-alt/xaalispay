@@ -9,9 +9,14 @@ const jakarta = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "XaalisPay — Payez les yeux fermés",
+  title: "Xaalis Pay — Payez les yeux fermés",
   description:
     "Paiement sécurisé pour les achats en ligne au Sénégal. Séquestre, protection client, zéro arnaque.",
+  icons: {
+    icon: [{ url: "/branding/xaalis-icon.png", type: "image/png", sizes: "512x512" }],
+    apple: "/branding/xaalis-icon.png",
+    shortcut: "/branding/xaalis-icon.png",
+  },
 };
 
 export default function RootLayout({

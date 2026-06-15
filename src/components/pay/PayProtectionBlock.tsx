@@ -2,6 +2,7 @@
 "use client";
 
 import s from "./PayProtectionBlock.module.css";
+import { IconShield } from "@/components/ui/AppIcon";
 
 export function PayProtectionBlock({ protectionMinutes = 30 }: { protectionMinutes?: number }) {
   const steps = [
@@ -27,7 +28,7 @@ export function PayProtectionBlock({ protectionMinutes = 30 }: { protectionMinut
     <section className={s.block} aria-label="Protection XaalisPay">
       <div className={s.header}>
         <span className={s.icon} aria-hidden="true">
-          🛡️
+          <IconShield size={18} />
         </span>
         <div className={s.headerText}>
           <p className={s.kicker}>Protection XaalisPay</p>

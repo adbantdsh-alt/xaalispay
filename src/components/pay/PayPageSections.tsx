@@ -1,5 +1,7 @@
 "use client";
 
+import { IconKey } from "@/components/ui/AppIcon";
+
 export { PayOrderSummary } from "./PayOrderSummary";
 export { PayProtectionBlock } from "./PayProtectionBlock";
 export { PayClientFields } from "./PayClientFields";
@@ -19,7 +21,8 @@ export function PinConsentGate({
     <div className="pay-pin-gate">
       <div className="pay-pin-consent">
         <p className="pay-pin-consent-title">
-          <span aria-hidden="true">🔐</span> Avant d&apos;afficher votre code
+          <IconKey size={18} className="pay-pin-consent-icon" />
+          Avant d&apos;afficher votre code
         </p>
         <p className="pay-pin-consent-text">
           Vous ne remettrez ce code <strong>qu&apos;à un livreur</strong>, une fois le colis

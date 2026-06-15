@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { copyToClipboard } from "@/lib/share";
+import { IconCheck } from "@/components/ui/AppIcon";
 
 export function CopyButton({
   text,
@@ -24,9 +25,18 @@ export function CopyButton({
     }
   };
 
+  const copiedText = copiedLabel.replace(/^✓\s*/, "");
+
   return (
     <button type="button" onClick={handleCopy} className={className}>
-      {copied ? copiedLabel : label}
+      {copied ? (
+        <span className="copy-btn-copied">
+          <IconCheck size={16} />
+          {copiedText}
+        </span>
+      ) : (
+        label
+      )}
     </button>
   );
 }

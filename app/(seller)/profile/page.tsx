@@ -56,7 +56,7 @@ export default function ProfilePage() {
       <section className="history-list animate-fade-up-d1">
         {[
           ["Boutique", profile.businessName],
-          ["Pays", "🇸🇳 Sénégal"],
+          ["Pays", "Sénégal"],
           ["Devise", "FCFA"],
           ...(profile.phone ? [["Téléphone", profile.phone] as const] : []),
         ].map(([label, value]) => (

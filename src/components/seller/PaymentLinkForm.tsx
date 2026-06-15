@@ -7,6 +7,7 @@ import { ProductFields, type ProductFormValues } from "@/components/seller/Produ
 import { buildPaymentLinkMessage, buildWhatsAppUrl } from "@/lib/share";
 import { PaymentLinkSuccessPanel } from "@/components/seller/PaymentLinkSuccessPanel";
 import { CopyButton } from "@/components/ui/CopyButton";
+import { IconCheck, IconPackage } from "@/components/ui/AppIcon";
 import { buildPaymentLinkUrl, formatPublicUrl } from "@/lib/site-url";
 
 export function PaymentLinkForm({
@@ -154,7 +155,9 @@ export function PaymentLinkForm({
                         {product.image ? (
                           <img src={product.image} alt="" className="product-pick-img" />
                         ) : (
-                          <div className="product-pick-img product-pick-img-empty">📦</div>
+                          <div className="product-pick-img product-pick-img-empty">
+                            <IconPackage size={20} />
+                          </div>
                         )}
                         <div className="product-pick-body">
                           <p className="product-pick-name">{product.name}</p>
@@ -164,7 +167,9 @@ export function PaymentLinkForm({
                           )}
                         </div>
                         {selected && product.active && (
-                          <span className="product-pick-check">✓</span>
+                          <span className="product-pick-check">
+                            <IconCheck size={14} />
+                          </span>
                         )}
                         {!product.active && onActivateProduct && (
                           <button

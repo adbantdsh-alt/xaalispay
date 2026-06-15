@@ -1,4 +1,5 @@
 import type { TimelineStep } from "@/lib/order-timeline";
+import { IconCheck } from "@/components/ui/AppIcon";
 
 export function MoneyTimeline({ steps, compact = false }: { steps: TimelineStep[]; compact?: boolean }) {
   return (
@@ -11,7 +12,7 @@ export function MoneyTimeline({ steps, compact = false }: { steps: TimelineStep[
         >
           <div className="money-timeline-track">
             <span className="money-timeline-dot" aria-hidden="true">
-              {step.done ? "✓" : i + 1}
+              {step.done ? <IconCheck size={14} /> : i + 1}
             </span>
             {i < steps.length - 1 && <span className="money-timeline-line" aria-hidden="true" />}
           </div>

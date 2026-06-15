@@ -5,6 +5,7 @@ import type { Product } from "@/lib/types";
 import { formatCurrency, formatDeliveryHours } from "@/lib/utils";
 import { fileToDataUrl } from "@/lib/product-form";
 import { CopyButton } from "@/components/ui/CopyButton";
+import { IconCheck, IconPackage } from "@/components/ui/AppIcon";
 import { copyToClipboard } from "@/lib/share";
 import { buildProductPaymentUrl, formatPublicUrl } from "@/lib/site-url";
 
@@ -203,7 +204,9 @@ export function ProductListItem({
       {product.image ? (
         <img src={product.image} alt="" className="product-row-img" />
       ) : (
-        <div className="product-row-img product-row-img-empty">📦</div>
+        <div className="product-row-img product-row-img-empty">
+          <IconPackage size={22} />
+        </div>
       )}
       <div className="product-row-body">
         <p className="product-row-name">{product.name}</p>
@@ -227,7 +230,13 @@ export function ProductListItem({
             >
               <span className="product-link-tap-url">{formatPublicUrl(payUrl)}</span>
               <span className="product-link-tap-hint">
-                {copied ? "✓ Copié !" : "Appuyer pour copier"}
+                {copied ? (
+                  <span className="copy-btn-copied">
+                    <IconCheck size={14} /> Copié !
+                  </span>
+                ) : (
+                  "Appuyer pour copier"
+                )}
               </span>
             </button>
             <CopyButton

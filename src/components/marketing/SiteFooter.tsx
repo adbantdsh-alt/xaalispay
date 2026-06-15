@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { BrandMark } from "@/components/ui/BrandMark";
 
 export function SiteFooter() {
   const year = new Date().getFullYear();
@@ -7,7 +8,7 @@ export function SiteFooter() {
     <footer className="site-footer">
       <div className="site-footer-inner">
         <div className="site-footer-brand">
-          <p className="site-footer-logo">XaalisPay</p>
+          <BrandMark size="sm" />
           <p className="site-footer-desc">
             Paiement sécurisé par séquestre pour les achats en ligne au Sénégal.
             Protégez vos achats sur les réseaux sociaux.
@@ -51,7 +52,7 @@ export function SiteFooter() {
       </div>
 
       <div className="site-footer-bottom">
-        <p>© {year} XaalisPay. Tous droits réservés.</p>
+        <p>© {year} Xaalis Pay. Tous droits réservés.</p>
         <p>Paiement mobile · Wave · Orange Money · FCFA</p>
       </div>
     </footer>
