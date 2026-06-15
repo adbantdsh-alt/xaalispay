@@ -49,6 +49,21 @@ function extractChargePayload(raw: unknown): Record<string, unknown> {
   return obj;
 }
 
+function findPaymentUrl(value: unknown): string | undefined {
+  if (!value || typeof value !== "object") return undefined;
+  const obj = value as Record<string, unknown>;
+  for (const key of ["link", "redirectUrl", "paymentUrl", "checkoutUrl", "url"]) {
+    if (typeof obj[key] === "string" && /^https?:\/\//.test(obj[key])) {
+      return obj[key];
+    }
+  }
+  for (const item of Object.values(obj)) {
+    const nested = findPaymentUrl(item);
+    if (nested) return nested;
+  }
+  return undefined;
+}
+
 export async function createBictorysMobileMoneyCharge({
   order,
   method,
@@ -97,18 +112,17 @@ export async function createBictorysMobileMoneyCharge({
     ],
   };
 
-  const res = await fetch(
-    `${getBaseUrl()}/pay/v1/charges?payment_type=${mapPaymentMethodToPaymentType(method)}`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Api-Key": getPublicKey(),
-        "Request-Id": crypto.randomUUID(),
-      },
-      body: JSON.stringify(payload),
-    }
-  );
+  // Sans payment_type, Bictorys renvoie une page checkout utilisable par le client.
+  // C'est plus fiable que la requête directe si le PSP ne fournit pas de deep-link mobile.
+  const res = await fetch(`${getBaseUrl()}/pay/v1/charges`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Api-Key": getPublicKey(),
+      "Request-Id": crypto.randomUUID(),
+    },
+    body: JSON.stringify(payload),
+  });
 
   const rawText = await res.text();
   let raw: unknown = {};
@@ -120,7 +134,7 @@ export async function createBictorysMobileMoneyCharge({
   if (!res.ok) {
     console.error("Bictorys charge failed", {
       status: res.status,
-      paymentType: mapPaymentMethodToPaymentType(method),
+      preferredPaymentType: mapPaymentMethodToPaymentType(method),
       response: raw,
     });
     const rawObject = raw && typeof raw === "object" ? (raw as Record<string, unknown>) : {};
@@ -149,11 +163,7 @@ export async function createBictorysMobileMoneyCharge({
           : reference,
     status: typeof data.status === "string" ? data.status : undefined,
     paymentUrl:
-      typeof data.link === "string"
-        ? data.link
-        : typeof data.redirectUrl === "string"
-          ? data.redirectUrl
-          : undefined,
+      findPaymentUrl(data) || findPaymentUrl(raw),
     qrCode: typeof data.qrCode === "string" ? data.qrCode : undefined,
     message:
       typeof data.message === "string"
