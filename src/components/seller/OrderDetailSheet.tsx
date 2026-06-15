@@ -112,6 +112,37 @@ export function OrderDetailSheet({
         </div>
       </div>
 
+      {order.status === "dispute" && (
+        <div>
+          <p className="shop-section-label">Litige</p>
+          <div className="profile-sheet-rows">
+            {order.disputeOpenedAt && (
+              <div className="profile-sheet-row">
+                <span className="text-muted">Ouvert le</span>
+                <span>{formatDateTime(order.disputeOpenedAt)}</span>
+              </div>
+            )}
+            {order.disputeReason && (
+              <div className="profile-sheet-row">
+                <span className="text-muted">Motif</span>
+                <span className="order-sheet-value-right">{order.disputeReason}</span>
+              </div>
+            )}
+            <div className="profile-sheet-row">
+              <span className="text-muted">Preuves photo</span>
+              <span>{order.disputePhotos?.length || 0} photo(s)</span>
+            </div>
+          </div>
+          {!!order.disputePhotos?.length && (
+            <div className="order-sheet-photo-grid" aria-label="Photos du litige">
+              {order.disputePhotos.slice(0, 10).map((photo, index) => (
+                <img key={`${photo.slice(0, 32)}-${index}`} src={photo} alt={`Preuve ${index + 1}`} />
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
       <div>
         <p className="shop-section-label">Commande</p>
         <div className="profile-sheet-rows">

@@ -178,7 +178,10 @@ export async function POST(
     }
 
     if (action === "dispute") {
-      const ok = await openDispute(slug);
+      const ok = await openDispute(slug, {
+        reason: String(body.reason || ""),
+        photos: Array.isArray(body.photos) ? body.photos : [],
+      });
       if (!ok) {
         return NextResponse.json(
           { error: "Litige impossible pendant cette étape" },

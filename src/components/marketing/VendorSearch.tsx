@@ -169,10 +169,6 @@ export function VendorSearch({ large = false }: { large?: boolean }) {
             />
             {loading && <span className="vendor-search-spinner" aria-hidden="true" />}
           </div>
-          <button type="submit" className="vendor-search-btn">
-            Voir les produits
-          </button>
-
           {open && hasResults && (
             <ul className="vendor-search-dropdown" role="listbox">
               <li className="vendor-search-group-label" role="presentation">

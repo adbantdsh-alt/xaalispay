@@ -105,7 +105,7 @@ function AuthForm() {
       });
       if (resendError) throw resendError;
       setSuccess(
-        `Email de confirmation renvoyé à ${targetEmail}. Cliquez le lien sur xaalispay.com (pas localhost).`
+        `Email de confirmation renvoyé à ${targetEmail}. Ouvrez votre boîte mail et cliquez sur le lien pour confirmer votre adresse.`
       );
     } catch (err) {
       setError(err instanceof Error ? err.message : "Renvoi impossible");
@@ -309,8 +309,8 @@ function AuthForm() {
                 />
               </div>
               <p className="mt-1 text-xs text-muted">
-                Comme un Wise Tag : vos clients vous paient via @
-                {username || "votre_tag"} sur xaalispay.com/seller/
+                Votre identifiant unique, simple et facile à retenir. Vos clients
+                vous paient via @{username || "votre_tag"} sur xaalispay.com/seller/
                 {username || "votre_tag"}
               </p>
             </div>

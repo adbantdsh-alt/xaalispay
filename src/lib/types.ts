@@ -62,6 +62,9 @@ export interface Order {
   deliveryDeadlineAt?: string;
   deliveryValidatedAt?: string;
   protectionEndsAt?: string;
+  disputeReason?: string;
+  disputePhotos?: string[];
+  disputeOpenedAt?: string;
   releasedAt?: string;
   refundedAt?: string;
   createdAt: string;

@@ -526,8 +526,8 @@ function CreatePageContent() {
           {success && <p className="toast-success" role="status">{success}</p>}
           <form onSubmit={handlePseudoSave} className="shop-card form-stack">
             <p className="shop-card-desc text-muted">
-              Votre XaalisTag est votre identifiant public, comme un Wise Tag.
-              Les clients vous trouvent sur{" "}
+              Votre XaalisTag est votre identifiant public unique, simple et
+              facile à retenir. Les clients vous trouvent sur{" "}
               <strong>xaalispay.com/seller/{profile.username}</strong>
               {" "}— 1 changement max. par mois.
             </p>

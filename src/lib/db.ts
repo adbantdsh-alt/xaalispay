@@ -50,6 +50,7 @@ function normalizeDb(db: Database): Database {
     if (o.clientFirstName === undefined) o.clientFirstName = "";
     if (o.clientAddress === undefined) o.clientAddress = "";
     if (o.clientNote === undefined) o.clientNote = "";
+    if (o.disputePhotos === undefined) o.disputePhotos = [];
   }
   return db;
 }

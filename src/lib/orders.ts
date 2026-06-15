@@ -6,9 +6,10 @@ import {
 } from "./protection";
 import type { Order, OrderStatus, Product, Profile } from "./types";
 import {
-  generatePin,
+  collectUsedPins,
   generateUniquePaymentSlug,
   collectUsedPaymentSlugs,
+  generateUniquePin,
   getOrderTotal,
   isValidUsername,
 } from "./utils";
@@ -199,6 +200,24 @@ export async function getOrderById(id: string): Promise<Order | undefined> {
   return db.orders.find((o) => o.id === id);
 }
 
+const DISPUTABLE_STATUSES: OrderStatus[] = ["paid", "protection", "dispute"];
+
+export async function getDisputableOrderByPin(pin: string): Promise<Order | null> {
+  const clean = pin.trim();
+  if (!/^\d{4}$/.test(clean)) return null;
+
+  const db = await getDb();
+  const matches = db.orders
+    .filter((o) => o.pin === clean && DISPUTABLE_STATUSES.includes(o.status))
+    .sort(
+      (a, b) =>
+        new Date(b.updatedAt || b.createdAt).getTime() -
+        new Date(a.updatedAt || a.createdAt).getTime()
+    );
+
+  return matches[0] || null;
+}
+
 export interface CreateOrderClient {
   firstName?: string;
   lastName?: string;
@@ -214,14 +233,16 @@ export async function createOrderFromProduct(
   const firstName = (client.firstName || "").trim();
   const lastName = (client.lastName || "").trim();
   const fullName = [firstName, lastName].filter(Boolean).join(" ").trim();
-  const used = collectUsedPaymentSlugs(await getDb());
+  const db = await getDb();
+  const used = collectUsedPaymentSlugs(db);
+  const usedPins = collectUsedPins(db);
   const now = new Date().toISOString();
   const order: Order = {
     id: crypto.randomUUID(),
     sellerId: product.sellerId,
     productId: product.id,
     slug: generateUniquePaymentSlug(used),
-    pin: generatePin(),
+    pin: generateUniquePin(usedPins),
     clientName: fullName,
     clientFirstName: firstName,
     clientPhone: (client.phone || "").trim(),
@@ -290,19 +311,37 @@ export async function validateDelivery(
   return result;
 }
 
-export async function openDispute(slug: string): Promise<boolean> {
+export async function openDispute(
+  slug: string,
+  data: { reason?: string; photos?: string[] } = {}
+): Promise<boolean> {
   let ok = false;
   const now = new Date().toISOString();
 
   await updateDb((db) => {
     const order = db.orders.find((o) => o.slug === slug);
-    if (!order || order.status !== "protection") return;
+    if (!order || !["paid", "protection"].includes(order.status)) return;
     order.status = "dispute";
+    order.disputeReason = (data.reason || "").trim();
+    order.disputePhotos = data.photos || [];
+    order.disputeOpenedAt = now;
     order.updatedAt = now;
     ok = true;
   });
 
   return ok;
+}
+
+export async function openDisputeByPin(
+  pin: string,
+  data: { reason: string; photos: string[] }
+): Promise<Order | null> {
+  const order = await getDisputableOrderByPin(pin);
+  if (!order) return null;
+  if (order.status === "dispute") return order;
+
+  const ok = await openDispute(order.slug, data);
+  return ok ? (await getOrderBySlug(order.slug)) || null : null;
 }
 
 export async function processOrderMaintenance(): Promise<boolean> {

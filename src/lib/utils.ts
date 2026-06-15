@@ -52,6 +52,18 @@ export function generatePin(): string {
   return pinAlphabet();
 }
 
+export function collectUsedPins(db: Database): Set<string> {
+  return new Set(db.orders.map((order) => order.pin).filter(Boolean));
+}
+
+export function generateUniquePin(used: Set<string>): string {
+  for (let i = 0; i < 40; i++) {
+    const pin = generatePin();
+    if (!used.has(pin)) return pin;
+  }
+  return generatePin();
+}
+
 export function getOrderTotal(
   order: Pick<Order, "productPrice" | "deliveryCost">
 ): number {

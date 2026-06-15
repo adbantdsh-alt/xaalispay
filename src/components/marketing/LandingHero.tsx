@@ -1,8 +1,10 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
-import { ArrowRight, BadgeCheck, Smartphone, Users, AtSign } from "lucide-react";
+import { AlertTriangle, ArrowRight, BadgeCheck, Smartphone, Users, AtSign } from "lucide-react";
+import { DisputeDialog } from "@/components/marketing/DisputeDialog";
 import { LandingPaymentMockup } from "@/components/marketing/LandingPaymentMockup";
 import { VendorSearch } from "@/components/marketing/VendorSearch";
 
@@ -11,6 +13,7 @@ const EASE = [0.22, 1, 0.36, 1] as const;
 
 export function LandingHero() {
   const reduce = useReducedMotion();
+  const [disputeOpen, setDisputeOpen] = useState(false);
 
   return (
     <section className="lp-hero">
@@ -22,7 +25,7 @@ export function LandingHero() {
             animate={reduce ? {} : { opacity: 1, y: 0 }}
             transition={{ duration: 0.5, ease: EASE }}
           >
-            Séquestre de confiance · Sénégal 🇸🇳
+            Numéro un du paiement de confiance au Sénégal
           </motion.span>
 
           <h1 className="lp-h1 serif">
@@ -79,9 +82,14 @@ export function LandingHero() {
               Créer un compte
               <ArrowRight size={18} strokeWidth={1.75} />
             </Link>
-            <Link href="/#vendeurs" className="lp-btn lp-btn-ghost">
-              Je suis vendeur
-            </Link>
+            <button
+              type="button"
+              className="lp-btn lp-btn-ghost"
+              onClick={() => setDisputeOpen(true)}
+            >
+              <AlertTriangle size={18} strokeWidth={1.5} />
+              Ouvrir un litige
+            </button>
           </motion.div>
 
           <motion.div
@@ -109,6 +117,7 @@ export function LandingHero() {
           <LandingPaymentMockup />
         </div>
       </div>
+      <DisputeDialog open={disputeOpen} onClose={() => setDisputeOpen(false)} />
     </section>
   );
 }
