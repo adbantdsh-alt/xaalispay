@@ -1,11 +1,19 @@
-import { Plus_Jakarta_Sans } from "next/font/google";
+import { Instrument_Serif, Inter_Tight } from "next/font/google";
 import type { Metadata } from "next";
 import "./globals.css";
 
-const jakarta = Plus_Jakarta_Sans({
+const instrumentSerif = Instrument_Serif({
   subsets: ["latin"],
   display: "swap",
-  weight: ["400", "500", "600", "700", "800"],
+  weight: "400",
+  variable: "--font-serif",
+});
+
+const interTight = Inter_Tight({
+  subsets: ["latin"],
+  display: "swap",
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-sans",
 });
 
 export const metadata: Metadata = {
@@ -24,7 +32,11 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="fr">
-      <body className={`app-bg ${jakarta.className}`}>{children}</body>
+      <body
+        className={`app-bg ${interTight.className} ${instrumentSerif.variable} ${interTight.variable}`}
+      >
+        {children}
+      </body>
     </html>
   );
 }

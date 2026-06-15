@@ -242,7 +242,7 @@ function AuthForm() {
       </div>
 
       <div className="animate-fade-up">
-        <h1 style={{ fontSize: "1.75rem", fontWeight: 800, letterSpacing: "-0.03em" }}>
+        <h1 className="page-hero-title" style={{ fontSize: "2.25rem", letterSpacing: "-0.02em" }}>
           {mode === "login" ? "Bon retour" : "Créer un compte"}
         </h1>
         <p className="text-muted" style={{ marginTop: "0.5rem" }}>

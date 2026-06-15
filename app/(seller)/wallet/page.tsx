@@ -3,9 +3,8 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { computeWalletBreakdown } from "@/lib/wallet-breakdown";
-import { MOBILE_MONEY_METHODS } from "@/lib/payment-methods";
 import { formatCurrency } from "@/lib/utils";
-import { PayMethodLogo } from "@/components/ui/PayMethodLogo";
+import { PayMethodButtons } from "@/components/pay/PayMethodButtons";
 import type { Order } from "@/lib/types";
 
 interface WalletPageData {
@@ -153,18 +152,11 @@ export default function WalletPage() {
         </label>
 
         <div className="wallet-withdraw-methods">
-          {MOBILE_MONEY_METHODS.map((method) => (
-            <button
-              key={method.id}
-              type="button"
-              disabled={withdrawing || !amount || !phone}
-              className={`pay-method ${method.btnClass} wallet-withdraw-btn`}
-              onClick={() => handleWithdraw(method.id)}
-            >
-              <PayMethodLogo method={method.id} />
-              <span>Retirer via {method.name}</span>
-            </button>
-          ))}
+          <PayMethodButtons
+            onPay={handleWithdraw}
+            paying={withdrawing}
+            disabled={!amount || !phone}
+          />
         </div>
 
         {error && <p className="alert-danger">{error}</p>}

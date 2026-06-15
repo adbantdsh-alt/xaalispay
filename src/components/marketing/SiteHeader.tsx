@@ -2,19 +2,28 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { Menu, X } from "lucide-react";
 import { BrandMark } from "@/components/ui/BrandMark";
-import { IconMenu, IconClose } from "@/components/ui/AppIcon";
 
 const NAV = [
   { href: "/#acheteurs", label: "Acheteurs" },
   { href: "/#vendeurs", label: "Vendeurs" },
+  { href: "/#faq", label: "Tarifs" },
   { href: "/histoire", label: "Notre histoire" },
 ];
 
 export function SiteHeader() {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 8);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   const isActive = (href: string) => {
     if (href.startsWith("/#")) return pathname === "/";
@@ -22,7 +31,7 @@ export function SiteHeader() {
   };
 
   return (
-    <header className="site-header">
+    <header className={`site-header ${scrolled ? "is-scrolled" : ""}`}>
       <div className="site-header-inner">
         <BrandMark size="sm" />
 
@@ -43,16 +52,16 @@ export function SiteHeader() {
             Connexion
           </Link>
           <Link href="/auth?mode=signup" className="site-header-cta">
-            Créer ma boutique
+            Créer un compte
           </Link>
           <button
             type="button"
             className="site-menu-btn"
-            aria-label="Menu"
+            aria-label={menuOpen ? "Fermer le menu" : "Ouvrir le menu"}
             aria-expanded={menuOpen}
             onClick={() => setMenuOpen((v) => !v)}
           >
-            {menuOpen ? <IconClose size={22} /> : <IconMenu size={22} />}
+            {menuOpen ? <X size={22} strokeWidth={1.5} /> : <Menu size={22} strokeWidth={1.5} />}
           </button>
         </div>
       </div>
@@ -77,7 +86,7 @@ export function SiteHeader() {
             className="site-mobile-link site-mobile-link-cta"
             onClick={() => setMenuOpen(false)}
           >
-            Créer ma boutique
+            Créer un compte
           </Link>
         </nav>
       )}

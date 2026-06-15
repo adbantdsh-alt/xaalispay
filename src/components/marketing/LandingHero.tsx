@@ -1,0 +1,114 @@
+"use client";
+
+import Link from "next/link";
+import { motion, useReducedMotion } from "framer-motion";
+import { ArrowRight, BadgeCheck, Smartphone, Users, AtSign } from "lucide-react";
+import { LandingPaymentMockup } from "@/components/marketing/LandingPaymentMockup";
+import { VendorSearch } from "@/components/marketing/VendorSearch";
+
+const TITLE_WORDS = ["Payez", "les", "yeux", "fermés."];
+const EASE = [0.22, 1, 0.36, 1] as const;
+
+export function LandingHero() {
+  const reduce = useReducedMotion();
+
+  return (
+    <section className="lp-hero">
+      <div className="lp-container lp-hero-grid">
+        <div className="lp-hero-left">
+          <motion.span
+            className="lp-eyebrow"
+            initial={reduce ? false : { opacity: 0, y: 10 }}
+            animate={reduce ? {} : { opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, ease: EASE }}
+          >
+            Séquestre de confiance · Sénégal 🇸🇳
+          </motion.span>
+
+          <h1 className="lp-h1 serif">
+            {TITLE_WORDS.map((word, i) => (
+              <motion.span
+                key={word}
+                className="lp-word"
+                initial={reduce ? false : { opacity: 0, y: 22 }}
+                animate={reduce ? {} : { opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, ease: EASE, delay: 0.1 + i * 0.12 }}
+              >
+                {word === "fermés." ? (
+                  <>
+                    fermés<span className="lp-dot">.</span>
+                  </>
+                ) : (
+                  word
+                )}
+                {i < TITLE_WORDS.length - 1 ? "\u00A0" : ""}
+              </motion.span>
+            ))}
+          </h1>
+
+          <motion.p
+            className="lp-sub"
+            initial={reduce ? false : { opacity: 0, y: 14 }}
+            animate={reduce ? {} : { opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, ease: EASE, delay: 0.5 }}
+          >
+            L&apos;argent reste protégé chez XaalisPay jusqu&apos;à ce que vous validiez la
+            livraison. Wave, Orange Money, zéro mauvaise surprise.
+          </motion.p>
+
+          <motion.div
+            className="lp-hero-search"
+            initial={reduce ? false : { opacity: 0, y: 14 }}
+            animate={reduce ? {} : { opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, ease: EASE, delay: 0.6 }}
+          >
+            <span className="lp-hero-search-label">
+              <AtSign size={15} strokeWidth={1.75} />
+              Vous avez un XaalisTag ? Trouvez le vendeur et payez en sécurité
+            </span>
+            <VendorSearch large />
+          </motion.div>
+
+          <motion.div
+            className="lp-cta-row"
+            initial={reduce ? false : { opacity: 0, y: 14 }}
+            animate={reduce ? {} : { opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, ease: EASE, delay: 0.7 }}
+          >
+            <Link href="/auth?mode=signup" className="lp-btn lp-btn-primary">
+              Créer un compte
+              <ArrowRight size={18} strokeWidth={1.75} />
+            </Link>
+            <Link href="/#vendeurs" className="lp-btn lp-btn-ghost">
+              Je suis vendeur
+            </Link>
+          </motion.div>
+
+          <motion.div
+            className="lp-trust"
+            initial={reduce ? false : { opacity: 0 }}
+            animate={reduce ? {} : { opacity: 1 }}
+            transition={{ duration: 0.6, ease: EASE, delay: 0.82 }}
+          >
+            <span className="lp-trust-item">
+              <BadgeCheck size={16} strokeWidth={1.5} />
+              Conforme BCEAO
+            </span>
+            <span className="lp-trust-item">
+              <Smartphone size={16} strokeWidth={1.5} />
+              Wave · Orange Money
+            </span>
+            <span className="lp-trust-item">
+              <Users size={16} strokeWidth={1.5} />
+              +2 400 vendeurs
+            </span>
+          </motion.div>
+        </div>
+
+        <div className="lp-hero-right">
+          <LandingPaymentMockup />
+        </div>
+      </div>
+    </section>
+  );
+}

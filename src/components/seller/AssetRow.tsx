@@ -45,16 +45,36 @@ export function AssetRow({
   subtitle,
   amount,
   status,
+  onClick,
 }: {
   title: string;
   subtitle: string;
   amount: number;
   status: OrderStatus;
+  onClick?: () => void;
 }) {
   const visual = getOrderStatusVisual(status);
+  const clickable = typeof onClick === "function";
+
+  const interactiveProps = clickable
+    ? {
+        role: "button" as const,
+        tabIndex: 0,
+        onClick,
+        onKeyDown: (e: React.KeyboardEvent) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            onClick?.();
+          }
+        },
+      }
+    : {};
 
   return (
-    <article className="asset-row">
+    <article
+      className={`asset-row ${clickable ? "asset-row-clickable" : ""}`}
+      {...interactiveProps}
+    >
       <div className={`asset-row-icon asset-row-icon-${visual.tone}`}>
         <StatusIcon type={visual.icon} />
       </div>
@@ -64,6 +84,20 @@ export function AssetRow({
         <p className="asset-row-status">{getSellerHumanStatus(status)}</p>
       </div>
       <p className="asset-row-amount">{formatCurrency(amount)}</p>
+      {clickable && (
+        <svg
+          className="asset-row-chevron"
+          width="18"
+          height="18"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          aria-hidden="true"
+        >
+          <path d="M9 6l6 6-6 6" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      )}
     </article>
   );
 }

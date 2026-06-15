@@ -4,6 +4,8 @@ export interface VendorSearchResult {
   username: string;
   displayName: string;
   businessName: string;
+  /** Présent si le vendeur est trouvé via un produit */
+  matchHint?: string;
 }
 
 export interface ProductSearchResult {
@@ -21,47 +23,55 @@ export async function searchMarketplace(query: string, limit = 8) {
   }
 
   const db = await getDb();
-  const vendorLimit = Math.ceil(limit / 2);
-  const productLimit = Math.ceil(limit / 2);
-
-  const vendors = db.profiles
-    .filter(
-      (p) =>
-        p.username.toLowerCase().includes(q) ||
-        p.displayName.toLowerCase().includes(q) ||
-        p.businessName.toLowerCase().includes(q)
-    )
-    .slice(0, vendorLimit)
-    .map((p) => ({
-      username: p.username,
-      displayName: p.displayName,
-      businessName: p.businessName,
-    }));
-
   const profileById = new Map(db.profiles.map((p) => [p.id, p]));
+  const vendorMap = new Map<string, VendorSearchResult>();
 
-  const products = db.products
-    .filter((p) => p.active)
-    .filter((p) => {
-      const profile = profileById.get(p.sellerId);
-      if (!profile) return false;
-      return (
-        p.name.toLowerCase().includes(q) ||
-        p.description.toLowerCase().includes(q) ||
-        profile.username.toLowerCase().includes(q)
-      );
-    })
-    .slice(0, productLimit)
-    .map((p) => {
-      const profile = profileById.get(p.sellerId)!;
-      return {
-        id: p.id,
-        name: p.name,
-        price: p.price,
+  for (const p of db.profiles) {
+    if (
+      p.username.toLowerCase().includes(q) ||
+      p.displayName.toLowerCase().includes(q) ||
+      p.businessName.toLowerCase().includes(q)
+    ) {
+      vendorMap.set(p.username, {
+        username: p.username,
+        displayName: p.displayName,
+        businessName: p.businessName,
+      });
+    }
+  }
+
+  const productHits: ProductSearchResult[] = [];
+
+  for (const product of db.products) {
+    if (!product.active) continue;
+    const profile = profileById.get(product.sellerId);
+    if (!profile) continue;
+
+    const nameMatch = product.name.toLowerCase().includes(q);
+    const descMatch = product.description.toLowerCase().includes(q);
+
+    if (nameMatch || descMatch) {
+      productHits.push({
+        id: product.id,
+        name: product.name,
+        price: product.price,
         username: profile.username,
         displayName: profile.displayName,
-      };
-    });
+      });
+
+      if (!vendorMap.has(profile.username)) {
+        vendorMap.set(profile.username, {
+          username: profile.username,
+          displayName: profile.displayName,
+          businessName: profile.businessName,
+          matchHint: `Vend : ${product.name}`,
+        });
+      }
+    }
+  }
+
+  const vendors = [...vendorMap.values()].slice(0, limit);
+  const products = productHits.slice(0, Math.ceil(limit / 2));
 
   return { vendors, products };
 }
