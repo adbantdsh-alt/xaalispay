@@ -27,6 +27,10 @@ interface OverviewData {
     payoutConfigured: boolean;
     storage: string;
     remoteOk?: boolean;
+    bictorysBaseUrl?: string;
+    bictorysPayinKeySet?: boolean;
+    bictorysRefundKeySet?: boolean;
+    webhookSecretSet?: boolean;
   };
 }
 
@@ -366,6 +370,31 @@ export function AdminDashboard() {
               <li>
                 <span>Payout Bictorys</span>
                 <strong>{overview.health.payoutConfigured ? "Configuré" : "Manquant"}</strong>
+              </li>
+              <li>
+                <span>API Bictorys</span>
+                <strong
+                  style={{
+                    color: overview.health.bictorysBaseUrl?.includes("test") ? "#b91c1c" : "#15803d",
+                    fontSize: "0.75rem",
+                    wordBreak: "break-all",
+                  }}
+                >
+                  {overview.health.bictorysBaseUrl?.includes("test") ? "⚠️ TEST — " : "✅ PROD — "}
+                  {overview.health.bictorysBaseUrl}
+                </strong>
+              </li>
+              <li>
+                <span>Clé Payin</span>
+                <strong style={{ color: overview.health.bictorysPayinKeySet ? "#15803d" : "#b91c1c" }}>
+                  {overview.health.bictorysPayinKeySet ? "✅ Définie" : "❌ Manquante"}
+                </strong>
+              </li>
+              <li>
+                <span>Clé Remboursement</span>
+                <strong style={{ color: overview.health.bictorysRefundKeySet ? "#15803d" : "#b91c1c" }}>
+                  {overview.health.bictorysRefundKeySet ? "✅ Définie" : "❌ Manquante"}
+                </strong>
               </li>
             </ul>
           </article>

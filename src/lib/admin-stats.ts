@@ -1,4 +1,4 @@
-import { isBictorysPayoutConfigured } from "./bictorys";
+import { isBictorysPayoutConfigured, getWebhookSecret } from "./bictorys";
 import { getDb, getDbStorageMode } from "./db";
 import { checkRemoteStore } from "./data-store";
 import type { DisputeMedia, Order, Payout, Profile } from "./types";
@@ -51,6 +51,10 @@ export async function getAdminOverview() {
       payoutConfigured: isBictorysPayoutConfigured(),
       storage: getDbStorageMode(),
       remoteOk: remote.ok,
+      bictorysBaseUrl: process.env.BICTORYS_BASE_URL || "https://api.bictorys.com (défaut)",
+      bictorysPayinKeySet: !!(process.env.BICTORYS_PUBLIC_KEY || process.env.bictorys_xaalispay_encaissement),
+      bictorysRefundKeySet: !!(process.env.BICTORYS_REFUND_API_KEY),
+      webhookSecretSet: !!(getWebhookSecret()),
     },
   };
 }
