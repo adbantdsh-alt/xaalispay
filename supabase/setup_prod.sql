@@ -43,4 +43,7 @@ using (bucket_id = 'product-images');
 -- • Table app_state existe (1 ligne id=main après 1er déploiement)
 -- • Bucket product-images public
 -- • Authentication → URL : Site URL + Redirect /auth/callback
+--
+-- Étape suivante (Phase 3C) : supabase/schema_v1.sql
+-- Puis /admin → Synchroniser app_state → tables relationnelles
 -- ═══════════════════════════════════════════════════════════════

@@ -262,7 +262,11 @@ export function AdminDashboard() {
       )}
 
       {tab === "overview" && overview && (
-        <AdminOverviewSection overview={overview} onNavigate={setTab} />
+        <AdminOverviewSection
+          overview={overview}
+          onNavigate={setTab}
+          onRefresh={() => refresh(true)}
+        />
       )}
 
       {tab === "disputes" && !tabLoading && (

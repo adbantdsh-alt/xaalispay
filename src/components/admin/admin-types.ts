@@ -39,6 +39,12 @@ export interface OverviewData {
       hint?: string;
     }>;
   };
+  relational?: {
+    enabled: boolean;
+    schemaReady: boolean;
+    lastMigratedAt: string | null;
+    counts: Record<string, number>;
+  };
 }
 
 export interface PayoutRow {

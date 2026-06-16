@@ -2526,8 +2526,9 @@ input, button, textarea, select { font: inherit; color: var(--text); }
 }
 .seller-tip-card .btn-seller-primary { margin-top: 1.25rem; }
 
-/* Seller buttons */
-.btn-seller-primary {
+/* Seller primary button — canonical: btn-seller-primary (.btn-primary alias in .seller-app) */
+.btn-seller-primary,
+.seller-app .btn-primary {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2545,9 +2546,12 @@ input, button, textarea, select { font: inherit; color: var(--text); }
   box-shadow: 0 4px 20px rgba(26, 79, 214, 0.3);
   transition: transform 0.2s var(--ease), box-shadow 0.2s;
 }
-.btn-seller-primary:hover:not(:disabled) { transform: translateY(-1px); }
-.btn-seller-primary:active:not(:disabled) { transform: scale(0.98); }
-.btn-seller-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-seller-primary:hover:not(:disabled),
+.seller-app .btn-primary:hover:not(:disabled) { transform: translateY(-1px); }
+.btn-seller-primary:active:not(:disabled),
+.seller-app .btn-primary:active:not(:disabled) { transform: scale(0.98); }
+.btn-seller-primary:disabled,
+.seller-app .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
 .btn-seller-primary-compact { width: auto; min-height: 52px; padding: 0 1.25rem; }
 
 /* Floating nav pill */
@@ -2626,11 +2630,6 @@ input, button, textarea, select { font: inherit; color: var(--text); }
   box-shadow: 0 0 0 3px rgba(26, 79, 214, 0.1);
 }
 
-.seller-app .btn-primary {
-  background: linear-gradient(135deg, var(--accent-blue), var(--accent-blue-dark));
-  color: #fff;
-  box-shadow: 0 4px 20px rgba(26, 79, 214, 0.25);
-}
 .seller-app .btn-secondary {
   background: var(--surface-seller);
   border-color: var(--border-seller);
@@ -3823,35 +3822,6 @@ input, button, textarea, select { font: inherit; color: var(--text); }
   gap: 1rem;
 }
 
-.profile-sheet-user {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.profile-sheet-avatar {
-  width: 56px;
-  height: 56px;
-  border-radius: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(135deg, var(--accent-blue), var(--accent-blue-dark));
-  color: #fff;
-  font-weight: 800;
-  font-size: 1.25rem;
-}
-
-.profile-sheet-name {
-  font-weight: 700;
-  font-size: 1.125rem;
-}
-
-.profile-sheet-tag {
-  color: var(--text-seller-muted);
-  font-size: 0.875rem;
-}
-
 .profile-sheet-rows {
   display: flex;
   flex-direction: column;
@@ -3866,42 +3836,6 @@ input, button, textarea, select { font: inherit; color: var(--text); }
   border-radius: var(--radius-lg);
   background: var(--surface-seller-elevated);
   font-size: 0.875rem;
-}
-
-.settings-sheet-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.375rem;
-}
-
-.settings-sheet-item {
-  display: flex;
-  flex-direction: column;
-  gap: 0.125rem;
-  padding: 0.875rem 1rem;
-  border-radius: var(--radius-lg);
-  background: var(--surface-seller-elevated);
-  transition: background 0.2s var(--ease);
-}
-
-.settings-sheet-item:active {
-  background: var(--accent-blue-dim);
-}
-
-.settings-sheet-item-label {
-  font-weight: 700;
-  font-size: 0.9375rem;
-}
-
-.settings-sheet-item-desc {
-  font-size: 0.75rem;
-  color: var(--text-seller-muted);
-}
-
-.settings-sheet-logout {
-  width: 100%;
-  margin-top: 0.5rem;
-  color: #c0392b;
 }
 
 /* Page Paramètres (slide-in) */
@@ -6011,6 +5945,16 @@ input, button, textarea, select { font: inherit; color: var(--text); }
   margin-bottom: 0.5rem;
 }
 
+.admin-migrate-btn {
+  margin-top: 0.75rem;
+}
+
+.admin-migrate-msg {
+  margin: 0.5rem 0 0;
+  font-size: 0.8125rem;
+  color: #15803d;
+}
+
 .admin-kpi,
 .admin-card {
   background: #fff;
@@ -6332,11 +6276,6 @@ input, button, textarea, select { font: inherit; color: var(--text); }
 }
 .not-found-links .btn-primary,
 .not-found-links .btn-secondary { width: auto; padding: 0 1.5rem; }
-
-.settings-sheet-item-admin {
-  border: 1px solid rgba(15, 212, 199, 0.35);
-  background: rgba(15, 212, 199, 0.08);
-}
 
 /* â”€â”€ Tarifs & simulateur â”€â”€ */
 .lp-pricing { padding-bottom: 2rem; }

@@ -2,6 +2,7 @@ import { isBictorysPayoutConfigured, getWebhookSecret } from "./bictorys";
 import { getDb, getDbStorageMode } from "./db";
 import { checkRemoteStore } from "./data-store";
 import { getProdConfigSummary } from "./prod-config";
+import { getRelationalMigrationStatus } from "./relational-store";
 import type { DisputeMedia, Order, Payout, Profile } from "./types";
 import { getOrderTotal } from "./utils";
 
@@ -25,6 +26,7 @@ export async function getAdminOverview() {
   );
 
   const remote = await checkRemoteStore();
+  const relational = await getRelationalMigrationStatus();
 
   return {
     stats: {
@@ -74,6 +76,7 @@ export async function getAdminOverview() {
       webhookSecretSet: !!(getWebhookSecret()),
     },
     prodConfig: getProdConfigSummary(),
+    relational,
   };
 }
 

@@ -1,16 +1,51 @@
 "use client";
 
+import { useState } from "react";
 import { formatCurrency } from "@/lib/utils";
 import type { AdminTab, OverviewData } from "./admin-types";
 
 export function AdminOverviewSection({
   overview,
   onNavigate,
+  onRefresh,
 }: {
   overview: OverviewData;
   onNavigate: (tab: AdminTab) => void;
+  onRefresh: () => void;
 }) {
-  const { stats } = overview;
+  const { stats, relational } = overview;
+  const [migrating, setMigrating] = useState(false);
+  const [migrateMsg, setMigrateMsg] = useState("");
+
+  const runMigration = async () => {
+    if (
+      !window.confirm(
+        "Copier app_state vers les tables relationnelles Supabase ?\n\nLa source de vérité reste app_state pour l'instant."
+      )
+    ) {
+      return;
+    }
+    setMigrating(true);
+    setMigrateMsg("");
+    try {
+      const res = await fetch("/api/admin/migrate-relational", { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) {
+        setMigrateMsg(data.error || "Migration échouée");
+        return;
+      }
+      const total = Object.values(data.counts as Record<string, number>).reduce(
+        (sum, n) => sum + n,
+        0
+      );
+      setMigrateMsg(`${total} enregistrement(s) synchronisé(s).`);
+      onRefresh();
+    } catch {
+      setMigrateMsg("Erreur réseau");
+    } finally {
+      setMigrating(false);
+    }
+  };
 
   return (
     <section className="admin-section">
@@ -101,6 +136,50 @@ export function AdminOverviewSection({
                 </li>
               ))}
           </ul>
+        </article>
+      )}
+
+      {relational && (
+        <article className="admin-card">
+          <h2 className="admin-card-title">Base relationnelle</h2>
+          <ul className="admin-health-list">
+            <li>
+              <span>Schéma xp_*</span>
+              <strong className={relational.schemaReady ? "admin-health-ok" : "admin-health-bad"}>
+                {relational.schemaReady ? "Installé" : "Exécuter schema_v1.sql"}
+              </strong>
+            </li>
+            {relational.lastMigratedAt && (
+              <li>
+                <span>Dernière sync</span>
+                <strong>
+                  {new Date(relational.lastMigratedAt).toLocaleString("fr-FR", {
+                    day: "2-digit",
+                    month: "short",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </strong>
+              </li>
+            )}
+            {relational.lastMigratedAt && relational.counts.orders != null && (
+              <li>
+                <span>Commandes miroir</span>
+                <strong>{relational.counts.orders}</strong>
+              </li>
+            )}
+          </ul>
+          {relational.schemaReady && (
+            <button
+              type="button"
+              className="admin-action-btn admin-migrate-btn"
+              disabled={migrating}
+              onClick={runMigration}
+            >
+              {migrating ? "Synchronisation…" : "Synchroniser app_state → tables"}
+            </button>
+          )}
+          {migrateMsg && <p className="admin-migrate-msg">{migrateMsg}</p>}
         </article>
       )}
     </section>
