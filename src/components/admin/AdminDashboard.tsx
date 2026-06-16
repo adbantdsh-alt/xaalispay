@@ -137,6 +137,10 @@ export function AdminDashboard() {
   const [payouts, setPayouts] = useState<PayoutRow[]>([]);
   const [orderFilter, setOrderFilter] = useState<"all" | OrderStatus>("all");
   const [disputes, setDisputes] = useState<DisputeRow[]>([]);
+  const showError = (msg: string) => {
+    setError(msg);
+    setTimeout(() => setError(""), 5000);
+  };
   const [selectedDispute, setSelectedDispute] = useState<DisputeRow | null>(null);
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
   const [resolving, setResolving] = useState<string | null>(null);
@@ -198,8 +202,14 @@ export function AdminDashboard() {
     setResolving(null);
 
     if (!res.ok) {
+      // Commande déjà traitée → rafraîchir la liste pour nettoyer l'état
+      if (res.status === 404) {
+        const freshRes = await fetch("/api/admin/disputes");
+        if (freshRes.ok) setDisputes((await freshRes.json()).disputes || []);
+        showError("Cette commande a déjà été traitée — la liste a été mise à jour.");
+        return;
+      }
       if (data.canForce) {
-        // Proposer l'option de forcer si Bictorys est indisponible
         const confirmForce = window.confirm(
           `${data.error}\n\n` +
           `⚠️ AVANT DE CONFIRMER :\n` +
@@ -213,12 +223,12 @@ export function AdminDashboard() {
         }
         return;
       }
-      setError(data.error || "Action impossible");
+      showError(data.error || "Action impossible");
       return;
     }
 
     if (data.warning) {
-      setError(`⚠️ ${data.warning}`);
+      showError(`⚠️ ${data.warning}`);
     }
     setDisputes(data.disputes || []);
     setSelectedDispute(null);
