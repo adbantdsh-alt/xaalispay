@@ -729,7 +729,9 @@ export function AdminDashboard() {
                   disabled={resolving !== null}
                   onClick={() => resolveDispute(selectedDispute.id, "refund")}
                 >
-                  {resolving === selectedDispute.id + "refund" ? "En cours…" : "Rembourser l'acheteur"}
+                  {resolving === selectedDispute.id + "refund" ? (
+                    <><span className="btn-spinner" aria-hidden="true" />En cours…</>
+                  ) : "Rembourser l'acheteur"}
                 </button>
                 <button
                   type="button"
@@ -737,7 +739,9 @@ export function AdminDashboard() {
                   disabled={resolving !== null}
                   onClick={() => resolveDispute(selectedDispute.id, "release")}
                 >
-                  {resolving === selectedDispute.id + "release" ? "En cours…" : "Libérer au vendeur"}
+                  {resolving === selectedDispute.id + "release" ? (
+                    <><span className="btn-spinner" aria-hidden="true" />En cours…</>
+                  ) : "Libérer au vendeur"}
                 </button>
               </div>
             </div>

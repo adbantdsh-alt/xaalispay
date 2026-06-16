@@ -222,8 +222,12 @@ export function DisputeDialog({
             aria-label="Code livraison"
           />
           <button type="submit" className="lp-btn lp-btn-primary" disabled={loading || pin.length !== 4}>
-            <Search size={17} strokeWidth={1.5} />
-            Rechercher
+            {loading && !order ? (
+              <span className="btn-spinner" aria-hidden="true" />
+            ) : (
+              <Search size={17} strokeWidth={1.5} />
+            )}
+            {loading && !order ? "Recherche…" : "Rechercher"}
           </button>
         </form>
 
@@ -301,7 +305,14 @@ export function DisputeDialog({
                 )}
 
                 <button type="submit" className="lp-btn lp-btn-primary lp-dispute-submit" disabled={loading}>
-                  Valider le litige
+                  {loading ? (
+                    <>
+                      <span className="btn-spinner" aria-hidden="true" />
+                      Envoi en cours…
+                    </>
+                  ) : (
+                    "Valider le litige"
+                  )}
                 </button>
               </>
             )}

@@ -554,7 +554,9 @@ export function DeliveryValidation({
                   disabled={!otpComplete || confirming}
                   onClick={handleConfirm}
                 >
-                  {confirming ? "Validation…" : "Confirmer"}
+                  {confirming ? (
+                    <><span className="btn-spinner" aria-hidden="true" style={{ borderTopColor: "#fff" }} />Validation…</>
+                  ) : "Confirmer"}
                 </button>
               </div>
             </motion.div>
