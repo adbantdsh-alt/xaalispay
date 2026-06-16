@@ -16,6 +16,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <div>
             <p className="admin-eyebrow">XaalisPay</p>
             <h1 className="admin-title">Administration</h1>
+            <p className="admin-subtitle">Litiges · Retraits · Santé prod</p>
           </div>
           <Link href="/dashboard" className="admin-back-link">
             ← App vendeur
