@@ -23,7 +23,7 @@ export interface BictorysPayoutResult {
 }
 
 function getBaseUrl(): string {
-  return (process.env.BICTORYS_BASE_URL || "https://api.test.bictorys.com").replace(/\/$/, "");
+  return (process.env.BICTORYS_BASE_URL || "https://api.bictorys.com").replace(/\/$/, "");
 }
 
 function firstEnvValue(names: string[]): string | undefined {
