@@ -1,8 +1,12 @@
 import type { Metadata } from "next";
+import { buildPageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "Politique de confidentialité — XaalisPay",
-};
+export const metadata: Metadata = buildPageMetadata({
+  title: "Politique de confidentialité",
+  description:
+    "Politique de confidentialité XaalisPay : collecte, utilisation et protection de vos données personnelles au Sénégal.",
+  path: "/confidentialite",
+});
 
 export default function ConfidentialitePage() {
   return (

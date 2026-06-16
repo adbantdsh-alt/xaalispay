@@ -1,4 +1,12 @@
+import type { Metadata } from "next";
 import Link from "next/link";
+import { buildPageMetadata } from "@/lib/seo";
+
+export const metadata: Metadata = buildPageMetadata({
+  title: "Administration",
+  description: "Console d'administration XaalisPay.",
+  noIndex: true,
+});
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   return (

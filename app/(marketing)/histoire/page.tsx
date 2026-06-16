@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { buildPageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "Notre histoire — XaalisPay",
+export const metadata: Metadata = buildPageMetadata({
+  title: "Notre histoire",
   description:
-    "L'histoire de XaalisPay : une solution née de la frustration des arnaques en ligne au Sénégal.",
-};
+    "L'histoire de XaalisPay : une solution née de la frustration des arnaques en ligne au Sénégal. Séquestre, confiance, commerce social.",
+  path: "/histoire",
+});
 
 const CHAPTERS = [
   {

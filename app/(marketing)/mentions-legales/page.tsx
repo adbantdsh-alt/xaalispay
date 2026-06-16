@@ -1,8 +1,12 @@
 import type { Metadata } from "next";
+import { buildPageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "Mentions légales — XaalisPay",
-};
+export const metadata: Metadata = buildPageMetadata({
+  title: "Mentions légales",
+  description:
+    "Mentions légales XaalisPay : éditeur, hébergement, contact et informations juridiques au Sénégal.",
+  path: "/mentions-legales",
+});
 
 export default function MentionsLegalesPage() {
   return (

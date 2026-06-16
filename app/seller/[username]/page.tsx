@@ -1,14 +1,42 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getProfileByUsername, getProductsBySeller } from "@/lib/orders";
 import { SellerShopClient } from "@/components/shop/SellerShopClient";
 import { BrandMark } from "@/components/ui/BrandMark";
+import { buildPageMetadata } from "@/lib/seo";
 
 const RESERVED = [
   "auth", "dashboard", "wallet", "create", "profile", "pay", "api",
   "seller", "orderlink", "home", "histoire", "contact", "cgv",
-  "confidentialite", "mentions-legales",
+  "confidentialite", "mentions-legales", "blog", "litige", "admin",
 ];
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ username: string }>;
+}): Promise<Metadata> {
+  const { username } = await params;
+  if (RESERVED.includes(username.toLowerCase())) return {};
+
+  const profile = await getProfileByUsername(username);
+  if (!profile) {
+    return buildPageMetadata({
+      title: "Vendeur introuvable",
+      description: "Cette boutique XaalisPay n'existe pas.",
+      path: `/seller/${username}`,
+      noIndex: true,
+    });
+  }
+
+  return buildPageMetadata({
+    title: `Boutique ${profile.displayName} (@${profile.username})`,
+    description: `Achetez en sécurité chez ${profile.displayName} sur XaalisPay. Paiement séquestre Wave et Orange Money au Sénégal.`,
+    path: `/seller/${username}`,
+    keywords: [profile.displayName, profile.username, "boutique XaalisPay", "achat sécurisé Sénégal"],
+  });
+}
 
 export default async function SellerPublicPage({
   params,

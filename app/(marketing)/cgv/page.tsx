@@ -1,8 +1,12 @@
 import type { Metadata } from "next";
+import { buildPageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "Conditions générales — XaalisPay",
-};
+export const metadata: Metadata = buildPageMetadata({
+  title: "Conditions générales",
+  description:
+    "Conditions générales d'utilisation de XaalisPay : séquestre, litiges, commissions et droit sénégalais.",
+  path: "/cgv",
+});
 
 export default function CgvPage() {
   return (

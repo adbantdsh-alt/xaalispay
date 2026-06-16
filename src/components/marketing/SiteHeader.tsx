@@ -9,6 +9,7 @@ import { BrandMark } from "@/components/ui/BrandMark";
 const NAV = [
   { href: "/#acheteurs", label: "Acheteurs" },
   { href: "/#vendeurs", label: "Vendeurs" },
+  { href: "/blog", label: "Blog" },
   { href: "/#faq", label: "Tarifs" },
   { href: "/litige", label: "Litige" },
   { href: "/histoire", label: "Notre histoire" },
