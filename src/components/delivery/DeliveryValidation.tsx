@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { IconCheck, IconShield } from "@/components/ui/AppIcon";
@@ -51,26 +51,62 @@ export function DeliveryValidation({
   const [protectionRemainingMs, setProtectionRemainingMs] = useState(0);
 
   const [pendingPayment, setPendingPayment] = useState(false);
+  const [pendingElapsed, setPendingElapsed] = useState(0);
+  const pendingStartRef = useRef<number | null>(null);
+  const verifyCalledRef = useRef(false);
 
   const loadSession = useCallback(async () => {
     const res = await fetch(`/api/delivery/${orderSlug}`);
     if (!res.ok) return;
     const data = await res.json();
     if (data.session?.status === "pending_payment") {
+      if (!pendingStartRef.current) pendingStartRef.current = Date.now();
       setPendingPayment(true);
       setLoading(false);
       return;
     }
+    pendingStartRef.current = null;
+    verifyCalledRef.current = false;
     setPendingPayment(false);
     setSession(data.session);
     setLoading(false);
   }, [orderSlug]);
 
+  // Déclenche /verify une seule fois dès que pending_payment est détecté
+  useEffect(() => {
+    if (!pendingPayment || verifyCalledRef.current) return;
+    verifyCalledRef.current = true;
+    fetch(`/api/delivery/${orderSlug}/verify`, { method: "POST" })
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.session && data.session.status !== "pending_payment") {
+          pendingStartRef.current = null;
+          setPendingPayment(false);
+          setSession(data.session);
+          setLoading(false);
+        }
+      })
+      .catch(() => {/* le polling reprend de toute façon */});
+  }, [pendingPayment, orderSlug]);
+
+  // Polling rapide (2 s) en mode pending, normal (5 s) sinon
   useEffect(() => {
     loadSession();
-    const id = setInterval(loadSession, 5000);
+    const interval = pendingPayment ? 2000 : 5000;
+    const id = setInterval(loadSession, interval);
     return () => clearInterval(id);
-  }, [loadSession]);
+  }, [loadSession, pendingPayment]);
+
+  // Compteur secondes affiché pendant l'attente
+  useEffect(() => {
+    if (!pendingPayment) { setPendingElapsed(0); return; }
+    const id = setInterval(() => {
+      setPendingElapsed(
+        pendingStartRef.current ? Math.floor((Date.now() - pendingStartRef.current) / 1000) : 0
+      );
+    }, 1000);
+    return () => clearInterval(id);
+  }, [pendingPayment]);
 
   const codeExpiresAt = session?.deliveryCodeExpiresAt;
 
@@ -153,6 +189,7 @@ export function DeliveryValidation({
   }
 
   if (pendingPayment) {
+    const showTimeout = pendingElapsed >= 45;
     return (
       <div className={styles.deliverySecure} aria-live="polite">
         <div className={styles.captureShield} aria-hidden="true" />
@@ -184,6 +221,20 @@ export function DeliveryValidation({
               }}
             />
           </div>
+          {pendingElapsed > 3 && (
+            <p className={styles.pendingTimer}>
+              Vérification en cours… {pendingElapsed}s
+            </p>
+          )}
+          {showTimeout && (
+            <p className={styles.pendingTimeout}>
+              Si votre paiement a bien été débité, contactez le vendeur ou{" "}
+              <a href="/contact" className={styles.pendingLink}>
+                notre support
+              </a>
+              .
+            </p>
+          )}
         </div>
       </div>
     );

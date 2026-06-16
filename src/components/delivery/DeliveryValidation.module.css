@@ -261,3 +261,25 @@
   color: #fcd34d;
   text-align: center;
 }
+
+.pendingTimer {
+  margin: 0.75rem 0 0;
+  font-size: 0.78rem;
+  color: rgba(255, 255, 255, 0.5);
+  text-align: center;
+  letter-spacing: 0.02em;
+}
+
+.pendingTimeout {
+  margin: 0.75rem 0 0;
+  font-size: 0.82rem;
+  color: #fcd34d;
+  text-align: center;
+  line-height: 1.5;
+}
+
+.pendingLink {
+  color: #0fd5c7;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
