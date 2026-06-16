@@ -174,7 +174,32 @@ export default function PayPage() {
     );
   }
 
-  if (paid && (status === "paid" || status === "protection")) {
+  // Dès que le client revient du paiement (success) ou que le statut est paid/protection,
+  // afficher directement le code — pas d'écran intermédiaire.
+  const showDelivery =
+    paid ||
+    (paymentReturn === "success" && !order.isProductLink) ||
+    status === "paid" ||
+    status === "protection";
+
+  if (showDelivery) {
+    const paymentFailed = paymentReturn === "failed";
+    if (paymentFailed) {
+      return (
+        <div className="page-shell status-screen">
+          <BrandMark />
+          <p className="status-screen-icon" aria-hidden="true">
+            <IconAlert size={36} />
+          </p>
+          <h2 className="status-screen-title">Paiement non finalisé</h2>
+          <p className="status-screen-desc">
+            Le paiement n&apos;a pas été confirmé. Revenez au lien de paiement et réessayez.
+          </p>
+          <MoneyTimeline steps={getBuyerTimeline(status)} />
+        </div>
+      );
+    }
+
     return (
       <div className="pay-success-screen">
         <BrandMark size="lg" />
@@ -185,9 +210,7 @@ export default function PayPage() {
             </div>
           </div>
           <h1 className="pay-success-title">Paiement confirmé</h1>
-          <p className="pay-success-sub">{getBuyerHumanStatus(status)}</p>
           <MoneyTimeline steps={getBuyerTimeline(status)} />
-
           <div style={{ marginTop: "1.25rem" }}>
             <DeliveryValidation
               orderSlug={pollSlug}
@@ -196,52 +219,6 @@ export default function PayPage() {
               onSessionChange={fetchOrder}
             />
           </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (!order.isProductLink && status === "pending_payment") {
-    const returnedAfterPayment = paymentReturn === "success";
-    const paymentFailed = paymentReturn === "failed";
-
-    return (
-      <div className="page-shell status-screen">
-        <BrandMark />
-        <p className="status-screen-icon" aria-hidden="true">
-          {paymentFailed ? <IconAlert size={36} /> : returnedAfterPayment ? <IconCheck size={36} /> : <IconLock size={36} />}
-        </p>
-        <h2 className="status-screen-title">
-          {paymentFailed
-            ? "Paiement non finalisé"
-            : returnedAfterPayment
-              ? "Paiement reçu"
-              : "Paiement en attente"}
-        </h2>
-        <p className="status-screen-desc">
-          {paymentFailed
-            ? "Le paiement n'a pas été confirmé. Vous pouvez revenir au lien de paiement et réessayer."
-            : returnedAfterPayment
-              ? "Nous confirmons la transaction. Le code livraison va s'afficher automatiquement dans quelques instants."
-              : order.paymentProviderMessage ||
-                "Confirmez la demande de paiement sur votre téléphone. Le code livraison s'affichera ici après confirmation."}
-        </p>
-        <MoneyTimeline steps={getBuyerTimeline(status)} />
-      </div>
-    );
-  }
-
-  if (paid) {
-    return (
-      <div className="pay-success-screen">
-        <div className="pay-success-card animate-fade-up">
-          <div className="pay-success-ring">
-            <div className="pay-success-check">
-              <IconCheck size={24} />
-            </div>
-          </div>
-          <h1 className="pay-success-title">Paiement confirmé</h1>
-          <p className="pay-success-sub">{getBuyerHumanStatus(status)}</p>
         </div>
       </div>
     );

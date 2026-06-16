@@ -50,10 +50,18 @@ export function DeliveryValidation({
   const [codeRemainingMs, setCodeRemainingMs] = useState(0);
   const [protectionRemainingMs, setProtectionRemainingMs] = useState(0);
 
+  const [pendingPayment, setPendingPayment] = useState(false);
+
   const loadSession = useCallback(async () => {
     const res = await fetch(`/api/delivery/${orderSlug}`);
     if (!res.ok) return;
     const data = await res.json();
+    if (data.session?.status === "pending_payment") {
+      setPendingPayment(true);
+      setLoading(false);
+      return;
+    }
+    setPendingPayment(false);
     setSession(data.session);
     setLoading(false);
   }, [orderSlug]);
@@ -123,12 +131,59 @@ export function DeliveryValidation({
     onSessionChange?.();
   };
 
-  if (loading && !session) {
+  if (loading) {
     return (
       <div className={styles.deliverySecure} aria-busy="true">
         <div className={styles.captureShield} aria-hidden="true" />
         <div className={styles.glassInner}>
-          <p className={styles.subtitle}>Chargement de la validation sécurisée…</p>
+          <div className={styles.liveBadge}>
+            <motion.span
+              className={styles.liveDot}
+              animate={{ scale: [1, 1.25, 1], opacity: [1, 0.6, 1] }}
+              transition={{ duration: 1.4, repeat: Infinity }}
+            />
+            Connexion sécurisée…
+          </div>
+          <p className={styles.subtitle} style={{ marginTop: "0.75rem" }}>
+            Chargement de la session de livraison.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (pendingPayment) {
+    return (
+      <div className={styles.deliverySecure} aria-live="polite">
+        <div className={styles.captureShield} aria-hidden="true" />
+        <div className={styles.glassInner}>
+          <div className={styles.liveBadge}>
+            <motion.span
+              className={styles.liveDot}
+              animate={{ scale: [1, 1.4, 1], opacity: [1, 0.55, 1] }}
+              transition={{ duration: 1.2, repeat: Infinity }}
+            />
+            Confirmation en cours
+          </div>
+          <h2 className={styles.title}>Confirmation du paiement</h2>
+          <p className={styles.subtitle}>
+            Votre paiement Wave / Orange Money est en cours de validation. Le code
+            livraison s&apos;affiche automatiquement — restez sur cette page.
+          </p>
+          <div style={{ marginTop: "1rem", textAlign: "center" }}>
+            <motion.div
+              animate={{ rotate: 360 }}
+              transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
+              style={{
+                display: "inline-block",
+                width: 36,
+                height: 36,
+                borderRadius: "50%",
+                border: "3px solid rgba(255,255,255,0.15)",
+                borderTopColor: "#0fd5c7",
+              }}
+            />
+          </div>
         </div>
       </div>
     );

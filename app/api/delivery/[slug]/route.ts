@@ -15,9 +15,8 @@ export async function GET(
     return NextResponse.json({ error: "Commande introuvable" }, { status: 404 });
   }
 
-  if (order.status === "pending_payment") {
-    return NextResponse.json({ error: "Commande non payée" }, { status: 409 });
-  }
+  // Autoriser pending_payment : le client vient de payer, le webhook arrive sous peu.
+  // Le composant affiche un spinner et poll jusqu'à confirmation.
 
   return NextResponse.json({
     session: toDeliverySession(order),
