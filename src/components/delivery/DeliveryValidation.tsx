@@ -514,8 +514,15 @@ export function DeliveryValidation({
               <div className={styles.modalHandle} />
               <h3 className={styles.modalTitle}>Confirmer la réception</h3>
               <p className={styles.modalSubtitle}>
-                Saisissez le code de livraison affiché sur cette page pour valider votre réception.
+                Saisissez le code ci-dessous pour valider votre réception.
               </p>
+              {/* Code affiché dans le modal pour faciliter la saisie */}
+              <div className={styles.modalPinDisplay}>
+                {session.pin.split("").map((d, i) => (
+                  <span key={i} className={styles.modalPinDigit}>{d}</span>
+                ))}
+              </div>
+              <p className={styles.modalPinHint}>↓ Recopiez ce code dans les cases</p>
 
               {/* OTP 4 chiffres */}
               <div className={styles.otpRow}>

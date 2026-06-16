@@ -364,8 +364,8 @@
   position: fixed;
   inset: 0;
   z-index: 1000;
-  background: rgba(15, 23, 42, 0.55);
-  backdrop-filter: blur(4px);
+  background: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(2px);
   display: flex;
   align-items: flex-end;
   justify-content: center;
@@ -417,11 +417,42 @@
 }
 
 .modalSubtitle {
-  margin: 0 0 1.25rem;
+  margin: 0 0 0.875rem;
   font-size: 0.8125rem;
   color: #64748b;
   text-align: center;
   line-height: 1.5;
+}
+
+/* Code affiché dans le modal */
+.modalPinDisplay {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+  margin-bottom: 0.35rem;
+}
+
+.modalPinDigit {
+  width: 52px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  background: #f0fdfa;
+  border: 2px solid #0fd5c7;
+  font-size: 1.75rem;
+  font-weight: 900;
+  color: #0a1547;
+  font-variant-numeric: tabular-nums;
+}
+
+.modalPinHint {
+  margin: 0 0 1rem;
+  font-size: 0.75rem;
+  color: #94a3b8;
+  text-align: center;
+  letter-spacing: 0.02em;
 }
 
 /* Inputs OTP 4 chiffres */
