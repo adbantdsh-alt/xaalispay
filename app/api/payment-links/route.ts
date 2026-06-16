@@ -7,6 +7,7 @@ import {
 } from "@/lib/orders";
 import { getSellerAccess } from "@/lib/profile-access";
 import { normalizeProductFields } from "@/lib/product-form";
+import { persistProductImage } from "@/lib/product-images";
 import { buildPaymentLinkUrl } from "@/lib/site-url";
 
 export async function POST(request: Request) {
@@ -39,6 +40,9 @@ export async function POST(request: Request) {
           { error: "Nom, prix et délai livraison requis" },
           { status: 400 }
         );
+      }
+      if (fields.image) {
+        fields.image = await persistProductImage(user.id, fields.image);
       }
       product = await createProduct(user.id, fields);
     }

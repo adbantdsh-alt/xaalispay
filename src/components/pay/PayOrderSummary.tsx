@@ -4,6 +4,7 @@
 import { formatCurrency } from "@/lib/utils";
 import { FEE_POLICY } from "@/lib/fees";
 import { IconCheck, IconPackage } from "@/components/ui/AppIcon";
+import { ProductImage } from "@/components/ui/ProductImage";
 import s from "./PayOrderSummary.module.css";
 
 export function PayOrderSummary({
@@ -30,7 +31,13 @@ export function PayOrderSummary({
     <article className={s.card}>
       <div className={s.media}>
         {productImage ? (
-          <img src={productImage} alt={productName} className={s.img} />
+          <ProductImage
+            src={productImage}
+            alt={productName}
+            className={s.img}
+            placeholderClassName={s.imgEmpty}
+            iconSize={40}
+          />
         ) : (
           <div className={s.imgEmpty} aria-hidden="true">
             <IconPackage size={40} />

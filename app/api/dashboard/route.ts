@@ -4,7 +4,9 @@ import {
   getWalletData,
   processOrderMaintenance,
   validateDelivery,
+  getProductsBySeller,
 } from "@/lib/orders";
+import { resolveProductImageUrl } from "@/lib/product-images";
 import { getSellerAccess } from "@/lib/profile-access";
 import { getProtectionDurationMinutes } from "@/lib/protection";
 
@@ -21,6 +23,10 @@ export async function GET() {
   }
 
   const wallet = await getWalletData(user.id, { skipMaintenance: true });
+  const products = await getProductsBySeller(user.id);
+  const imageByProductId = new Map(
+    products.map((p) => [p.id, resolveProductImageUrl(p.image)])
+  );
 
   return NextResponse.json({
     profile: access.profile,
@@ -30,7 +36,10 @@ export async function GET() {
       sequesteredTotal: wallet.sequesteredTotal,
       breakdown: wallet.breakdown,
     },
-    orders: wallet.orders,
+    orders: wallet.orders.map((order) => ({
+      ...order,
+      productImage: imageByProductId.get(order.productId) || "",
+    })),
     protectionMinutes: getProtectionDurationMinutes(),
     canCreateProducts: access.canCreateProducts,
     emailVerified: access.emailVerified,

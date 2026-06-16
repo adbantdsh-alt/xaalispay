@@ -80,6 +80,7 @@ export default function HistoryPage() {
                   subtitle={order.clientName || order.clientPhone || "Client"}
                   amount={getOrderTotal(order)}
                   status={order.status}
+                  imageUrl={order.productImage}
                   onClick={() => setSelected(order)}
                 />
               ))}

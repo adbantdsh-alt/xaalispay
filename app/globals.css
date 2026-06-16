@@ -1840,8 +1840,8 @@ input, button, textarea, select { font: inherit; color: var(--text); }
 .product-card-media {
   display: block;
   width: 100%;
-  height: clamp(140px, 36vw, 170px);
-  object-fit: contain;
+  height: clamp(160px, 40vw, 200px);
+  object-fit: cover;
   background: linear-gradient(145deg, #f7f8fc, #eef3fa);
 }
 .product-card-media-placeholder {
@@ -2421,6 +2421,27 @@ input, button, textarea, select { font: inherit; color: var(--text); }
 .asset-row-icon-muted { background: var(--surface-seller-muted); color: var(--text-seller-muted); }
 .asset-row-icon-danger { background: rgba(255, 80, 80, 0.1); color: #e04545; }
 
+.asset-row-thumb {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  object-fit: cover;
+  flex-shrink: 0;
+  display: block;
+}
+
+.asset-row-thumb-empty {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface-seller-muted);
+  color: var(--accent-blue);
+  flex-shrink: 0;
+}
+
 .asset-row-body { flex: 1; min-width: 0; }
 .asset-row-title {
   font-weight: 700;
@@ -2906,10 +2927,16 @@ input, button, textarea, select { font: inherit; color: var(--text); }
 
 .seller-app .photo-picker-preview {
   width: 100%;
-  height: 128px;
-  object-fit: contain;
-  border-radius: 8px;
+  height: 140px;
+  object-fit: cover;
+  border-radius: 10px;
   background: #fff;
+}
+
+.seller-app .photo-picker-hint {
+  margin: 0.35rem 0 0;
+  font-size: 0.75rem;
+  text-align: center;
 }
 
 .seller-app .photo-picker-icon {
@@ -2940,11 +2967,12 @@ input, button, textarea, select { font: inherit; color: var(--text); }
 }
 
 .seller-app .product-row-img {
-  width: 44px;
-  height: 44px;
-  border-radius: 10px;
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
   object-fit: cover;
   flex-shrink: 0;
+  background: var(--surface-seller-elevated);
 }
 
 .seller-app .product-row-img-empty {

@@ -16,6 +16,7 @@ import { getCheckoutBreakdown, calculateSellerCommission, FEE_POLICY } from "@/l
 import { getOrderTotal } from "@/lib/utils";
 import { updateDb } from "@/lib/db";
 import { getReusablePaymentAttempt, recordPaymentAttempt } from "@/lib/ledger";
+import { resolveProductImageUrl } from "@/lib/product-images";
 import type { Order, Product } from "@/lib/types";
 
 function buildFeesPayload(
@@ -51,7 +52,7 @@ function buildProductPayPayload(
     productName: product.name,
     productPrice: product.price,
     deliveryCost: product.deliveryCost || 0,
-    productImage: product.image || "",
+    productImage: resolveProductImageUrl(product.image),
     productDescription: product.description || "",
     productNote: product.note || "",
     deliveryHours: product.deliveryHours,
@@ -72,7 +73,7 @@ async function buildOrderPayPayload(order: Order) {
     productName: order.productName,
     productPrice: order.productPrice,
     deliveryCost: order.deliveryCost || 0,
-    productImage: product?.image || "",
+    productImage: resolveProductImageUrl(product?.image),
     productDescription: product?.description || "",
     productNote: product?.note || "",
     deliveryHours: order.deliveryHours,

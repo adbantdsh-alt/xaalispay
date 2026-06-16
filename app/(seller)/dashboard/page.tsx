@@ -205,6 +205,7 @@ export default function DashboardPage() {
                     subtitle={order.clientName || "Client"}
                     amount={order.productPrice}
                     status={order.status}
+                    imageUrl={order.productImage}
                     onClick={() => setSelectedOrder(order)}
                   />
                 ))}

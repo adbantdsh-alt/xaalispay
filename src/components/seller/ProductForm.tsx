@@ -3,8 +3,9 @@
 import { useId, useRef, useState } from "react";
 import type { Product } from "@/lib/types";
 import { formatCurrency, formatDeliveryHours } from "@/lib/utils";
-import { fileToDataUrl } from "@/lib/product-form";
+import { uploadProductImageFile, MAX_IMAGE_INPUT_MB } from "@/lib/product-form";
 import { IconCheck, IconPackage } from "@/components/ui/AppIcon";
+import { ProductImage } from "@/components/ui/ProductImage";
 import { copyToClipboard } from "@/lib/share";
 import { buildProductPaymentUrl, formatPublicUrl } from "@/lib/site-url";
 
@@ -50,18 +51,23 @@ export function ProductFields({
   showDescription?: boolean;
 }) {
   const [imageError, setImageError] = useState("");
+  const [uploadingImage, setUploadingImage] = useState(false);
   const fileId = useId();
   const fileRef = useRef<HTMLInputElement>(null);
 
   const handleImage = async (file: File | null) => {
     if (!file) return;
     setImageError("");
-    const dataUrl = await fileToDataUrl(file);
-    if (!dataUrl) {
-      setImageError("Image max 450 Ko");
-      return;
+    setUploadingImage(true);
+    try {
+      const url = await uploadProductImageFile(file);
+      onChange({ ...form, image: url });
+    } catch (err) {
+      setImageError(err instanceof Error ? err.message : "Upload impossible");
+    } finally {
+      setUploadingImage(false);
+      if (fileRef.current) fileRef.current.value = "";
     }
-    onChange({ ...form, image: dataUrl });
   };
 
   return (
@@ -79,9 +85,15 @@ export function ProductFields({
           type="button"
           className="photo-picker-btn"
           onClick={() => fileRef.current?.click()}
+          disabled={uploadingImage}
         >
-          {form.image ? (
-            <img src={form.image} alt="" className="photo-picker-preview" />
+          {uploadingImage ? (
+            <>
+              <span className="btn-spinner" aria-hidden="true" />
+              <span>Envoi…</span>
+            </>
+          ) : form.image ? (
+            <ProductImage src={form.image} alt="" className="photo-picker-preview" />
           ) : (
             <>
               <span className="photo-picker-icon">📷</span>
@@ -89,6 +101,9 @@ export function ProductFields({
             </>
           )}
         </button>
+        {!uploadingImage && !form.image && (
+          <p className="photo-picker-hint text-muted">JPEG, PNG ou WebP — max {MAX_IMAGE_INPUT_MB} Mo</p>
+        )}
         {form.image && (
           <button
             type="button"
@@ -200,12 +215,8 @@ export function ProductListItem({
 
   return (
     <article className="product-row">
-      {product.image || product.hasImage ? (
-        product.image ? (
-          <img src={product.image} alt="" className="product-row-img" />
-        ) : (
-          <div className="product-row-img product-row-img-empty" aria-hidden />
-        )
+      {product.image ? (
+        <ProductImage src={product.image} alt={product.name} className="product-row-img" />
       ) : (
         <div className="product-row-img product-row-img-empty">
           <IconPackage size={22} />

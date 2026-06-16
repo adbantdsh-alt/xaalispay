@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getProfileByUsername, getProductsBySeller } from "@/lib/orders";
+import { resolveProductImageUrl } from "@/lib/product-images";
 import { SellerShopClient } from "@/components/shop/SellerShopClient";
 import { BrandMark } from "@/components/ui/BrandMark";
 import { buildPageMetadata } from "@/lib/seo";
@@ -105,7 +106,7 @@ export default async function SellerPublicPage({
           name: p.name,
           price: p.price,
           deliveryCost: p.deliveryCost || 0,
-          image: p.image,
+          image: resolveProductImageUrl(p.image),
         }))}
       />
     </div>

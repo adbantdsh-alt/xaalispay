@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getProfileByUsername, getProductsBySeller } from "@/lib/orders";
+import { resolveProductImageUrl } from "@/lib/product-images";
 import { formatCurrency, getOrderTotal } from "@/lib/utils";
 
 export async function GET(
@@ -36,7 +37,7 @@ export async function GET(
       totalLabel: formatCurrency(
         getOrderTotal({ productPrice: p.price, deliveryCost: p.deliveryCost || 0 })
       ),
-      image: p.image,
+      image: resolveProductImageUrl(p.image),
     })),
   });
 }

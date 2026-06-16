@@ -99,6 +99,8 @@ export interface Order {
   buyerProtectionFee?: number;
   /** Commission vendeur prélevée à la libération (2 %). */
   sellerCommission?: number;
+  /** URL image produit (enrichie côté API dashboard). */
+  productImage?: string;
   createdAt: string;
   updatedAt: string;
 }

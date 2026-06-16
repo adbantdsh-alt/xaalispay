@@ -3,6 +3,7 @@ import { formatCurrency } from "@/lib/utils";
 import { getSellerHumanStatus } from "@/lib/order-timeline";
 import { getOrderStatusVisual } from "@/lib/order-status-ui";
 import type { OrderStatus } from "@/lib/types";
+import { ProductImage } from "@/components/ui/ProductImage";
 
 function StatusIcon({ type }: { type: ReturnType<typeof getOrderStatusVisual>["icon"] }) {
   const paths: Record<string, ReactNode> = {
@@ -45,12 +46,14 @@ export function AssetRow({
   subtitle,
   amount,
   status,
+  imageUrl,
   onClick,
 }: {
   title: string;
   subtitle: string;
   amount: number;
   status: OrderStatus;
+  imageUrl?: string;
   onClick?: () => void;
 }) {
   const visual = getOrderStatusVisual(status);
@@ -76,7 +79,17 @@ export function AssetRow({
       {...interactiveProps}
     >
       <div className={`asset-row-icon asset-row-icon-${visual.tone}`}>
-        <StatusIcon type={visual.icon} />
+        {imageUrl ? (
+          <ProductImage
+            src={imageUrl}
+            alt=""
+            className="asset-row-thumb"
+            placeholderClassName="asset-row-thumb-empty"
+            iconSize={18}
+          />
+        ) : (
+          <StatusIcon type={visual.icon} />
+        )}
       </div>
       <div className="asset-row-body">
         <p className="asset-row-title">{title}</p>

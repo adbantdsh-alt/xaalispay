@@ -9,6 +9,7 @@ import {
 import { getSellerAccess } from "@/lib/profile-access";
 import { normalizeProductFields } from "@/lib/product-form";
 import { buildPaymentLinkUrl } from "@/lib/site-url";
+import { persistProductImage, withResolvedProductImage } from "@/lib/product-images";
 
 export async function GET(request: Request) {
   const user = await getSessionUser();
@@ -22,12 +23,12 @@ export async function GET(request: Request) {
     if (!product || product.sellerId !== user.id) {
       return NextResponse.json({ error: "Produit introuvable" }, { status: 404 });
     }
-    return NextResponse.json({ product });
+    return NextResponse.json({ product: withResolvedProductImage(product) });
   }
 
   const products = await getProductsBySeller(user.id);
   return NextResponse.json({
-    products: products.map((product) => ({
+    products: products.map((product) => withResolvedProductImage({
       ...product,
       hasImage: Boolean(product.image),
     })),
@@ -63,9 +64,13 @@ export async function POST(request: Request) {
       );
     }
 
+    if (fields.image) {
+      fields.image = await persistProductImage(user.id, fields.image);
+    }
+
     const product = await createProduct(user.id, fields);
     return NextResponse.json({
-      product,
+      product: withResolvedProductImage(product),
       payUrl: buildPaymentLinkUrl(product.paymentSlug),
     });
   } catch (err) {
@@ -96,6 +101,8 @@ export async function PATCH(request: Request) {
     // sans avoir explicitement supprimé l'image (hasImage flag absent)
     if (data.image === "" && raw.clearImage !== true) {
       delete data.image;
+    } else if (typeof data.image === "string" && data.image) {
+      data.image = await persistProductImage(user.id, data.image);
     }
 
     const product = await updateProduct(id, user.id, data);
@@ -103,7 +110,7 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ error: "Produit introuvable" }, { status: 404 });
     }
 
-    return NextResponse.json({ product });
+    return NextResponse.json({ product: withResolvedProductImage(product) });
   } catch (err) {
     const message =
       err instanceof Error ? err.message : "Erreur serveur";

@@ -34,7 +34,7 @@ export async function POST() {
   ].map((p) => ({
     ...p,
     sellerId,
-    image: "",
+    image: `https://picsum.photos/seed/xaalispay-${p.id}/800/800`,
     active: true,
     productId: p.id,
     createdAt: d(30),
