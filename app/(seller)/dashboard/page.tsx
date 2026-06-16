@@ -8,6 +8,7 @@ import { filterOrders, type OrderFilterKey } from "@/lib/order-filters";
 import { computeWalletBreakdown } from "@/lib/wallet-breakdown";
 import { computeChargebackStats } from "@/lib/chargeback";
 import { SellerOnboarding } from "@/components/seller/SellerOnboarding";
+import { SellerSupportCard } from "@/components/seller/SellerSupportCard";
 import { ActionRequiredCard } from "@/components/seller/ActionRequiredCard";
 import { DashboardSkeleton } from "@/components/ui/Skeleton";
 import { WalletOverview } from "@/components/seller/WalletOverview";
@@ -114,6 +115,12 @@ export default function DashboardPage() {
   const hasValidatedDelivery = data.orders.some(
     (o) => o.status === "protection" || o.status === "released"
   );
+  const hasSuccessfulPayout = data.hasSuccessfulPayout === true;
+  const onboardingIncomplete =
+    productCount === 0 ||
+    data.orders.length === 0 ||
+    !hasValidatedDelivery ||
+    !hasSuccessfulPayout;
   const shopUrl = buildShopUrl(data.profile.username);
   const showEmpty = data.orders.length === 0 && productCount === 0;
 
@@ -189,6 +196,12 @@ export default function DashboardPage() {
 
       <SellerStatsCard stats={sellerStats} />
 
+      <SellerSupportCard
+        username={data.profile.username}
+        createdAt={data.profile.createdAt}
+        onboardingIncomplete={onboardingIncomplete}
+      />
+
       {showEmpty ? (
         <section className="seller-tip-card animate-fade-up-d2">
           <p className="seller-tip-title">Lancez votre boutique</p>
@@ -242,9 +255,11 @@ export default function DashboardPage() {
       )}
 
       <SellerOnboarding
+        username={data.profile.username}
         productCount={productCount}
         orderCount={data.orders.length}
         hasValidatedDelivery={hasValidatedDelivery}
+        hasSuccessfulPayout={hasSuccessfulPayout}
       />
 
       {/* Popup détail commande */}

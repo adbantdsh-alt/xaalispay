@@ -30,6 +30,7 @@ export interface SellerDashboardPayload {
   canCreateProducts?: boolean;
   emailVerified?: boolean;
   isSuperAdmin?: boolean;
+  hasSuccessfulPayout?: boolean;
 }
 
 interface SellerDataContextValue {

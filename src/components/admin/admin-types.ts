@@ -1,6 +1,46 @@
 import type { OrderStatus } from "@/lib/types";
 
-export type AdminTab = "overview" | "disputes" | "payouts";
+export type AdminTab = "overview" | "pilote" | "disputes" | "payouts";
+
+export type PilotFunnelStage =
+  | "registered"
+  | "email_verified"
+  | "product"
+  | "paid_order"
+  | "delivery"
+  | "payout";
+
+export interface PilotVendorRow {
+  id: string;
+  username: string;
+  displayName: string;
+  phone: string | null;
+  emailVerified: boolean;
+  productCount: number;
+  orderCount: number;
+  paidOrderCount: number;
+  releasedCount: number;
+  payoutSuccessCount: number;
+  stage: PilotFunnelStage;
+  stageIndex: number;
+  stageLabel: string;
+  createdAt: string;
+  daysSinceSignup: number;
+}
+
+export interface PilotDashboardData {
+  target: { min: number; max: number };
+  sellerCount: number;
+  completeCount: number;
+  supportWhatsAppConfigured: boolean;
+  funnel: Array<{
+    stage: PilotFunnelStage;
+    label: string;
+    count: number;
+    rateFromPrevious: number | null;
+  }>;
+  vendors: PilotVendorRow[];
+}
 
 export interface OverviewData {
   stats: {

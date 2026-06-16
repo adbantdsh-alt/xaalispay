@@ -108,7 +108,39 @@ Créer un cron job :
 
 ---
 
-## 9. Phase 5B — Infra durable (post-pilote)
+## 9. Phase 7 — Pilote vendeurs (5–10)
+
+### Variables
+
+| Variable | Rôle |
+|----------|------|
+| `NEXT_PUBLIC_SUPPORT_WHATSAPP` | Numéro support (sans +) — lien WhatsApp vendeur + page contact |
+
+### Admin → onglet **Pilote**
+
+- Entonnoir : inscrit → email vérifié → produit → commande payée → livraison → retrait
+- Liste vendeurs avec statut et lien WhatsApp direct
+- Objectif : **5–10 parcours complets** (payin → livraison → retrait)
+
+### Session onboarding (1 vendeur, ~30 min)
+
+1. Inscription + vérification email
+2. Créer 1 produit avec photo (`/create`)
+3. Partager le lien (WhatsApp) — acheteur test sur autre téléphone
+4. Payer Wave/Orange → webhook ou polling confirme le paiement
+5. Valider livraison avec PIN (`/dashboard`)
+6. Attendre fin Séquestre Flash → retrait Wave/Orange (`/wallet`)
+7. Vérifier email confirmation + mouvements portefeuille
+
+### Côté vendeur
+
+- **Premiers pas** (dashboard) : 5 étapes dont retrait
+- Bannière **Support pilote WhatsApp** (14 premiers jours)
+- Paramètres → lien support WhatsApp
+
+---
+
+## 10. Phase 5B — Infra durable (post-pilote)
 
 | Variable | Rôle |
 |----------|------|

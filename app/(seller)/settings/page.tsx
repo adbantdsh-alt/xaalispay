@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { buildShopPath } from "@/lib/site-url";
+import { buildSupportWhatsAppUrl, buildSellerPilotSupportMessage } from "@/lib/support";
 import { DashboardSkeleton } from "@/components/ui/Skeleton";
 import { SettingsPhoneEditor } from "@/components/seller/SettingsPhoneEditor";
 import { SettingsProfileEditor } from "@/components/seller/SettingsProfileEditor";
@@ -67,6 +68,9 @@ export default function SettingsPage() {
 
   const initial = profile.displayName.charAt(0).toUpperCase();
   const showAdmin = profile.role === "super_admin" || data?.isSuperAdmin === true;
+  const supportWhatsApp = buildSupportWhatsAppUrl(
+    buildSellerPilotSupportMessage(profile.username)
+  );
 
   return (
     <div className="settings-page animate-settings-slide">
@@ -165,6 +169,22 @@ export default function SettingsPage() {
       <section className="settings-section">
         <p className="settings-section-label">Aide &amp; légal</p>
         <div className="settings-link-group">
+          {supportWhatsApp && (
+            <a
+              href={supportWhatsApp}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="settings-link-item settings-link-item-support"
+            >
+              <div className="settings-link-body">
+                <span className="settings-link-label">Support pilote WhatsApp</span>
+                <span className="settings-link-desc">Aide rapide pendant la phase pilote</span>
+              </div>
+              <svg className="settings-link-chevron" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+              </svg>
+            </a>
+          )}
           {HELP_LINKS.map((item) => (
             <SettingsLink key={item.href} {...item} />
           ))}

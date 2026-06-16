@@ -8,6 +8,7 @@ import {
 } from "@/lib/orders";
 import { resolveProductImageUrl } from "@/lib/product-images";
 import { getSellerAccess } from "@/lib/profile-access";
+import { getDb } from "@/lib/db";
 import { getProtectionDurationMinutes } from "@/lib/protection";
 
 export async function GET() {
@@ -24,6 +25,10 @@ export async function GET() {
 
   const wallet = await getWalletData(user.id, { skipMaintenance: true });
   const products = await getProductsBySeller(user.id);
+  const db = await getDb();
+  const hasSuccessfulPayout = db.payouts.some(
+    (payout) => payout.sellerId === user.id && payout.status === "success"
+  );
   const imageByProductId = new Map(
     products.map((p) => [p.id, resolveProductImageUrl(p.image)])
   );
@@ -44,6 +49,7 @@ export async function GET() {
     canCreateProducts: access.canCreateProducts,
     emailVerified: access.emailVerified,
     isSuperAdmin: access.isSuperAdmin,
+    hasSuccessfulPayout,
   });
 }
 

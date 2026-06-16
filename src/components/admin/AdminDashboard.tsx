@@ -4,14 +4,16 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AdminDisputesSection } from "./AdminDisputesSection";
 import { AdminOverviewSection } from "./AdminOverviewSection";
+import { AdminPilotSection } from "./AdminPilotSection";
 import { AdminPayoutsSection } from "./AdminPayoutsSection";
-import type { AdminTab, DisputeRow, OverviewData, PayoutRow } from "./admin-types";
+import type { AdminTab, DisputeRow, OverviewData, PayoutRow, PilotDashboardData } from "./admin-types";
 
 const AUTO_REFRESH_MS = 15_000;
 const NO_CACHE = { cache: "no-store" as const };
 
-const TABS: { id: AdminTab; label: string; badgeKey?: "disputes" | "payouts" }[] = [
+const TABS: { id: AdminTab; label: string; badgeKey?: "disputes" | "payouts" | "pilote" }[] = [
   { id: "overview", label: "Vue d'ensemble" },
+  { id: "pilote", label: "Pilote", badgeKey: "pilote" },
   { id: "disputes", label: "Litiges", badgeKey: "disputes" },
   { id: "payouts", label: "Retraits", badgeKey: "payouts" },
 ];
@@ -23,6 +25,7 @@ export function AdminDashboard() {
   const [tabLoading, setTabLoading] = useState(false);
   const [error, setError] = useState("");
   const [overview, setOverview] = useState<OverviewData | null>(null);
+  const [pilot, setPilot] = useState<PilotDashboardData | null>(null);
   const [disputes, setDisputes] = useState<DisputeRow[]>([]);
   const [payouts, setPayouts] = useState<PayoutRow[]>([]);
   const [resolving, setResolving] = useState<string | null>(null);
@@ -79,12 +82,22 @@ export function AdminDashboard() {
     if (res.ok) setPayouts((await res.json()).payouts || []);
   }, [checkAuth]);
 
+  const fetchPilot = useCallback(async () => {
+    const res = await fetch("/api/admin/pilot", NO_CACHE);
+    if (checkAuth(res.status)) return;
+    if (res.ok) {
+      const data = await res.json();
+      setPilot(data.pilot || null);
+    }
+  }, [checkAuth]);
+
   const fetchTab = useCallback(
     async (target: AdminTab) => {
+      if (target === "pilote") await fetchPilot();
       if (target === "disputes") await fetchDisputes();
       if (target === "payouts") await fetchPayouts();
     },
-    [fetchDisputes, fetchPayouts]
+    [fetchPilot, fetchDisputes, fetchPayouts]
   );
 
   const refresh = useCallback(
@@ -116,6 +129,7 @@ export function AdminDashboard() {
     (async () => {
       try {
         const data = await fetchOverview();
+        await fetchPilot();
         if (data && data.stats.openDisputes > 0) {
           setTab("disputes");
           await fetchDisputes();
@@ -128,7 +142,7 @@ export function AdminDashboard() {
         setLoading(false);
       }
     })();
-  }, [fetchOverview, fetchDisputes]);
+  }, [fetchOverview, fetchDisputes, fetchPilot]);
 
   useEffect(() => {
     if (loading || !initialTabSet) return;
@@ -201,6 +215,8 @@ export function AdminDashboard() {
   };
 
   const failedPayouts = payouts.filter((p) => p.status === "failed").length;
+  const pilotIncomplete =
+    pilot && pilot.completeCount < pilot.target.min ? pilot.target.min - pilot.completeCount : 0;
 
   if (loading) {
     return (
@@ -223,6 +239,9 @@ export function AdminDashboard() {
             {item.label}
             {item.badgeKey === "disputes" && disputes.length > 0 && (
               <span className="admin-tab-badge">{disputes.length}</span>
+            )}
+            {item.badgeKey === "pilote" && pilotIncomplete > 0 && (
+              <span className="admin-tab-badge admin-tab-badge--warn">{pilotIncomplete}</span>
             )}
             {item.badgeKey === "payouts" && failedPayouts > 0 && (
               <span className="admin-tab-badge admin-tab-badge--warn">{failedPayouts}</span>
@@ -268,6 +287,8 @@ export function AdminDashboard() {
           onRefresh={() => refresh(true)}
         />
       )}
+
+      {tab === "pilote" && !tabLoading && pilot && <AdminPilotSection pilot={pilot} />}
 
       {tab === "disputes" && !tabLoading && (
         <AdminDisputesSection

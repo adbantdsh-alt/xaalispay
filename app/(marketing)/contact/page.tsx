@@ -1,10 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import { buildSupportWhatsAppUrl } from "@/lib/support";
 
 export default function ContactPage() {
   const [sent, setSent] = useState(false);
   const [form, setForm] = useState({ name: "", email: "", subject: "", message: "" });
+  const supportWhatsApp = buildSupportWhatsAppUrl(
+    "Bonjour XaalisPay, j'ai une question sur le séquestre ou mon compte vendeur."
+  );
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -77,6 +81,19 @@ export default function ContactPage() {
           <div className="glass-card content-aside-block">
             <p className="section-label">Adresse</p>
             <p className="text-black">Dakar, Sénégal</p>
+          </div>
+          <div className="glass-card content-aside-block">
+            <p className="section-label">Support pilote WhatsApp</p>
+            {supportWhatsApp ? (
+              <a href={supportWhatsApp} target="_blank" rel="noopener noreferrer" className="content-link">
+                Écrire sur WhatsApp
+              </a>
+            ) : (
+              <p className="text-sm text-muted">Disponible prochainement.</p>
+            )}
+            <p className="text-sm text-muted" style={{ marginTop: "0.5rem" }}>
+              Réponse rapide du lundi au vendredi, 9h–18h (GMT).
+            </p>
           </div>
           <div className="glass-card content-aside-block">
             <p className="section-label">Support litiges</p>

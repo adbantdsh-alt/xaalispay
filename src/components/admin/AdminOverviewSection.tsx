@@ -53,6 +53,11 @@ export function AdminOverviewSection({
       <AdminLaunchChecklist />
 
       <div className="admin-kpi-grid admin-kpi-grid--compact">
+        <button type="button" className="admin-kpi admin-kpi--action" onClick={() => onNavigate("pilote")}>
+          <p className="admin-kpi-label">Pilote vendeurs</p>
+          <p className="admin-kpi-value">{stats.sellerCount}</p>
+          <p className="admin-kpi-sub">Entonnoir →</p>
+        </button>
         <button type="button" className="admin-kpi admin-kpi--action" onClick={() => onNavigate("disputes")}>
           <p className="admin-kpi-label">Litiges ouverts</p>
           <p className={`admin-kpi-value${stats.openDisputes > 0 ? " admin-kpi-value--alert" : ""}`}>

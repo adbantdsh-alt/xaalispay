@@ -3,22 +3,33 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { IconCheck } from "@/components/ui/AppIcon";
+import {
+  buildSupportWhatsAppUrl,
+  buildSellerPilotSupportMessage,
+} from "@/lib/support";
 
 const STEPS = [
   { id: "product", label: "Créer un produit", href: "/create" },
   { id: "share", label: "Partager votre lien", href: "/create" },
   { id: "order", label: "Recevoir une commande", href: "/dashboard" },
   { id: "validate", label: "Valider une livraison", href: "/dashboard" },
+  { id: "payout", label: "Effectuer un retrait", href: "/wallet" },
 ] as const;
 
+type StepId = (typeof STEPS)[number]["id"];
+
 export function SellerOnboarding({
+  username,
   productCount,
   orderCount,
   hasValidatedDelivery,
+  hasSuccessfulPayout,
 }: {
+  username: string;
   productCount: number;
   orderCount: number;
   hasValidatedDelivery: boolean;
+  hasSuccessfulPayout: boolean;
 }) {
   const [shared, setShared] = useState(false);
   const [dismissed, setDismissed] = useState(false);
@@ -41,11 +52,12 @@ export function SellerOnboarding({
     };
   }, []);
 
-  const completed = {
+  const completed: Record<StepId, boolean> = {
     product: productCount > 0,
     share: shared,
     order: orderCount > 0,
     validate: hasValidatedDelivery,
+    payout: hasSuccessfulPayout,
   };
 
   const doneCount = Object.values(completed).filter(Boolean).length;
@@ -64,6 +76,9 @@ export function SellerOnboarding({
   if (dismissed || allDone) return null;
 
   const nextStep = STEPS.find((s) => !completed[s.id]);
+  const supportUrl = buildSupportWhatsAppUrl(
+    buildSellerPilotSupportMessage(username, nextStep?.label)
+  );
 
   return (
     <section className="onboarding-card animate-fade-up">
@@ -91,6 +106,16 @@ export function SellerOnboarding({
         <Link href={nextStep.href} className="btn-teal onboarding-cta">
           Continuer : {nextStep.label}
         </Link>
+      )}
+      {supportUrl && (
+        <a
+          href={supportUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="btn-ghost onboarding-support"
+        >
+          Besoin d&apos;aide ? WhatsApp support
+        </a>
       )}
       <button
         type="button"

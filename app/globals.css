@@ -966,6 +966,7 @@ input, button, textarea, select { font: inherit; color: var(--text); }
   opacity: 0.45;
 }
 .onboarding-cta { margin-top: 1rem; width: 100%; }
+.onboarding-support { margin-top: 0.5rem; width: 100%; font-size: 0.8125rem; }
 .onboarding-dismiss { margin-top: 0.5rem; width: 100%; }
 
 /* Ã¢â€â‚¬Ã¢â€â‚¬ Misc UI Ã¢â€â‚¬Ã¢â€â‚¬ */
@@ -6191,6 +6192,135 @@ input, button, textarea, select { font: inherit; color: var(--text); }
 .admin-webhook-date {
   color: rgba(15, 31, 102, 0.5);
   white-space: nowrap;
+}
+
+/* ── Phase 7 : pilote vendeurs ── */
+.admin-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.admin-card-subtitle {
+  margin: 0 0 0.75rem;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: rgba(15, 31, 102, 0.85);
+}
+
+.admin-pilot-target-badge {
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  background: rgba(15, 213, 199, 0.12);
+  color: #0f766e;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.admin-pilot-progress-bar {
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(15, 31, 102, 0.08);
+  overflow: hidden;
+}
+
+.admin-pilot-progress-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #1a4fd6, #0fd5c7);
+  transition: width 0.35s ease;
+}
+
+.admin-pilot-progress-label {
+  margin: 0.5rem 0 0;
+  font-size: 0.8125rem;
+}
+
+.admin-pilot-funnel {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  gap: 0.65rem;
+}
+
+.admin-pilot-funnel-step {
+  padding: 0.75rem;
+  border-radius: 12px;
+  background: rgba(15, 31, 102, 0.04);
+  text-align: center;
+}
+
+.admin-pilot-funnel-count {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #1a4fd6;
+}
+
+.admin-pilot-funnel-label {
+  margin: 0.25rem 0 0;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  line-height: 1.3;
+  color: rgba(15, 31, 102, 0.7);
+}
+
+.admin-pilot-funnel-rate {
+  margin: 0.2rem 0 0;
+  font-size: 0.625rem;
+}
+
+.admin-pilot-metrics {
+  font-size: 0.75rem;
+  white-space: nowrap;
+}
+
+.admin-pilot-wa-link {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: #15803d;
+  text-decoration: none;
+}
+
+.admin-pilot-wa-link:hover {
+  text-decoration: underline;
+}
+
+.seller-support-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin: 0.75rem 0;
+  padding: 1rem;
+  border-radius: 16px;
+  border: 1px solid rgba(15, 213, 199, 0.35);
+  background: linear-gradient(180deg, rgba(15, 213, 199, 0.08), rgba(255, 255, 255, 0.95));
+}
+
+.seller-support-card-title {
+  margin: 0;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--accent-blue, #0f1f66);
+}
+
+.seller-support-card-desc {
+  margin: 0.35rem 0 0;
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+  line-height: 1.45;
+}
+
+.seller-support-card-btn {
+  width: 100%;
+  text-align: center;
+  text-decoration: none;
+}
+
+.settings-link-item-support .settings-link-label {
+  color: #15803d;
 }
 
 /* ── Phase 4 : landing dev + notifications commandes ── */

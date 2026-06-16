@@ -120,6 +120,11 @@ const checks = [
     ok: process.env.DEV_AUTO_LOGIN === "false" || !isProd,
     required: isProd,
   },
+  {
+    label: "NEXT_PUBLIC_SUPPORT_WHATSAPP (pilote)",
+    ok: !!process.env.NEXT_PUBLIC_SUPPORT_WHATSAPP?.trim(),
+    required: false,
+  },
 ];
 
 const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || "https://xaalispay.com").replace(
