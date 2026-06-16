@@ -5,12 +5,11 @@ import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { getBuyerTimeline, getBuyerHumanStatus } from "@/lib/order-timeline";
 import { MoneyTimeline } from "@/components/ui/MoneyTimeline";
-import { CopyButton } from "@/components/ui/CopyButton";
 import { BrandMark } from "@/components/ui/BrandMark";
 import { IconLock, IconCheck, IconAlert, IconUndo } from "@/components/ui/AppIcon";
 import { PaySkeleton } from "@/components/ui/Skeleton";
-import { buildPinShareMessage, buildWhatsAppUrl } from "@/lib/share";
-import { PayOrderSummary, PayProtectionBlock, PayClientFields, PayMethodButtons, PayCheckoutSection, PinConsentGate } from "@/components/pay/PayPageSections";
+import { DeliveryValidation } from "@/components/delivery/DeliveryValidation";
+import { PayOrderSummary, PayProtectionBlock, PayClientFields, PayMethodButtons, PayCheckoutSection } from "@/components/pay/PayPageSections";
 import { calculateBuyerProtectionFee } from "@/lib/fees";
 import type { OrderStatus } from "@/lib/types";
 
@@ -56,8 +55,6 @@ export default function PayPage() {
   const [loading, setLoading] = useState(true);
   const [paying, setPaying] = useState(false);
   const [paid, setPaid] = useState(false);
-  const [pin, setPin] = useState("");
-  const [pinConsent, setPinConsent] = useState(false);
   const [protectionMinutes, setProtectionMinutes] = useState(30);
   const [error, setError] = useState("");
 
@@ -79,9 +76,6 @@ export default function PayPage() {
       }
       if (data.order.status !== "pending_payment") {
         setPaid(true);
-        if (data.order.pin) {
-          setPin(data.order.pin);
-        }
       }
     }
     setLoading(false);
@@ -93,11 +87,6 @@ export default function PayPage() {
     const interval = setInterval(fetchOrder, 4000);
     return () => clearInterval(interval);
   }, [fetchOrder, isProductLink, trackingSlug]);
-
-  const handleMaintenance = async () => {
-    await fetch("/api/maintenance", { method: "POST" });
-    fetchOrder();
-  };
 
   const handlePay = async (method: string) => {
     if (
@@ -134,8 +123,6 @@ export default function PayPage() {
       return;
     }
     setPaid(false);
-    setPin("");
-    setPinConsent(false);
     if (data.orderSlug) {
       setTrackingSlug(data.orderSlug);
       setIsProductLink(false);
@@ -187,9 +174,32 @@ export default function PayPage() {
     );
   }
 
-  const canDispute = status === "protection" && !!order.protectionEndsAt;
-  const visiblePin = pin || order.pin || "";
-  const showPin = visiblePin && (status === "paid" || canDispute);
+  if (paid && (status === "paid" || status === "protection")) {
+    return (
+      <div className="pay-success-screen">
+        <BrandMark size="lg" />
+        <div className="pay-success-card animate-fade-up" style={{ marginTop: "2rem", maxWidth: 480 }}>
+          <div className="pay-success-ring">
+            <div className="pay-success-check">
+              <IconCheck size={24} />
+            </div>
+          </div>
+          <h1 className="pay-success-title">Paiement confirmé</h1>
+          <p className="pay-success-sub">{getBuyerHumanStatus(status)}</p>
+          <MoneyTimeline steps={getBuyerTimeline(status)} />
+
+          <div style={{ marginTop: "1.25rem" }}>
+            <DeliveryValidation
+              orderSlug={pollSlug}
+              productName={order.productName}
+              protectionMinutes={protectionMinutes}
+              onSessionChange={fetchOrder}
+            />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (!order.isProductLink && status === "pending_payment") {
     const returnedAfterPayment = paymentReturn === "success";
@@ -217,65 +227,6 @@ export default function PayPage() {
                 "Confirmez la demande de paiement sur votre téléphone. Le code livraison s'affichera ici après confirmation."}
         </p>
         <MoneyTimeline steps={getBuyerTimeline(status)} />
-      </div>
-    );
-  }
-
-  if (paid && showPin) {
-    return (
-      <div className="pay-success-screen">
-        <BrandMark size="lg" />
-        <div className="pay-success-card animate-fade-up" style={{ marginTop: "2rem" }}>
-          <div className="pay-success-ring">
-            <div className="pay-success-check">
-              <IconCheck size={24} />
-            </div>
-          </div>
-          <h1 className="pay-success-title">Paiement confirmé</h1>
-          <p className="pay-success-sub">{getBuyerHumanStatus(status)}</p>
-          <MoneyTimeline steps={getBuyerTimeline(status)} />
-
-          <PinConsentGate accepted={pinConsent} onAcceptChange={setPinConsent}>
-            <div className="pay-pin-block">
-              <p className="pay-pin-label">Code Livraison</p>
-              <p className="pay-pin-code">{visiblePin}</p>
-            </div>
-
-            <p className="pay-pin-hint">
-              Donnez ce code au livreur après vérification du colis.
-            </p>
-
-            <div className="share-buttons">
-              <CopyButton text={visiblePin} label="Copier" className="btn-primary pay-code-action" />
-              <a
-                href={buildWhatsAppUrl(buildPinShareMessage(visiblePin, order.productName))}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="btn-secondary share-btn-whatsapp pay-code-action"
-                style={{
-                  background: "linear-gradient(135deg,#25d366,#128c7e)",
-                  color: "#fff",
-                  border: "none",
-                }}
-              >
-                WhatsApp
-              </a>
-            </div>
-          </PinConsentGate>
-
-          {canDispute && pinConsent && (
-            <div className="pay-dispute-minimal">
-              <ReleaseCountdownInline
-                endsAt={order.protectionEndsAt!}
-                minutes={protectionMinutes}
-                onExpire={handleMaintenance}
-              />
-              <Link href={`/litige?code=${visiblePin}`} className="btn-ghost dispute-link">
-                Ouvrir un litige
-              </Link>
-            </div>
-          )}
-        </div>
       </div>
     );
   }
@@ -362,53 +313,6 @@ export default function PayPage() {
         <PayMethodButtons onPay={handlePay} paying={paying} />
 
         {error && <p className="alert-danger">{error}</p>}
-      </div>
-    </div>
-  );
-}
-
-function ReleaseCountdownInline({
-  endsAt,
-  minutes,
-  onExpire,
-}: {
-  endsAt: string;
-  minutes: number;
-  onExpire?: () => void;
-}) {
-  const [remaining, setRemaining] = useState(0);
-  const [expired, setExpired] = useState(false);
-
-  useEffect(() => {
-    const tick = () => {
-      const ms = new Date(endsAt).getTime() - Date.now();
-      if (ms <= 0) {
-        setRemaining(0);
-        if (!expired) {
-          setExpired(true);
-          onExpire?.();
-        }
-        return;
-      }
-      setRemaining(ms);
-    };
-    tick();
-    const id = setInterval(tick, 1000);
-    return () => clearInterval(id);
-  }, [endsAt, expired, onExpire]);
-
-  const total = Math.floor(remaining / 1000);
-  const m = Math.floor(total / 60);
-  const s = total % 60;
-  const display = `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
-  const progress = Math.max(0, Math.min(100, (remaining / (minutes * 60 * 1000)) * 100));
-
-  return (
-    <div className="countdown-card countdown-card-inline">
-      <p className="countdown-label">Délai litige</p>
-      <p className="countdown-time countdown-time-sm">{display}</p>
-      <div className="countdown-bar">
-        <div className="countdown-bar-fill" style={{ width: `${progress}%` }} />
       </div>
     </div>
   );

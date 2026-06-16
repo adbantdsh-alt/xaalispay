@@ -2,6 +2,7 @@ import fs from "fs";
 import path from "path";
 import type { Database } from "./types";
 import { ensureProductPaymentSlugs, getOrderTotal } from "./utils";
+import { computeDeliveryCodeExpiresAt } from "./delivery-code";
 import {
   isRemoteStoreEnabled,
   loadRemoteDatabase,
@@ -199,6 +200,12 @@ function normalizeDb(db: Database): Database {
     if (o.disputePhotos === undefined) o.disputePhotos = [];
     if (o.disputeMedia === undefined) {
       o.disputeMedia = o.disputePhotos.map((url) => ({ type: "image", url }));
+    }
+    if (!o.deliveryCodeIssuedAt && o.paidAt) {
+      o.deliveryCodeIssuedAt = o.paidAt;
+    }
+    if (!o.deliveryCodeExpiresAt && o.deliveryCodeIssuedAt) {
+      o.deliveryCodeExpiresAt = computeDeliveryCodeExpiresAt(new Date(o.deliveryCodeIssuedAt));
     }
   }
   backfillLedgerFromOrders(db);

@@ -1,0 +1,263 @@
+.deliverySecure {
+  position: relative;
+  isolation: isolate;
+  user-select: none;
+  -webkit-user-select: none;
+  border-radius: 20px;
+  overflow: hidden;
+  background: linear-gradient(145deg, #0f1f66 0%, #152a7a 45%, #0a1547 100%);
+  color: #f8fafc;
+  padding: 1.25rem 1.25rem 1.35rem;
+  box-shadow:
+    0 12px 40px rgba(15, 31, 102, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.captureShield {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  background: repeating-linear-gradient(
+    -45deg,
+    rgba(255, 255, 255, 0.015) 0,
+    rgba(255, 255, 255, 0.015) 2px,
+    transparent 2px,
+    transparent 6px
+  );
+  mix-blend-mode: overlay;
+}
+
+.glassInner {
+  position: relative;
+  z-index: 2;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  padding: 1rem;
+}
+
+.liveBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.liveDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: #0fd5c7;
+  box-shadow: 0 0 12px rgba(15, 213, 199, 0.8);
+}
+
+.title {
+  margin: 0.75rem 0 0.25rem;
+  font-size: 1.0625rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.subtitle {
+  margin: 0;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.pulseWrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 1.25rem auto 0.75rem;
+  width: 168px;
+  height: 168px;
+}
+
+.pulseRing {
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  border: 2px solid rgba(15, 213, 199, 0.35);
+}
+
+.pinCode {
+  position: relative;
+  z-index: 1;
+  font-size: 2.75rem;
+  font-weight: 800;
+  letter-spacing: 0.35em;
+  font-variant-numeric: tabular-nums;
+  text-indent: 0.35em;
+  color: #fff;
+  text-shadow: 0 0 24px rgba(15, 213, 199, 0.35);
+}
+
+.countdown {
+  text-align: center;
+  margin-top: 0.5rem;
+}
+
+.countdownLabel {
+  margin: 0;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.countdownTime {
+  margin: 0.25rem 0 0;
+  font-size: 1.5rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: #0fd5c7;
+}
+
+.consent {
+  margin-top: 1rem;
+  padding: 0.75rem;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.consent label {
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-start;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: rgba(255, 255, 255, 0.85);
+  cursor: pointer;
+}
+
+.consent input {
+  margin-top: 0.15rem;
+  accent-color: #0fd5c7;
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  margin-top: 1rem;
+}
+
+.confirmBtn {
+  min-height: 48px;
+  border: none;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #0fd5c7, #0bbfb3);
+  color: #0a1547;
+  font-weight: 800;
+  font-size: 0.9375rem;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.confirmBtn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.hint {
+  margin: 0;
+  font-size: 0.75rem;
+  line-height: 1.45;
+  color: rgba(255, 255, 255, 0.6);
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+}
+
+.hintIcon {
+  flex-shrink: 0;
+  opacity: 0.85;
+}
+
+.error {
+  margin: 0.75rem 0 0;
+  padding: 0.65rem 0.75rem;
+  border-radius: 10px;
+  background: rgba(220, 38, 38, 0.15);
+  border: 1px solid rgba(248, 113, 113, 0.35);
+  color: #fecaca;
+  font-size: 0.8125rem;
+}
+
+.successPanel {
+  text-align: center;
+  padding: 0.5rem 0;
+}
+
+.successIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 999px;
+  background: rgba(15, 213, 199, 0.15);
+  color: #0fd5c7;
+  margin-bottom: 0.75rem;
+}
+
+.successTitle {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 800;
+}
+
+.successText {
+  margin: 0.5rem 0 0;
+  font-size: 0.8125rem;
+  line-height: 1.55;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.protectionBar {
+  margin-top: 1rem;
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  overflow: hidden;
+}
+
+.protectionFill {
+  height: 100%;
+  background: linear-gradient(90deg, #0fd5c7, #5eead4);
+  border-radius: inherit;
+  transition: width 1s linear;
+}
+
+.shareRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: center;
+  margin-top: 0.75rem;
+}
+
+.shareRow :global(.pay-code-action) {
+  flex: 1;
+  min-width: 120px;
+}
+
+.expiredNote {
+  margin: 0.5rem 0 0;
+  font-size: 0.75rem;
+  color: #fcd34d;
+  text-align: center;
+}

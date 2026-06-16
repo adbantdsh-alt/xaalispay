@@ -80,6 +80,11 @@ export interface Order {
   paidAt?: string;
   deliveryDeadlineAt?: string;
   deliveryValidatedAt?: string;
+  /** Horodatage émission code livraison (preuve de vie 15 min). */
+  deliveryCodeIssuedAt?: string;
+  deliveryCodeExpiresAt?: string;
+  /** Confirmation réception par l'acheteur sur la page sécurisée. */
+  clientDeliveryConfirmedAt?: string;
   protectionEndsAt?: string;
   disputeReason?: string;
   disputePhotos?: string[];

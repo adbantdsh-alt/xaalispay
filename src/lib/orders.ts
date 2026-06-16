@@ -14,6 +14,7 @@ import {
   isValidUsername,
 } from "./utils";
 import { calculateBuyerProtectionFee } from "./fees";
+import { issueDeliveryCodeTimestamps } from "./delivery-code";
 import type { WalletSequesteredItem } from "./wallet-breakdown";
 import { computeWalletBreakdown } from "./wallet-breakdown";
 import {
@@ -288,6 +289,7 @@ export async function processPayment(
     if (!order.buyerProtectionFee) {
       order.buyerProtectionFee = calculateBuyerProtectionFee(getOrderTotal(order));
     }
+    Object.assign(order, issueDeliveryCodeTimestamps(new Date(now)));
     order.deliveryDeadlineAt = computeDeliveryDeadlineAt(
       order.deliveryHours,
       new Date(now)
