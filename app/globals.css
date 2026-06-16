@@ -5955,6 +5955,181 @@ input, button, textarea, select { font: inherit; color: var(--text); }
   color: #15803d;
 }
 
+/* ── Phase 5A : lancement pilote ── */
+.admin-launch-card {
+  border: 1px solid rgba(15, 213, 199, 0.35);
+  background: linear-gradient(180deg, rgba(15, 213, 199, 0.06), #fff 40%);
+}
+
+.admin-launch-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.admin-launch-status {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.65rem 0.85rem;
+  margin-bottom: 0.85rem;
+  border-radius: 12px;
+  background: #fef3c7;
+  color: #92400e;
+  font-size: 0.8125rem;
+}
+
+.admin-launch-status--ready {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.admin-launch-progress-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+@media (max-width: 560px) {
+  .admin-launch-progress-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.admin-launch-progress span {
+  display: block;
+  margin-bottom: 0.35rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: rgba(15, 31, 102, 0.65);
+}
+
+.admin-launch-bar {
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(15, 31, 102, 0.1);
+  overflow: hidden;
+}
+
+.admin-launch-bar-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: #1a4fd6;
+  transition: width 0.25s ease;
+}
+
+.admin-launch-bar-fill--manual {
+  background: #0fd5c7;
+}
+
+.admin-launch-urls {
+  margin-bottom: 1rem;
+  padding: 0.75rem;
+  border-radius: 12px;
+  background: rgba(15, 31, 102, 0.04);
+}
+
+.admin-launch-urls-title {
+  margin: 0 0 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: rgba(15, 31, 102, 0.55);
+}
+
+.admin-launch-url-row {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 0.5rem;
+  align-items: center;
+  font-size: 0.8125rem;
+  padding: 0.35rem 0;
+}
+
+.admin-launch-url-row code {
+  font-size: 0.75rem;
+  word-break: break-all;
+  color: #1a4fd6;
+}
+
+.admin-launch-url-row button {
+  padding: 0.25rem 0.6rem;
+  border: 1px solid rgba(15, 31, 102, 0.15);
+  border-radius: 999px;
+  background: #fff;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.admin-launch-details {
+  margin-top: 0.75rem;
+}
+
+.admin-launch-details summary {
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 0.875rem;
+  margin-bottom: 0.5rem;
+}
+
+.admin-launch-group {
+  margin-bottom: 0.75rem;
+}
+
+.admin-launch-group-title {
+  margin: 0 0 0.35rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: rgba(15, 31, 102, 0.5);
+}
+
+.admin-launch-hint {
+  font-style: normal;
+  font-weight: 400;
+  color: rgba(15, 31, 102, 0.55);
+  font-size: 0.75rem;
+}
+
+.admin-launch-manual-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.admin-launch-manual-list li {
+  padding: 0.45rem 0;
+  border-bottom: 1px solid rgba(15, 31, 102, 0.06);
+}
+
+.admin-launch-check {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  cursor: pointer;
+  font-size: 0.875rem;
+}
+
+.admin-launch-check input {
+  margin-top: 0.2rem;
+  flex-shrink: 0;
+}
+
+.admin-launch-step-doc {
+  display: block;
+  margin-left: 1.5rem;
+  font-size: 0.75rem;
+  color: rgba(15, 31, 102, 0.5);
+}
+
 /* ── Phase 4 : landing dev + notifications commandes ── */
 .dev-landing-banner {
   display: flex;

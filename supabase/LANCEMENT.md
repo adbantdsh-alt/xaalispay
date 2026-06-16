@@ -1,6 +1,14 @@
-# XaalisPay — Checklist lancement manuel
+# XaalisPay — Checklist lancement manuel (Phase 5A)
 
 À faire **une fois** avant d'ouvrir aux vrais vendeurs (prod). Coche au fur et à mesure.
+
+## Outils intégrés
+
+| Outil | Usage |
+|-------|--------|
+| `npm run preflight` | Vérifie `.env.local` / variables avant deploy |
+| `/admin` → **Lancement pilote** | Checklist auto + manuelle, URLs webhook/cron |
+| `GET /api/admin/preflight` | Rapport JSON (super_admin) |
 
 ---
 

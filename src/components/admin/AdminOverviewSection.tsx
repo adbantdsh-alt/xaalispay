@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { formatCurrency } from "@/lib/utils";
+import { AdminLaunchChecklist } from "./AdminLaunchChecklist";
 import type { AdminTab, OverviewData } from "./admin-types";
 
 export function AdminOverviewSection({
@@ -49,6 +50,8 @@ export function AdminOverviewSection({
 
   return (
     <section className="admin-section">
+      <AdminLaunchChecklist />
+
       <div className="admin-kpi-grid admin-kpi-grid--compact">
         <button type="button" className="admin-kpi admin-kpi--action" onClick={() => onNavigate("disputes")}>
           <p className="admin-kpi-label">Litiges ouverts</p>
