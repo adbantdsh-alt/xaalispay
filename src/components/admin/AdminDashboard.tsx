@@ -151,12 +151,13 @@ export function AdminDashboard() {
     setError("");
     setLoading(true);
     try {
+      const noCache = { cache: "no-store" as const };
       const [overviewRes, vendorsRes, ordersRes, payoutsRes, disputesRes] = await Promise.all([
-        fetch("/api/admin/overview"),
-        fetch("/api/admin/vendors"),
-        fetch("/api/admin/orders"),
-        fetch("/api/admin/payouts"),
-        fetch("/api/admin/disputes"),
+        fetch("/api/admin/overview", noCache),
+        fetch("/api/admin/vendors", noCache),
+        fetch("/api/admin/orders", noCache),
+        fetch("/api/admin/payouts", noCache),
+        fetch("/api/admin/disputes", noCache),
       ]);
 
       if (overviewRes.status === 401) {
@@ -232,6 +233,8 @@ export function AdminDashboard() {
     }
     setDisputes(data.disputes || []);
     setSelectedDispute(null);
+    // Rechargement de sécurité après 2s pour synchroniser l'état complet
+    setTimeout(() => loadAll(), 2000);
   };
 
   const retryPayout = async (payoutId: string) => {

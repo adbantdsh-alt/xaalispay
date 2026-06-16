@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/admin-access";
-import { getDb, updateDb } from "@/lib/db";
+import { getDb, updateDb, invalidateDbCache } from "@/lib/db";
 import { refundEscrowForOrder, releaseEscrowForOrder } from "@/lib/ledger";
 import { getAdminDisputes } from "@/lib/admin-stats";
 import { refundBictorysTransaction } from "@/lib/bictorys";
@@ -116,16 +116,24 @@ export async function POST(
     o.updatedAt = now;
   });
 
+  // Invalider le cache mémoire et recharger depuis Supabase pour garantir
+  // que la liste retournée reflète bien ce qui est persisté.
+  invalidateDbCache();
   const disputes = await getAdminDisputes();
-  return NextResponse.json({
-    ok: true,
-    disputes,
-    ...(bictorysError
-      ? {
-          warning:
-            `Statut mis à jour localement, mais le remboursement Bictorys a échoué : ${bictorysError}. ` +
-            "Vérifiez le tableau de bord Bictorys pour confirmer.",
-        }
-      : {}),
-  });
+  return NextResponse.json(
+    {
+      ok: true,
+      disputes,
+      ...(bictorysError
+        ? {
+            warning:
+              `Statut mis à jour localement, mais le remboursement Bictorys a échoué : ${bictorysError}. ` +
+              "Vérifiez le tableau de bord Bictorys pour confirmer.",
+          }
+        : {}),
+    },
+    {
+      headers: { "Cache-Control": "no-store" },
+    }
+  );
 }

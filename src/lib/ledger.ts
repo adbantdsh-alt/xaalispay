@@ -180,14 +180,22 @@ export function holdDisputedEscrowForOrder(db: Database, order: Order) {
 }
 
 export function refundEscrowForOrder(db: Database, order: Order) {
-  return createOrderEntry(
+  // Si le litige a déjà déplacé les fonds vers "blocked", on débite depuis blocked.
+  // Sinon (commande paid directement remboursée), on débite depuis escrow.
+  const hasDisputeHold = db.ledgerEntries.some(
+    (e) => e.orderId === order.id && e.type === "dispute_hold" && e.pocket === "blocked" && e.direction === "credit"
+  );
+  const pocket: LedgerPocket = hasDisputeHold ? "blocked" : "escrow";
+
+  return createOrderEntryWithAmount(
     db,
     order,
+    getOrderTotal(order),
     "refund_debit",
-    "escrow",
+    pocket,
     "debit",
     `order:${order.id}:refund_debit`,
-    "Remboursement client avant livraison"
+    "Remboursement client"
   );
 }
 
