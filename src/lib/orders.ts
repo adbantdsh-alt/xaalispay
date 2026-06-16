@@ -139,6 +139,66 @@ export async function updateProfilePhone(
   return { profile: (await getProfileById(userId))! };
 }
 
+export async function updateProfileDetails(
+  userId: string,
+  data: { displayName?: string; businessName?: string }
+): Promise<{ profile: Profile } | { error: string }> {
+  const displayName = data.displayName?.trim();
+  const businessName = data.businessName?.trim();
+
+  if (displayName !== undefined && displayName.length < 2) {
+    return { error: "Nom trop court (2 caractères minimum)" };
+  }
+  if (businessName !== undefined && businessName.length < 2) {
+    return { error: "Nom de boutique trop court" };
+  }
+
+  const profile = await getProfileById(userId);
+  if (!profile) return { error: "Profil introuvable" };
+
+  await updateDb((db) => {
+    const p = db.profiles.find((x) => x.id === userId);
+    if (!p) return;
+    if (displayName !== undefined) p.displayName = displayName;
+    if (businessName !== undefined) p.businessName = businessName;
+  });
+
+  return { profile: (await getProfileById(userId))! };
+}
+
+export async function deleteProduct(
+  productId: string,
+  sellerId: string
+): Promise<{ ok: true; removed: boolean; message: string } | { error: string }> {
+  const db = await getDb();
+  const product = db.products.find((p) => p.id === productId && p.sellerId === sellerId);
+  if (!product) return { error: "Produit introuvable" };
+
+  const hasOrders = db.orders.some((o) => o.productId === productId);
+
+  if (hasOrders) {
+    await updateDb((dbInner) => {
+      const p = dbInner.products.find((x) => x.id === productId && x.sellerId === sellerId);
+      if (p) {
+        p.active = false;
+        p.updatedAt = new Date().toISOString();
+      }
+    });
+    return {
+      ok: true,
+      removed: false,
+      message: "Produit dépublié — des commandes existent, il reste visible dans l'historique.",
+    };
+  }
+
+  await updateDb((dbInner) => {
+    const idx = dbInner.products.findIndex((p) => p.id === productId && p.sellerId === sellerId);
+    if (idx !== -1) dbInner.products.splice(idx, 1);
+  });
+
+  return { ok: true, removed: true, message: "Produit supprimé définitivement." };
+}
+
 export async function getProductsBySeller(
   sellerId: string,
   activeOnly = false

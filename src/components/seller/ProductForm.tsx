@@ -228,10 +228,14 @@ export function ProductListItem({
   product,
   onToggle,
   onEdit,
+  onDelete,
+  deleting = false,
 }: {
   product: Product;
   onToggle: () => void;
   onEdit: () => void;
+  onDelete?: () => void;
+  deleting?: boolean;
 }) {
   const payUrl = buildProductPaymentUrl(product);
   const [copied, setCopied] = useState(false);
@@ -287,6 +291,16 @@ export function ProductListItem({
             <button type="button" className="btn-secondary btn-compact" onClick={onEdit}>
               Modifier
             </button>
+            {onDelete && (
+              <button
+                type="button"
+                className="btn-ghost btn-compact product-delete-btn"
+                onClick={onDelete}
+                disabled={deleting}
+              >
+                {deleting ? "…" : "Supprimer"}
+              </button>
+            )}
           </div>
         )}
       </div>

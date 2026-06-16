@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/session";
 import {
   createProduct,
+  deleteProduct,
   getProductById,
   getProductsBySeller,
   updateProduct,
@@ -116,4 +117,23 @@ export async function PATCH(request: Request) {
       err instanceof Error ? err.message : "Erreur serveur";
     return NextResponse.json({ error: message }, { status: 500 });
   }
+}
+
+export async function DELETE(request: Request) {
+  const user = await getSessionUser();
+  if (!user) {
+    return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+  }
+
+  const id = new URL(request.url).searchParams.get("id");
+  if (!id) {
+    return NextResponse.json({ error: "ID produit requis" }, { status: 400 });
+  }
+
+  const result = await deleteProduct(id, user.id);
+  if ("error" in result) {
+    return NextResponse.json({ error: result.error }, { status: 404 });
+  }
+
+  return NextResponse.json({ ok: true, removed: result.removed, message: result.message });
 }

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { buildShopPath } from "@/lib/site-url";
 import { DashboardSkeleton } from "@/components/ui/Skeleton";
 import { SettingsPhoneEditor } from "@/components/seller/SettingsPhoneEditor";
+import { SettingsProfileEditor } from "@/components/seller/SettingsProfileEditor";
 import { useSellerData } from "@/components/seller/SellerDataProvider";
 
 const ACCOUNT_LINKS = [
@@ -103,10 +104,6 @@ export default function SettingsPage() {
 
         <dl className="settings-info-grid">
           <div className="settings-info-row">
-            <dt>Boutique</dt>
-            <dd>{profile.businessName}</dd>
-          </div>
-          <div className="settings-info-row">
             <dt>Pays</dt>
             <dd>Sénégal</dd>
           </div>
@@ -115,6 +112,14 @@ export default function SettingsPage() {
             <dd>FCFA</dd>
           </div>
         </dl>
+
+        <SettingsProfileEditor
+          displayName={profile.displayName}
+          businessName={profile.businessName}
+          onSaved={async () => {
+            await refresh({ silent: true });
+          }}
+        />
 
         <SettingsPhoneEditor
           phone={profile.phone}

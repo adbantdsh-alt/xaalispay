@@ -13,7 +13,9 @@ import { DashboardSkeleton } from "@/components/ui/Skeleton";
 import { WalletOverview } from "@/components/seller/WalletOverview";
 import { AssetRow } from "@/components/seller/AssetRow";
 import { OrderFilterTabs } from "@/components/seller/OrderFilterTabs";
-import { OrderQuickView } from "@/components/seller/OrderQuickView";
+import { OrderDetailSheet } from "@/components/seller/OrderDetailSheet";
+import { SellerStatsCard } from "@/components/seller/SellerStatsCard";
+import { computeSellerStats } from "@/lib/seller-stats";
 import { buildShopUrl } from "@/lib/site-url";
 import { useSellerData } from "@/components/seller/SellerDataProvider";
 
@@ -117,6 +119,7 @@ export default function DashboardPage() {
 
   // Chargeback stats
   const cbStats = computeChargebackStats(data.orders);
+  const sellerStats = computeSellerStats(data.orders);
 
   return (
     <div className="seller-dashboard">
@@ -184,6 +187,8 @@ export default function DashboardPage() {
         </p>
       )}
 
+      <SellerStatsCard stats={sellerStats} />
+
       {showEmpty ? (
         <section className="seller-tip-card animate-fade-up-d2">
           <p className="seller-tip-title">Lancez votre boutique</p>
@@ -244,7 +249,7 @@ export default function DashboardPage() {
 
       {/* Popup détail commande */}
       {selectedOrder && (
-        <OrderQuickView
+        <OrderDetailSheet
           order={selectedOrder}
           onClose={() => setSelectedOrder(null)}
           onCancel={

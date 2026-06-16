@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { FloatingSheet } from "@/components/ui/FloatingSheet";
 import { formatCurrency, getOrderTotal } from "@/lib/utils";
 import { formatDeliveryWindow } from "@/lib/delivery-window";
@@ -30,19 +31,44 @@ function paymentLabel(method?: string): string {
 export function OrderDetailSheet({
   order,
   onClose,
+  onCancel,
 }: {
   order: Order | null;
   onClose: () => void;
+  onCancel?: (orderId: string, reason: string) => Promise<void>;
 }) {
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [cancelReason, setCancelReason] = useState("");
+  const [cancelling, setCancelling] = useState(false);
+
   if (!order) return null;
 
   const visual = getOrderStatusVisual(order.status);
   const steps = getSellerTimeline(order.status);
   const total = getOrderTotal(order);
   const clientName = order.clientName?.trim() || order.clientFirstName?.trim() || "Client";
+  const canCancel = onCancel && (order.status === "pending_payment" || order.status === "paid");
+
+  const handleCancel = async () => {
+    if (!onCancel) return;
+    setCancelling(true);
+    await onCancel(order.id, cancelReason || "Vendeur dans l'incapacité de livrer");
+    setCancelling(false);
+    setShowCancelModal(false);
+    onClose();
+  };
 
   return (
+    <>
     <FloatingSheet open={!!order} onClose={onClose} title="Détail de la commande">
+      {order.status === "dispute" && (
+        <div className="order-dispute-banner" role="alert">
+          <p className="order-dispute-banner-title">Litige en cours</p>
+          <p className="order-dispute-banner-desc">
+            L&apos;équipe XaalisPay examine le dossier. Les fonds sont bloqués jusqu&apos;à la décision.
+          </p>
+        </div>
+      )}
       <div className="order-sheet-head">
         <span className={`order-sheet-status order-sheet-status-${visual.tone}`}>
           {getSellerHumanStatus(order.status)}
@@ -195,6 +221,49 @@ export function OrderDetailSheet({
           )}
         </div>
       </div>
+
+      {canCancel && (
+        <div className="order-sheet-actions">
+          <button
+            type="button"
+            className="btn-danger btn-compact"
+            onClick={() => setShowCancelModal(true)}
+          >
+            Annuler cette commande
+          </button>
+        </div>
+      )}
     </FloatingSheet>
+
+    {showCancelModal && (
+      <div className="modal-backdrop modal-backdrop-stacked" onClick={() => !cancelling && setShowCancelModal(false)}>
+        <div className="modal-sheet cancel-modal" onClick={(e) => e.stopPropagation()}>
+          <div className="modal-sheet-handle" />
+          <h3 className="cancel-modal-title">Annuler la commande</h3>
+          <p className="cancel-modal-desc">
+            Le client sera remboursé automatiquement. Cette annulation compte dans votre taux de chargeback.
+          </p>
+          <label className="field-block" style={{ marginTop: "1rem" }}>
+            <span className="field-block-label">Raison (optionnel)</span>
+            <textarea
+              className="input-field input-compact form-textarea-sm"
+              rows={2}
+              value={cancelReason}
+              onChange={(e) => setCancelReason(e.target.value)}
+              disabled={cancelling}
+            />
+          </label>
+          <div className="cancel-modal-actions">
+            <button type="button" className="btn-danger btn-compact" onClick={handleCancel} disabled={cancelling}>
+              {cancelling ? "Annulation…" : "Confirmer"}
+            </button>
+            <button type="button" className="btn-ghost btn-compact" onClick={() => setShowCancelModal(false)} disabled={cancelling}>
+              Retour
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
+    </>
   );
 }

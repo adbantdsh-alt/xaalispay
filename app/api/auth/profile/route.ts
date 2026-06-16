@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { isSuperAdminEmail, superAdminProfileDefaults } from "@/lib/auth-policy";
-import { createProfile, getProfileById, isUsernameTaken, updateProfilePhone, updateProfileUsername } from "@/lib/orders";
+import { createProfile, getProfileById, isUsernameTaken, updateProfileDetails, updateProfilePhone, updateProfileUsername } from "@/lib/orders";
 import { ensureSuperAdminProfile } from "@/lib/profile-access";
 import { getSessionUser } from "@/lib/session";
 import { isValidUsername } from "@/lib/utils";
@@ -78,9 +78,19 @@ export async function PATCH(request: Request) {
 
   try {
     const body = await request.json();
-    const { username, phone } = body as { username?: string; phone?: string };
+    const { username, phone, displayName, businessName } = body as {
+      username?: string;
+      phone?: string;
+      displayName?: string;
+      businessName?: string;
+    };
 
-    if (username === undefined && phone === undefined) {
+    if (
+      username === undefined &&
+      phone === undefined &&
+      displayName === undefined &&
+      businessName === undefined
+    ) {
       return NextResponse.json({ error: "Aucune modification demandée" }, { status: 400 });
     }
 
@@ -102,6 +112,14 @@ export async function PATCH(request: Request) {
 
     if (phone !== undefined) {
       const result = await updateProfilePhone(user.id, phone);
+      if ("error" in result) {
+        return NextResponse.json({ error: result.error }, { status: 400 });
+      }
+      profile = result.profile;
+    }
+
+    if (displayName !== undefined || businessName !== undefined) {
+      const result = await updateProfileDetails(user.id, { displayName, businessName });
       if ("error" in result) {
         return NextResponse.json({ error: result.error }, { status: 400 });
       }

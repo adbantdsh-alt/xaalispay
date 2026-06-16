@@ -53,6 +53,8 @@ function CreatePageContent() {
   const [editSaved, setEditSaved] = useState(false);
   const [editLoading, setEditLoading] = useState(false);
   const [productSearch, setProductSearch] = useState("");
+  const [deletingId, setDeletingId] = useState("");
+  const [editDeleting, setEditDeleting] = useState(false);
 
   const loadProducts = async () => {
     const prodRes = await fetch("/api/products");
@@ -266,6 +268,34 @@ function CreatePageContent() {
     loadProducts();
   };
 
+  const handleDeleteProduct = async (product: Product, redirectAfter = false) => {
+    const confirmed = window.confirm(
+      `Supprimer « ${product.name} » ?\n\nSi des commandes existent, le produit sera seulement dépublié.`
+    );
+    if (!confirmed) return;
+
+    resetMessages();
+    if (redirectAfter) setEditDeleting(true);
+    else setDeletingId(product.id);
+
+    const res = await fetch(`/api/products?id=${encodeURIComponent(product.id)}`, {
+      method: "DELETE",
+    });
+    const data = await res.json();
+
+    if (redirectAfter) setEditDeleting(false);
+    else setDeletingId("");
+
+    if (!res.ok) {
+      setError(data.error || "Suppression impossible");
+      return;
+    }
+
+    setSuccess(data.message || "Produit supprimé");
+    await loadProducts();
+    if (redirectAfter) router.push("/create");
+  };
+
   const handleEditProduct = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingProduct) return;
@@ -397,6 +427,8 @@ function CreatePageContent() {
                     product={product}
                     onToggle={() => toggleActive(product)}
                     onEdit={() => router.push(`/create?tab=edit&id=${product.id}`)}
+                    onDelete={() => handleDeleteProduct(product)}
+                    deleting={deletingId === product.id}
                   />
                 ))}
               </div>
@@ -520,7 +552,7 @@ function CreatePageContent() {
               <div className="edit-form-actions">
                 <button
                   type="submit"
-                  disabled={saving}
+                  disabled={saving || editDeleting}
                   className="btn-seller-primary btn-compact btn-inline"
                 >
                   {saving ? "Enregistrement…" : "Enregistrer les modifications"}
@@ -528,6 +560,14 @@ function CreatePageContent() {
                 <Link href="/create" className="btn-ghost btn-inline">
                   Annuler
                 </Link>
+                <button
+                  type="button"
+                  className="btn-danger btn-compact btn-inline"
+                  disabled={saving || editDeleting}
+                  onClick={() => editingProduct && handleDeleteProduct(editingProduct, true)}
+                >
+                  {editDeleting ? "Suppression…" : "Supprimer le produit"}
+                </button>
               </div>
             </form>
           )}
