@@ -63,32 +63,41 @@ export async function POST(
     const transactionId =
       order.paymentProviderId ||
       successAttempt?.providerId ||
-      order.paymentReference ||
-      null;
+      null; // Ne pas utiliser paymentReference : c'est notre slug, pas un ID Bictorys
+
+    console.log("[resolve] transactionId:", transactionId, "| paymentProviderId:", order.paymentProviderId, "| attemptProviderId:", successAttempt?.providerId);
 
     if (!transactionId) {
       if (!force) {
         return NextResponse.json(
           {
             error:
-              "Aucun identifiant de transaction Bictorys trouvé pour ce paiement. " +
-              "Cliquez à nouveau pour confirmer le remboursement local (vérifiez d'abord le dashboard Bictorys).",
+              `Aucun ID de transaction Bictorys trouvé (paymentProviderId: ${order.paymentProviderId ?? "vide"}, attemptProviderId: ${successAttempt?.providerId ?? "vide"}). ` +
+              "Cette commande a peut-être été payée en mode test. Vérifiez le dashboard Bictorys.",
             canForce: true,
+            diagnostic: {
+              paymentProviderId: order.paymentProviderId ?? null,
+              attemptProviderId: successAttempt?.providerId ?? null,
+              paymentReference: order.paymentReference ?? null,
+            },
           },
           { status: 422 }
         );
       }
     } else {
       try {
-        await refundBictorysTransaction(transactionId);
+        const result = await refundBictorysTransaction(transactionId);
+        console.log("[resolve] Bictorys refund OK:", JSON.stringify(result));
       } catch (err) {
         const msg = err instanceof Error ? err.message : "Erreur Bictorys inconnue";
+        console.error("[resolve] Bictorys refund FAILED:", msg, "| transactionId:", transactionId);
         if (!force) {
           return NextResponse.json(
             {
-              error: `Remboursement Bictorys échoué : ${msg}. Vérifiez le dashboard Bictorys puis confirmez ci-dessous.`,
+              error: `Remboursement Bictorys échoué : ${msg}`,
               canForce: true,
               bictorysError: msg,
+              diagnostic: { transactionId },
             },
             { status: 502 }
           );
