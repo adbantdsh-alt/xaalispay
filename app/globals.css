@@ -1,4 +1,4 @@
-@import "tailwindcss";
+﻿@import "tailwindcss";
 
 :root {
   --bg: #FAFAF7;
@@ -71,7 +71,7 @@ input, button, textarea, select { font: inherit; color: var(--text); }
 
 .app-bg { overflow-x: hidden; }
 
-/* â”€â”€ Brand â”€â”€ */
+/* Ã¢â€â‚¬Ã¢â€â‚¬ Brand Ã¢â€â‚¬Ã¢â€â‚¬ */
 .brand-mark { display: inline-flex; align-items: center; gap: 0.625rem; }
 .brand-mark-link {
   display: inline-flex;
@@ -112,7 +112,7 @@ input, button, textarea, select { font: inherit; color: var(--text); }
 .brand-name-light { font-weight: 600; color: var(--accent); }
 .brand-lg .brand-name { font-size: 1.5rem; }
 
-/* â”€â”€ Layout â”€â”€ */
+/* Ã¢â€â‚¬Ã¢â€â‚¬ Layout Ã¢â€â‚¬Ã¢â€â‚¬ */
 .page-shell {
   max-width: 430px;
   margin: 0 auto;
@@ -133,7 +133,7 @@ input, button, textarea, select { font: inherit; color: var(--text); }
 }
 .section-heading { margin-bottom: 0.875rem; }
 
-/* â”€â”€ Wallet card (Wave-style hero) â”€â”€ */
+/* Ã¢â€â‚¬Ã¢â€â‚¬ Wallet card (Wave-style hero) Ã¢â€â‚¬Ã¢â€â‚¬ */
 .seller-topbar {
   display: flex;
   align-items: center;
@@ -208,7 +208,7 @@ input, button, textarea, select { font: inherit; color: var(--text); }
 
 .balance-hero-amount, .balance-secondary-amount { /* legacy */ }
 
-/* â”€â”€ Buttons â”€â”€ */
+/* Ã¢â€â‚¬Ã¢â€â‚¬ Buttons Ã¢â€â‚¬Ã¢â€â‚¬ */
 .btn-primary {
   display: flex;
   align-items: center;
@@ -295,7 +295,7 @@ input, button, textarea, select { font: inherit; color: var(--text); }
   background: linear-gradient(135deg, var(--teal), #0bc4b8); color: var(--blue); font-weight: 800;
 }
 
-/* â”€â”€ Pay methods (Wave-quality) â”€â”€ */
+/* Ã¢â€â‚¬Ã¢â€â‚¬ Pay methods (Wave-quality) Ã¢â€â‚¬Ã¢â€â‚¬ */
 .pay-method {
   display: flex;
   align-items: center;
@@ -336,7 +336,7 @@ input, button, textarea, select { font: inherit; color: var(--text); }
 .btn-pay-wave { background: linear-gradient(135deg, #00d4ff, #00b8e0); }
 .btn-pay-orange { background: linear-gradient(135deg, #ff8533, #ff6600); }
 
-/* â”€â”€ Inputs â”€â”€ */
+/* Ã¢â€â‚¬Ã¢â€â‚¬ Inputs Ã¢â€â‚¬Ã¢â€â‚¬ */
 .input-field {
   width: 100%;
   min-height: 56px;
@@ -365,7 +365,7 @@ input, button, textarea, select { font: inherit; color: var(--text); }
 }
 .phone-input { flex: 1; }
 
-/* â”€â”€ Pay page â”€â”€ */
+/* Ã¢â€â‚¬Ã¢â€â‚¬ Pay page Ã¢â€â‚¬Ã¢â€â‚¬ */
 .pay-brand-bar {
   display: flex;
   align-items: center;
@@ -813,7 +813,7 @@ input, button, textarea, select { font: inherit; color: var(--text); }
   border-top: 1px dashed rgba(15, 31, 102, 0.1);
 }
 
-/* â”€â”€ Countdown â”€â”€ */
+/* Ã¢â€â‚¬Ã¢â€â‚¬ Countdown Ã¢â€â‚¬Ã¢â€â‚¬ */
 .countdown-card {
   padding: 1.5rem;
   border-radius: var(--radius-lg);
@@ -834,7 +834,7 @@ input, button, textarea, select { font: inherit; color: var(--text); }
 .countdown-bar-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--teal), var(--wave)); transition: width 1s linear; }
 .countdown-card-inline { margin-top: 1rem; }
 
-/* â”€â”€ Seller home â”€â”€ */
+/* Ã¢â€â‚¬Ã¢â€â‚¬ Seller home Ã¢â€â‚¬Ã¢â€â‚¬ */
 .seller-home { display: flex; flex-direction: column; gap: 1.25rem; padding-top: 0.5rem; }
 
 .action-card {
@@ -868,7 +868,7 @@ input, button, textarea, select { font: inherit; color: var(--text); }
 .history-item-passive { align-items: flex-start; }
 .history-item-body { flex: 1; min-width: 0; }
 
-/* â”€â”€ FAB & Nav â”€â”€ */
+/* Ã¢â€â‚¬Ã¢â€â‚¬ FAB & Nav Ã¢â€â‚¬Ã¢â€â‚¬ */
 .seller-fab {
   position: fixed; bottom: calc(5.75rem + env(safe-area-inset-bottom));
   left: 50%; transform: translateX(-50%); z-index: 40;
@@ -906,7 +906,7 @@ input, button, textarea, select { font: inherit; color: var(--text); }
 }
 .nav-icon { width: 1.375rem; height: 1.375rem; }
 
-/* â”€â”€ Timeline â”€â”€ */
+/* Ã¢â€â‚¬Ã¢â€â‚¬ Timeline Ã¢â€â‚¬Ã¢â€â‚¬ */
 .money-timeline { display: flex; gap: 0.125rem; margin: 1.25rem 0; width: 100%; }
 .money-timeline-compact { margin: 0.75rem 0 0; }
 .money-timeline-step { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 0.5rem; min-width: 0; }
@@ -925,7 +925,7 @@ input, button, textarea, select { font: inherit; color: var(--text); }
 .money-timeline-active .money-timeline-label { color: var(--text); }
 .money-timeline-done .money-timeline-label { color: var(--text-muted); }
 
-/* â”€â”€ Onboarding â”€â”€ */
+/* Ã¢â€â‚¬Ã¢â€â‚¬ Onboarding Ã¢â€â‚¬Ã¢â€â‚¬ */
 .onboarding-card {
   padding: 1.5rem; background: var(--surface);
   border-radius: var(--radius-lg); box-shadow: var(--shadow-soft);
@@ -955,7 +955,7 @@ input, button, textarea, select { font: inherit; color: var(--text); }
 .onboarding-cta { margin-top: 1rem; width: 100%; }
 .onboarding-dismiss { margin-top: 0.5rem; width: 100%; }
 
-/* â”€â”€ Misc UI â”€â”€ */
+/* Ã¢â€â‚¬Ã¢â€â‚¬ Misc UI Ã¢â€â‚¬Ã¢â€â‚¬ */
 .surface, .glass-card, .card { background: var(--surface); border-radius: var(--radius-lg); box-shadow: var(--shadow-soft); }
 .glass-card-blue { background: var(--surface); border-radius: var(--radius-lg); box-shadow: var(--shadow-soft); }
 .surface-card { background: var(--surface); border-radius: var(--radius-lg); box-shadow: var(--shadow-soft); padding: 1.5rem; }
@@ -1055,7 +1055,7 @@ input, button, textarea, select { font: inherit; color: var(--text); }
 .dispute-actions .btn-primary, .dispute-actions .btn-secondary { flex: 1; }
 .pay-dispute-minimal { margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid rgba(15,31,102,0.08); width: 100%; }
 
-/* â”€â”€ Marketing (fintech premium — Payez les yeux fermés) â”€â”€ */
+/* Ã¢â€â‚¬Ã¢â€â‚¬ Marketing (fintech premium â€” Payez les yeux fermÃ©s) Ã¢â€â‚¬Ã¢â€â‚¬ */
 .marketing-layout {
   --brand-navy: #0F1F66;
   --brand-navy-dark: #0a1547;
@@ -1088,7 +1088,7 @@ input, button, textarea, select { font: inherit; color: var(--text); }
   margin: 0;
   padding: 0;
 }
-/* Les pages de contenu (légal, contact, histoire) gardent une colonne lisible */
+/* Les pages de contenu (lÃ©gal, contact, histoire) gardent une colonne lisible */
 .marketing-main > .content-page {
   max-width: 880px;
   margin: 0 auto;
@@ -1219,7 +1219,7 @@ input, button, textarea, select { font: inherit; color: var(--text); }
   color: #0a1628;
 }
 
-/* Hero centrÃ© */
+/* Hero centrÃƒÂ© */
 .landing-hero {
   text-align: center;
   padding: 3.5rem 0 3rem;
@@ -1268,7 +1268,7 @@ input, button, textarea, select { font: inherit; color: var(--text); }
 }
 .landing-seller-link:hover { opacity: 0.75; }
 
-/* Escrow â€” fond gris 2% */
+/* Escrow Ã¢â‚¬â€ fond gris 2% */
 .landing-escrow {
   margin-top: 1rem;
   padding: 3rem 0;
@@ -1534,7 +1534,7 @@ input, button, textarea, select { font: inherit; color: var(--text); }
 }
 .landing-seller-cta:hover { background: var(--accent-dark); color: #fff; }
 
-/* Vendor search â€” premium blanc */
+/* Vendor search Ã¢â‚¬â€ premium blanc */
 .vendor-search { position: relative; }
 .vendor-search-row {
   display: flex;
@@ -1628,7 +1628,7 @@ input, button, textarea, select { font: inherit; color: var(--text); }
   margin-right: 0.875rem;
 }
 
-/* Grille produits après sélection vendeur */
+/* Grille produits aprÃ¨s sÃ©lection vendeur */
 .vendor-picker {
   margin-top: 0.25rem;
   text-align: left;
@@ -1846,10 +1846,10 @@ input, button, textarea, select { font: inherit; color: var(--text); }
   border-radius: 24px;
 }
 
-/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-   Seller app â€” light fintech (fond blanc, bleu)
+/* Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â
+   Seller app Ã¢â‚¬â€ light fintech (fond blanc, bleu)
    Scoped via .seller-app
-   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+   Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â */
 .seller-app {
   --bg-app: #ffffff;
   --surface-seller: #ffffff;
@@ -1942,7 +1942,7 @@ input, button, textarea, select { font: inherit; color: var(--text); }
 }
 .seller-header-settings:hover { color: var(--accent-blue); }
 
-/* Wallet card (bleu â€” style rÃ©fÃ©rence) */
+/* Wallet card (bleu Ã¢â‚¬â€ style rÃƒÂ©fÃƒÂ©rence) */
 .wallet-card-blue {
   position: relative;
   overflow: hidden;
@@ -2235,7 +2235,7 @@ input, button, textarea, select { font: inherit; color: var(--text); }
   transform: translateX(2px);
 }
 
-/* Historique — filtres */
+/* Historique â€” filtres */
 .history-filters {
   display: flex;
   gap: 0.5rem;
@@ -2284,7 +2284,7 @@ input, button, textarea, select { font: inherit; color: var(--text); }
   font-size: 0.875rem;
 }
 
-/* Détail commande (sheet) */
+/* DÃ©tail commande (sheet) */
 .order-sheet-head {
   text-align: center;
   display: flex;
@@ -2524,7 +2524,7 @@ input, button, textarea, select { font: inherit; color: var(--text); }
   box-shadow: 0 4px 16px rgba(26, 79, 214, 0.3);
 }
 
-/* Light overrides â€” create / profile */
+/* Light overrides Ã¢â‚¬â€ create / profile */
 .seller-app .history-item {
   background: var(--surface-seller);
   border: 1px solid var(--border-seller);
@@ -2616,7 +2616,7 @@ input, button, textarea, select { font: inherit; color: var(--text); }
   margin-top: 0.75rem;
 }
 
-/* â”€â”€ Boutique (create) â”€â”€ */
+/* Ã¢â€â‚¬Ã¢â€â‚¬ Boutique (create) Ã¢â€â‚¬Ã¢â€â‚¬ */
 .seller-app .shop-page {
   display: flex;
   flex-direction: column;
@@ -3060,7 +3060,7 @@ input, button, textarea, select { font: inherit; color: var(--text); }
   color: var(--accent-blue);
 }
 
-/* â”€â”€ Lien de paiement (flux vendeur) â”€â”€ */
+/* Ã¢â€â‚¬Ã¢â€â‚¬ Lien de paiement (flux vendeur) Ã¢â€â‚¬Ã¢â€â‚¬ */
 .seller-app .link-flow-card { gap: 0.875rem; }
 
 .seller-app .link-flow-steps {
@@ -3409,7 +3409,7 @@ input, button, textarea, select { font: inherit; color: var(--text); }
   font-family: inherit;
 }
 
-/* Floating sheets â€” profil & paramÃ¨tres */
+/* Floating sheets Ã¢â‚¬â€ profil & paramÃƒÂ¨tres */
 .sheet-overlay {
   position: fixed;
   inset: 0;
@@ -3739,10 +3739,10 @@ input, button, textarea, select { font: inherit; color: var(--text); }
   font-size: 0.8125rem;
 }
 
-/* ══════════════════════════════════════════════════════════
-   LANDING PREMIUM — "Payez les yeux fermés"
-   Scope: .marketing-layout (navy/teal, serif éditorial)
-   ══════════════════════════════════════════════════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+   LANDING PREMIUM â€” "Payez les yeux fermÃ©s"
+   Scope: .marketing-layout (navy/teal, serif Ã©ditorial)
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
 .marketing-layout .lp-container {
   width: 100%;
@@ -3765,7 +3765,7 @@ input, button, textarea, select { font: inherit; color: var(--text); }
   50% { transform: translateY(-10px); }
 }
 
-/* ── Header v2 ───────────────────────────────────────────── */
+/* â”€â”€ Header v2 â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .marketing-layout .site-header {
   position: sticky;
   top: 0;
@@ -3850,10 +3850,10 @@ input, button, textarea, select { font: inherit; color: var(--text); }
   filter: drop-shadow(0 3px 8px rgba(15, 31, 102, 0.18));
 }
 
-/* ── Reveal helper (fallback si pas de motion) ───────────── */
+/* â”€â”€ Reveal helper (fallback si pas de motion) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .lp-reveal { will-change: transform, opacity; }
 
-/* ── Hero ────────────────────────────────────────────────── */
+/* â”€â”€ Hero â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .lp-hero {
   position: relative;
   overflow: hidden;
@@ -3975,7 +3975,7 @@ input, button, textarea, select { font: inherit; color: var(--text); }
 .lp-trust-item { display: inline-flex; align-items: center; gap: 0.4rem; }
 .lp-trust-item svg { color: var(--brand-navy); opacity: 0.7; }
 
-/* ── Hero : bloc recherche XaalisTag inline ──────────────── */
+/* â”€â”€ Hero : bloc recherche XaalisTag inline â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .lp-hero-search { margin-top: 2rem; max-width: 30rem; }
 .lp-hero-search-label {
   display: inline-flex;
@@ -3987,7 +3987,7 @@ input, button, textarea, select { font: inherit; color: var(--text); }
   color: var(--brand-muted);
 }
 .lp-hero-search-label svg { color: var(--brand-teal); flex-shrink: 0; }
-/* VendorSearch — habillage navy/teal pour le marketing */
+/* VendorSearch â€” habillage navy/teal pour le marketing */
 .marketing-layout .vendor-search-row {
   border-radius: 14px;
   border-color: var(--brand-border);
@@ -4284,7 +4284,7 @@ input, button, textarea, select { font: inherit; color: var(--text); }
   margin: 1.5rem auto 4rem;
 }
 
-/* ── Hero mockup iPhone ──────────────────────────────────── */
+/* â”€â”€ Hero mockup iPhone â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .lp-mockup-wrap {
   position: relative;
   display: flex;
@@ -4410,7 +4410,7 @@ input, button, textarea, select { font: inherit; color: var(--text); }
   align-items: center;
   justify-content: center;
 }
-/* carte secondaire timeline derrière le phone */
+/* carte secondaire timeline derriÃ¨re le phone */
 .lp-mini-card {
   position: absolute;
   z-index: 1;
@@ -4441,7 +4441,7 @@ input, button, textarea, select { font: inherit; color: var(--text); }
 .lp-mini-step.is-pending { color: var(--brand-muted); }
 .lp-mini-step.is-pending .lp-mini-tick { background: rgba(15, 31, 102, 0.1); color: var(--brand-muted); }
 
-/* ── Modal XaalisTag ─────────────────────────────────────── */
+/* â”€â”€ Modal XaalisTag â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .lp-modal-backdrop {
   position: fixed;
   inset: 0;
@@ -4489,7 +4489,7 @@ input, button, textarea, select { font: inherit; color: var(--text); }
 }
 .lp-modal-close:hover { background: var(--brand-offwhite); }
 
-/* ── Section générique ───────────────────────────────────── */
+/* â”€â”€ Section gÃ©nÃ©rique â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .lp-section { padding: clamp(3.5rem, 7vw, 6rem) 0; }
 .lp-section-head { max-width: 40rem; }
 .lp-section-lead {
@@ -4523,7 +4523,7 @@ input, button, textarea, select { font: inherit; color: var(--text); }
 }
 .lp-lead-light { color: rgba(255, 255, 255, 0.7); }
 
-/* ── Stats (bandeau navy) ────────────────────────────────── */
+/* â”€â”€ Stats (bandeau navy) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .lp-stats {
   background: var(--brand-navy);
   background-image: radial-gradient(circle at 12% 0%, rgba(15, 213, 199, 0.16), transparent 38%),
@@ -4552,7 +4552,7 @@ input, button, textarea, select { font: inherit; color: var(--text); }
   color: rgba(255, 255, 255, 0.66);
 }
 
-/* ── How it works ────────────────────────────────────────── */
+/* â”€â”€ How it works â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .lp-how { background: var(--brand-offwhite); }
 .lp-timeline {
   position: relative;
@@ -4613,7 +4613,7 @@ input, button, textarea, select { font: inherit; color: var(--text); }
 .lp-step-title { font-size: 1.5rem; color: var(--brand-navy); margin: 0; }
 .lp-step-desc { margin: 0.5rem 0 0; font-size: 0.95rem; line-height: 1.6; color: var(--brand-muted); }
 
-/* ── Buyers (cartes minimalistes) ────────────────────────── */
+/* â”€â”€ Buyers (cartes minimalistes) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .lp-buyers { background: #fff; scroll-margin-top: 84px; }
 .lp-cards {
   display: grid;
@@ -4648,7 +4648,7 @@ input, button, textarea, select { font: inherit; color: var(--text); }
 .lp-card-title { font-size: 1.4rem; color: var(--brand-navy); margin: 0; }
 .lp-card-desc { margin: 0.55rem 0 0; font-size: 0.93rem; line-height: 1.6; color: var(--brand-muted); }
 
-/* ── Sellers (sombre) ────────────────────────────────────── */
+/* â”€â”€ Sellers (sombre) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .lp-sellers {
   background: var(--brand-navy);
   background-image: radial-gradient(circle at 85% 10%, rgba(15, 213, 199, 0.14), transparent 40%);
@@ -4722,7 +4722,7 @@ input, button, textarea, select { font: inherit; color: var(--text); }
 .lp-dash-row-status { font-size: 0.66rem; color: rgba(255, 255, 255, 0.5); }
 .lp-dash-row-amount { font-size: 0.82rem; color: var(--brand-teal); font-weight: 600; }
 
-/* ── Testimonials ────────────────────────────────────────── */
+/* â”€â”€ Testimonials â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .lp-testimonials { background: var(--brand-offwhite); }
 .lp-quote {
   display: flex;
@@ -4755,7 +4755,7 @@ input, button, textarea, select { font: inherit; color: var(--text); }
 .lp-quote-name { font-size: 0.9rem; font-weight: 600; color: var(--brand-navy); }
 .lp-quote-role { font-size: 0.78rem; color: var(--brand-muted); }
 
-/* ── FAQ ─────────────────────────────────────────────────── */
+/* â”€â”€ FAQ â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .lp-faq { background: #fff; scroll-margin-top: 84px; }
 .lp-faq-list { margin-top: 2.5rem; border-top: 1px solid var(--brand-border-soft); }
 .lp-faq-item { border-bottom: 1px solid var(--brand-border-soft); }
@@ -4785,7 +4785,7 @@ input, button, textarea, select { font: inherit; color: var(--text); }
 .lp-faq-item.is-open .lp-faq-a { max-height: 320px; }
 .lp-faq-a-inner { padding: 0 0 1.4rem; font-size: 0.96rem; line-height: 1.6; color: var(--brand-muted); max-width: 48rem; }
 
-/* ── Final CTA ───────────────────────────────────────────── */
+/* â”€â”€ Final CTA â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .lp-final { background: var(--brand-offwhite); text-align: center; }
 .lp-final-inner { max-width: 44rem; margin: 0 auto; }
 .lp-final h2 {
@@ -4797,7 +4797,7 @@ input, button, textarea, select { font: inherit; color: var(--text); }
 .lp-final p { margin: 1.2rem auto 0; max-width: 32rem; font-size: 1.05rem; color: var(--brand-muted); line-height: 1.6; }
 .lp-final .lp-btn { margin-top: 2.2rem; }
 
-/* ── Footer v2 (noir) ────────────────────────────────────── */
+/* â”€â”€ Footer v2 (noir) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .marketing-layout .site-footer {
   margin-top: auto;
   background: var(--brand-black);
@@ -4876,7 +4876,7 @@ input, button, textarea, select { font: inherit; color: var(--text); }
 .lp-footer-bottom-links a { transition: color 0.15s var(--mk-ease); }
 .lp-footer-bottom-links a:hover { color: #fff; }
 
-/* ── Accessibilité : prefers-reduced-motion ──────────────── */
+/* â”€â”€ AccessibilitÃ© : prefers-reduced-motion â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 @media (prefers-reduced-motion: reduce) {
   .lp-phone,
   .lp-escrow-dot { animation: none !important; }
@@ -4889,11 +4889,11 @@ input, button, textarea, select { font: inherit; color: var(--text); }
   border-radius: 6px;
 }
 
-/* ══════════════════════════════════════════════════════════
-   PONT DE COHÉRENCE — typo serif sur les grands titres de page
-   (hors marketing, qui gère déjà sa propre typo via .serif)
-   Placé en fin de fichier pour primer dans la cascade.
-   ══════════════════════════════════════════════════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+   PONT DE COHÃ‰RENCE â€” typo serif sur les grands titres de page
+   (hors marketing, qui gÃ¨re dÃ©jÃ  sa propre typo via .serif)
+   PlacÃ© en fin de fichier pour primer dans la cascade.
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .page-hero-title,
 .content-title,
 .pay-success-title,
@@ -4907,9 +4907,9 @@ input, button, textarea, select { font: inherit; color: var(--text); }
 }
 .content-title { font-weight: 400; }
 
-/* ══════════════════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    ADMIN MVP
-   ══════════════════════════════════════════════════════════ */
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .admin-shell {
   min-height: 100dvh;
   background: linear-gradient(180deg, #f4f7ff 0%, #eef8f7 100%);
@@ -5205,7 +5205,7 @@ input, button, textarea, select { font: inherit; color: var(--text); }
   color: #0f1f66;
 }
 
-/* ── Blog SEO ── */
+/* â”€â”€ Blog SEO â”€â”€ */
 .blog-index { padding-bottom: 3rem; }
 .blog-grid {
   display: grid;
@@ -5342,7 +5342,7 @@ input, button, textarea, select { font: inherit; color: var(--text); }
   background: rgba(15, 212, 199, 0.08);
 }
 
-/* ── Tarifs & simulateur ── */
+/* â”€â”€ Tarifs & simulateur â”€â”€ */
 .lp-pricing { padding-bottom: 2rem; }
 .lp-pricing-grid {
   display: grid;
@@ -5519,3 +5519,238 @@ input, button, textarea, select { font: inherit; color: var(--text); }
 }
 .wallet-fee-row-net span,
 .wallet-fee-row-net strong { color: var(--accent-blue); }
+
+/* ── Admin Litiges & Arbitrage ── */
+.admin-tab-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  background: #dc2626;
+  color: #fff;
+  font-size: 0.65rem;
+  font-weight: 800;
+  margin-left: 0.3rem;
+  padding: 0 4px;
+}
+.admin-empty {
+  padding: 2rem 1rem;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+}
+.admin-dispute-reason { max-width: 280px; }
+.admin-modal--dispute {
+  width: min(640px, 100%);
+  max-height: 92dvh;
+  overflow-y: auto;
+}
+.admin-dispute-section {
+  padding: 0.85rem 1rem;
+  border-top: 1px solid rgba(15, 31, 102, 0.07);
+}
+.admin-dispute-section-title {
+  margin: 0 0 0.6rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+}
+.admin-dispute-text {
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.6;
+  color: var(--text);
+}
+/* Galerie médias */
+.admin-media-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  gap: 0.5rem;
+}
+.admin-media-thumb {
+  position: relative;
+  border-radius: 10px;
+  overflow: hidden;
+  aspect-ratio: 1;
+  background: #f1f5f9;
+  border: 1.5px solid #e2e8f0;
+  cursor: pointer;
+  padding: 0;
+}
+.admin-media-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.admin-media-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 31, 102, 0.0);
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.15s, background 0.15s;
+}
+.admin-media-thumb:hover .admin-media-overlay {
+  opacity: 1;
+  background: rgba(15, 31, 102, 0.45);
+}
+.admin-media-video {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #0f1f66;
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+/* Contacts */
+.admin-dispute-contacts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+.admin-contact-card {
+  padding: 0.75rem;
+  border-radius: 12px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+}
+.admin-contact-role {
+  margin: 0 0 0.2rem;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #94a3b8;
+}
+.admin-contact-name {
+  margin: 0 0 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--text);
+}
+.admin-contact-actions {
+  display: flex;
+  gap: 0.4rem;
+}
+.admin-contact-btn {
+  flex: 1;
+  padding: 0.35rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-align: center;
+  text-decoration: none;
+  border: none;
+  cursor: pointer;
+}
+.admin-contact-call {
+  background: #0f1f66;
+  color: #fff;
+}
+.admin-contact-wa {
+  background: #25d366;
+  color: #fff;
+}
+.admin-contact-sub {
+  margin: 0.4rem 0 0;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+/* Timeline */
+.admin-timeline {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.admin-timeline li {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.82rem;
+}
+.admin-timeline-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: #cbd5e1;
+  flex-shrink: 0;
+}
+.admin-timeline-dot--ok { background: #0fd5c7; }
+.admin-timeline-dot--bad { background: #dc2626; }
+.admin-timeline-label { flex: 1; color: var(--text); }
+.admin-timeline-date { color: var(--text-muted); font-size: 0.78rem; white-space: nowrap; }
+/* Arbitrage */
+.admin-arbitrage-warn {
+  margin: 0 0 0.75rem;
+  padding: 0.6rem 0.75rem;
+  border-radius: 10px;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  font-size: 0.8125rem;
+  color: #92400e;
+}
+.admin-arbitrage-actions {
+  display: flex;
+  gap: 0.625rem;
+}
+.admin-arbitrage-btn {
+  flex: 1;
+  min-height: 44px;
+  border-radius: 999px;
+  border: none;
+  font-size: 0.9375rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.admin-arbitrage-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.admin-arbitrage-refund { background: #fef2f2; color: #dc2626; border: 1.5px solid #fecaca; }
+.admin-arbitrage-release { background: #f0fdf9; color: #059669; border: 1.5px solid #a7f3d0; }
+/* Lightbox */
+.admin-lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: rgba(0, 0, 0, 0.88);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: zoom-out;
+}
+.admin-lightbox img {
+  max-width: min(92vw, 840px);
+  max-height: 90dvh;
+  object-fit: contain;
+  border-radius: 12px;
+}
+.admin-lightbox-close {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.15);
+  border: none;
+  color: #fff;
+  font-size: 1.25rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}

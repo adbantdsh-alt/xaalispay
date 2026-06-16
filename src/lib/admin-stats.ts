@@ -1,7 +1,7 @@
 import { isBictorysPayoutConfigured } from "./bictorys";
 import { getDb, getDbStorageMode } from "./db";
 import { checkRemoteStore } from "./data-store";
-import type { Order, Payout, Profile } from "./types";
+import type { DisputeMedia, Order, Payout, Profile } from "./types";
 import { getOrderTotal } from "./utils";
 
 function isSeller(profile: Profile) {
@@ -118,6 +118,42 @@ function serializeOrder(order: Order, seller?: Profile) {
     updatedAt: order.updatedAt,
     disputeReason: order.disputeReason,
   };
+}
+
+export async function getAdminDisputes() {
+  const db = await getDb();
+  const profiles = profileMap(db.profiles);
+  return [...db.orders]
+    .filter((o) => o.status === "dispute")
+    .sort((a, b) => (b.disputeOpenedAt || b.updatedAt).localeCompare(a.disputeOpenedAt || a.updatedAt))
+    .map((order) => {
+      const seller = profiles.get(order.sellerId);
+      return {
+        id: order.id,
+        slug: order.slug,
+        sellerId: order.sellerId,
+        sellerUsername: seller?.username || "—",
+        sellerName: seller?.displayName || "—",
+        sellerPhone: seller?.phone || null,
+        productName: order.productName,
+        clientName: order.clientName || order.clientFirstName || "Client",
+        clientPhone: order.clientPhone,
+        clientAddress: order.clientAddress || null,
+        status: order.status,
+        total: getOrderTotal(order),
+        buyerProtectionFee: order.buyerProtectionFee ?? 0,
+        sellerCommission: order.sellerCommission ?? 0,
+        paymentMethod: order.paymentMethod,
+        paidAt: order.paidAt,
+        clientDeliveryConfirmedAt: order.clientDeliveryConfirmedAt,
+        disputeOpenedAt: order.disputeOpenedAt,
+        disputeReason: order.disputeReason || "",
+        disputeMedia: (order.disputeMedia || []) as DisputeMedia[],
+        disputePhotos: order.disputePhotos || [],
+        createdAt: order.createdAt,
+        updatedAt: order.updatedAt,
+      };
+    });
 }
 
 function serializePayout(payout: Payout, seller?: Profile) {
