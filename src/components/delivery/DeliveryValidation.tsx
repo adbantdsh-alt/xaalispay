@@ -1,8 +1,14 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import Link from "next/link";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { IconCheck, IconShield } from "@/components/ui/AppIcon";
 import { CopyButton } from "@/components/ui/CopyButton";
 import { buildPinShareMessage, buildWhatsAppUrl } from "@/lib/share";
@@ -45,16 +51,29 @@ export function DeliveryValidation({
   const [session, setSession] = useState<DeliverySession | null>(null);
   const [loading, setLoading] = useState(true);
   const [consent, setConsent] = useState(false);
-  const [confirming, setConfirming] = useState(false);
   const [error, setError] = useState("");
   const [codeRemainingMs, setCodeRemainingMs] = useState(0);
   const [protectionRemainingMs, setProtectionRemainingMs] = useState(0);
-
   const [pendingPayment, setPendingPayment] = useState(false);
   const [pendingElapsed, setPendingElapsed] = useState(0);
+  const [renewing, setRenewing] = useState(false);
+
+  // Modal de confirmation PIN
+  const [showModal, setShowModal] = useState(false);
+  const [otpDigits, setOtpDigits] = useState(["", "", "", ""]);
+  const [otpError, setOtpError] = useState("");
+  const [confirming, setConfirming] = useState(false);
+  const otpRefs = [
+    useRef<HTMLInputElement>(null),
+    useRef<HTMLInputElement>(null),
+    useRef<HTMLInputElement>(null),
+    useRef<HTMLInputElement>(null),
+  ];
+
   const pendingStartRef = useRef<number | null>(null);
   const verifyCalledRef = useRef(false);
 
+  /* ─── Chargement session ─── */
   const loadSession = useCallback(async () => {
     const res = await fetch(`/api/delivery/${orderSlug}`);
     if (!res.ok) return;
@@ -72,7 +91,7 @@ export function DeliveryValidation({
     setLoading(false);
   }, [orderSlug]);
 
-  // Déclenche /verify une seule fois dès que pending_payment est détecté
+  /* Appel /verify une seule fois dès pending_payment */
   useEffect(() => {
     if (!pendingPayment || verifyCalledRef.current) return;
     verifyCalledRef.current = true;
@@ -86,46 +105,46 @@ export function DeliveryValidation({
           setLoading(false);
         }
       })
-      .catch(() => {/* le polling reprend de toute façon */});
+      .catch(() => undefined);
   }, [pendingPayment, orderSlug]);
 
-  // Polling rapide (2 s) en mode pending, normal (5 s) sinon
+  /* Polling rapide (2 s) en mode pending, normal (5 s) sinon */
   useEffect(() => {
     loadSession();
-    const interval = pendingPayment ? 2000 : 5000;
-    const id = setInterval(loadSession, interval);
+    const id = setInterval(loadSession, pendingPayment ? 2000 : 5000);
     return () => clearInterval(id);
   }, [loadSession, pendingPayment]);
 
-  // Compteur secondes affiché pendant l'attente
+  /* Compteur secondes pendant l'attente */
   useEffect(() => {
     if (!pendingPayment) { setPendingElapsed(0); return; }
     const id = setInterval(() => {
       setPendingElapsed(
-        pendingStartRef.current ? Math.floor((Date.now() - pendingStartRef.current) / 1000) : 0
+        pendingStartRef.current
+          ? Math.floor((Date.now() - pendingStartRef.current) / 1000)
+          : 0
       );
     }, 1000);
     return () => clearInterval(id);
   }, [pendingPayment]);
 
+  /* ─── Compte à rebours code ─── */
   const codeExpiresAt = session?.deliveryCodeExpiresAt;
-
   useEffect(() => {
     if (!codeExpiresAt) return;
-    const tick = () => {
+    const tick = () =>
       setCodeRemainingMs(Math.max(0, new Date(codeExpiresAt).getTime() - Date.now()));
-    };
     tick();
     const id = setInterval(tick, 1000);
     return () => clearInterval(id);
   }, [codeExpiresAt]);
 
+  /* ─── Compte à rebours protection ─── */
   useEffect(() => {
     const endsAt = session?.protectionEndsAt;
-    if (!endsAt || session.status !== "protection") return;
-    const tick = () => {
+    if (!endsAt || session?.status !== "protection") return;
+    const tick = () =>
       setProtectionRemainingMs(Math.max(0, new Date(endsAt).getTime() - Date.now()));
-    };
     tick();
     const id = setInterval(tick, 1000);
     return () => clearInterval(id);
@@ -134,7 +153,6 @@ export function DeliveryValidation({
   const codeExpired = codeRemainingMs <= 0 && !!codeExpiresAt;
   const isProtection = session?.status === "protection";
   const isReleased = session?.status === "released";
-  const canConfirm = session?.status === "paid" && consent;
 
   const codeProgress = useMemo(() => {
     if (!codeExpiresAt) return 0;
@@ -148,25 +166,83 @@ export function DeliveryValidation({
     return Math.max(0, Math.min(100, (protectionRemainingMs / total) * 100));
   }, [protectionMinutes, protectionRemainingMs, session?.protectionEndsAt]);
 
-  const handleConfirm = async () => {
-    if (!session?.pin) return;
+  /* ─── Renouvellement du code ─── */
+  const handleRenew = async () => {
+    setRenewing(true);
     setError("");
+    try {
+      const res = await fetch(`/api/delivery/${orderSlug}/renew`, { method: "POST" });
+      const data = await res.json();
+      if (res.ok && data.session) {
+        setSession(data.session);
+      } else {
+        setError(data.error || "Impossible de renouveler le code.");
+      }
+    } finally {
+      setRenewing(false);
+    }
+  };
+
+  /* ─── Saisie OTP dans le modal ─── */
+  const handleOtpDigit = (index: number, value: string) => {
+    const char = value.replace(/\D/g, "").slice(-1);
+    const next = [...otpDigits];
+    next[index] = char;
+    setOtpDigits(next);
+    setOtpError("");
+    if (char && index < 3) {
+      otpRefs[index + 1].current?.focus();
+    }
+  };
+
+  const handleOtpKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Backspace" && !otpDigits[index] && index > 0) {
+      otpRefs[index - 1].current?.focus();
+    }
+  };
+
+  const enteredPin = otpDigits.join("");
+  const otpComplete = enteredPin.length === 4;
+
+  const openModal = () => {
+    setOtpDigits(["", "", "", ""]);
+    setOtpError("");
+    setShowModal(true);
+    setTimeout(() => otpRefs[0].current?.focus(), 80);
+  };
+
+  const closeModal = () => {
+    setShowModal(false);
+    setOtpDigits(["", "", "", ""]);
+    setOtpError("");
+  };
+
+  /* ─── Confirmation finale (envoi au serveur) ─── */
+  const handleConfirm = async () => {
+    if (!session?.pin || !otpComplete) return;
+    setOtpError("");
     setConfirming(true);
     const res = await fetch(`/api/delivery/${orderSlug}/confirm`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ pin: session.pin }),
+      body: JSON.stringify({ pin: enteredPin }),
     });
     const data = await res.json();
     setConfirming(false);
     if (!res.ok) {
-      setError(data.error || "Confirmation impossible");
+      setOtpError(data.error || "Code incorrect. Vérifiez et réessayez.");
+      setOtpDigits(["", "", "", ""]);
+      setTimeout(() => otpRefs[0].current?.focus(), 50);
       return;
     }
+    closeModal();
     setSession(data.session);
     onSessionChange?.();
   };
 
+  /* ────────────────────────────────────────────
+     Rendus conditionnels
+  ─────────────────────────────────────────────── */
   if (loading) {
     return (
       <div className={styles.deliverySecure} aria-busy="true">
@@ -180,7 +256,7 @@ export function DeliveryValidation({
             />
             Connexion sécurisée…
           </div>
-          <p className={styles.subtitle} style={{ marginTop: "0.75rem" }}>
+          <p className={styles.subtitle} style={{ marginTop: "0.6rem" }}>
             Chargement de la session de livraison.
           </p>
         </div>
@@ -204,8 +280,8 @@ export function DeliveryValidation({
           </div>
           <h2 className={styles.title}>Confirmation du paiement</h2>
           <p className={styles.subtitle}>
-            Votre paiement Wave / Orange Money est en cours de validation. Le code
-            livraison s&apos;affiche automatiquement — restez sur cette page.
+            Votre paiement Wave / Orange Money est en cours de validation.
+            Le code livraison s&apos;affiche automatiquement — restez sur cette page.
           </p>
           <div style={{ marginTop: "1rem", textAlign: "center" }}>
             <motion.div
@@ -216,23 +292,18 @@ export function DeliveryValidation({
                 width: 36,
                 height: 36,
                 borderRadius: "50%",
-                border: "3px solid rgba(255,255,255,0.15)",
+                border: "3px solid #e2e8f0",
                 borderTopColor: "#0fd5c7",
               }}
             />
           </div>
           {pendingElapsed > 3 && (
-            <p className={styles.pendingTimer}>
-              Vérification en cours… {pendingElapsed}s
-            </p>
+            <p className={styles.pendingTimer}>Vérification en cours… {pendingElapsed}s</p>
           )}
           {showTimeout && (
             <p className={styles.pendingTimeout}>
               Si votre paiement a bien été débité, contactez le vendeur ou{" "}
-              <a href="/contact" className={styles.pendingLink}>
-                notre support
-              </a>
-              .
+              <a href="/contact" className={styles.pendingLink}>notre support</a>.
             </p>
           )}
         </div>
@@ -248,9 +319,7 @@ export function DeliveryValidation({
         <div className={styles.captureShield} aria-hidden="true" />
         <div className={styles.glassInner}>
           <div className={styles.successPanel}>
-            <span className={styles.successIcon}>
-              <IconCheck size={28} />
-            </span>
+            <span className={styles.successIcon}><IconCheck size={24} /></span>
             <h3 className={styles.successTitle}>Transaction finalisée</h3>
             <p className={styles.successText}>Les fonds ont été libérés au vendeur.</p>
           </div>
@@ -260,139 +329,230 @@ export function DeliveryValidation({
   }
 
   if (isProtection || session.clientDeliveryConfirmedAt) {
-    const pin = session.pin;
     return (
       <div className={styles.deliverySecure}>
         <div className={styles.captureShield} aria-hidden="true" />
         <div className={styles.glassInner}>
           <div className={styles.successPanel}>
-            <span className={styles.successIcon}>
-              <IconCheck size={28} />
-            </span>
+            <span className={styles.successIcon}><IconCheck size={24} /></span>
             <h3 className={styles.successTitle}>Réception confirmée</h3>
             <p className={styles.successText}>
-              Séquestre Flash actif — {protectionMinutes} min pour signaler un problème avant
-              libération au vendeur.
+              Séquestre Flash actif — {protectionMinutes} min avant libération au vendeur.
             </p>
             <p className={styles.countdownTime}>{formatCountdown(protectionRemainingMs)}</p>
             <div className={styles.protectionBar}>
               <div className={styles.protectionFill} style={{ width: `${protectionProgress}%` }} />
             </div>
-            {pin && (
-              <div className={styles.shareRow}>
-                <Link href={`/litige?code=${pin}`} className="btn-ghost dispute-link">
-                  Ouvrir un litige
-                </Link>
-              </div>
-            )}
+            <div style={{ marginTop: "0.75rem" }}>
+              <Link href={`/litige?code=${session.pin}`} className={`btn-ghost ${styles.pendingLink}`}>
+                Ouvrir un litige
+              </Link>
+            </div>
           </div>
         </div>
       </div>
     );
   }
 
+  /* ── État principal : "paid" — affichage du code ── */
   return (
-    <div className={styles.deliverySecure} aria-live="polite">
-      <div className={styles.captureShield} aria-hidden="true" />
-
-      <div className={styles.glassInner}>
-        <div className={styles.liveBadge}>
-          <motion.span
-            className={styles.liveDot}
-            animate={{ scale: [1, 1.25, 1], opacity: [1, 0.65, 1] }}
-            transition={{ duration: 1.6, repeat: Infinity, ease: "easeInOut" }}
-          />
-          Session sécurisée active
-        </div>
-
-        <h2 className={styles.title}>Validation livraison</h2>
-        <p className={styles.subtitle}>
-          {productName} — code unique lié à la commande{" "}
-          <span style={{ opacity: 0.7 }}>#{session.orderId.slice(0, 8)}</span>
-        </p>
-
-        <div className={styles.consent}>
-          <label>
-            <input
-              type="checkbox"
-              checked={consent}
-              onChange={(e) => setConsent(e.target.checked)}
+    <>
+      <div className={styles.deliverySecure} aria-live="polite">
+        <div className={styles.captureShield} aria-hidden="true" />
+        <div className={styles.glassInner}>
+          <div className={styles.liveBadge}>
+            <motion.span
+              className={styles.liveDot}
+              animate={{ scale: [1, 1.25, 1], opacity: [1, 0.65, 1] }}
+              transition={{ duration: 1.6, repeat: Infinity, ease: "easeInOut" }}
             />
-            <span>
-              Je confirme avoir reçu et vérifié mon colis. Je ne communique ce code qu&apos;au
-              livreur, jamais au vendeur avant réception.
-            </span>
-          </label>
-        </div>
+            Session sécurisée active
+          </div>
 
-        {consent && (
-          <>
-            <div className={styles.pulseWrap}>
-              <motion.div
-                className={styles.pulseRing}
-                animate={{ scale: [1, 1.08, 1], opacity: [0.45, 0.9, 0.45] }}
-                transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut" }}
-              />
-              <motion.div
-                className={styles.pulseRing}
-                animate={{ scale: [1, 1.18, 1], opacity: [0.2, 0.5, 0.2] }}
-                transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut", delay: 0.35 }}
-              />
-              <p className={styles.pinCode}>{session.pin}</p>
-            </div>
-
-            <div className={styles.countdown}>
-              <p className={styles.countdownLabel}>
-                Preuve de vie — expire dans ({DELIVERY_CODE_TTL_MINUTES} min)
-              </p>
-              <p className={styles.countdownTime}>{formatCountdown(codeRemainingMs)}</p>
-              <div className={styles.protectionBar}>
-                <div className={styles.protectionFill} style={{ width: `${codeProgress}%` }} />
-              </div>
-              {codeExpired && (
-                <p className={styles.expiredNote}>
-                  Affichage code expiré. Vous pouvez toujours confirmer la réception si le colis est
-                  OK.
-                </p>
-              )}
-            </div>
-
-            <div className={styles.shareRow}>
-              <CopyButton text={session.pin} label="Copier" className="btn-primary pay-code-action" />
-              <a
-                href={buildWhatsAppUrl(buildPinShareMessage(session.pin, productName))}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="btn-secondary share-btn-whatsapp pay-code-action"
-                style={{
-                  background: "linear-gradient(135deg,#25d366,#128c7e)",
-                  color: "#fff",
-                  border: "none",
-                }}
-              >
-                WhatsApp
-              </a>
-            </div>
-          </>
-        )}
-
-        <div className={styles.actions}>
-          <button
-            type="button"
-            className={styles.confirmBtn}
-            disabled={!canConfirm || confirming}
-            onClick={handleConfirm}
-          >
-            {confirming ? "Confirmation…" : "Confirmer la réception"}
-          </button>
-          <p className={styles.hint}>
-            <IconShield size={14} className={styles.hintIcon} />
-            Validation atomique — déclenche le Séquestre Flash {protectionMinutes} min
+          <h2 className={styles.title}>Validation livraison</h2>
+          <p className={styles.subtitle}>
+            Code livraison {productName} — à donner au livreur après réception
           </p>
-        </div>
 
-        {error && <p className={styles.error}>{error}</p>}
+          {/* Consentement */}
+          <div className={styles.consent}>
+            <label>
+              <input
+                type="checkbox"
+                checked={consent}
+                onChange={(e) => setConsent(e.target.checked)}
+              />
+              <span>
+                J&apos;ai reçu et vérifié mon colis. Je donne ce code uniquement au livreur,
+                après réception.
+              </span>
+            </label>
+          </div>
+
+          {/* Révélation du code */}
+          <AnimatePresence>
+            {consent && (
+              <motion.div
+                className={styles.pinReveal}
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.25, ease: "easeOut" }}
+              >
+                <div className={styles.pulseWrap}>
+                  <motion.div
+                    className={styles.pulseRing}
+                    animate={{ scale: [1, 1.08, 1], opacity: [0.4, 0.85, 0.4] }}
+                    transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut" }}
+                  />
+                  <motion.div
+                    className={styles.pulseRing}
+                    animate={{ scale: [1, 1.18, 1], opacity: [0.18, 0.45, 0.18] }}
+                    transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut", delay: 0.35 }}
+                  />
+                  <p className={styles.pinCode}>{session.pin}</p>
+                </div>
+
+                <div className={styles.countdown}>
+                  <p className={styles.countdownLabel}>
+                    Preuve de vie — expire dans ({DELIVERY_CODE_TTL_MINUTES} min)
+                  </p>
+                  <p className={styles.countdownTime}>{formatCountdown(codeRemainingMs)}</p>
+                  <div className={styles.protectionBar}>
+                    <div className={styles.protectionFill} style={{ width: `${codeProgress}%` }} />
+                  </div>
+                  {codeExpired && (
+                    <p className={styles.expiredNote}>Code expiré — renouveler pour continuer.</p>
+                  )}
+                </div>
+
+                {/* Copier + Partager sur la même ligne */}
+                <div className={styles.shareRow}>
+                  <CopyButton
+                    text={session.pin}
+                    label="Copier"
+                    className="btn-primary pay-code-action"
+                  />
+                  <a
+                    href={buildWhatsAppUrl(buildPinShareMessage(session.pin, productName))}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn-secondary pay-code-action"
+                    style={{
+                      flex: 1,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      background: "linear-gradient(135deg,#25d366,#128c7e)",
+                      color: "#fff",
+                      border: "none",
+                      borderRadius: "999px",
+                      fontWeight: 700,
+                      fontSize: "0.875rem",
+                      minHeight: 40,
+                      textDecoration: "none",
+                    }}
+                  >
+                    WhatsApp
+                  </a>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Actions */}
+          <div className={styles.actions}>
+            {codeExpired ? (
+              <button
+                type="button"
+                className={styles.renewBtn}
+                onClick={handleRenew}
+                disabled={renewing}
+              >
+                {renewing ? "Renouvellement…" : "Renouveler le code"}
+              </button>
+            ) : (
+              <button
+                type="button"
+                className={styles.confirmBtn}
+                disabled={!consent}
+                onClick={openModal}
+              >
+                Confirmer la réception
+              </button>
+            )}
+            <p className={styles.hint}>
+              <IconShield size={13} className={styles.hintIcon} />
+              Déclenche le Séquestre Flash {protectionMinutes} min
+            </p>
+          </div>
+
+          {error && <p className={styles.error}>{error}</p>}
+        </div>
       </div>
-    </div>
+
+      {/* ── Modal saisie PIN ── */}
+      <AnimatePresence>
+        {showModal && (
+          <motion.div
+            className={styles.modalOverlay}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.18 }}
+            onClick={closeModal}
+          >
+            <motion.div
+              className={styles.modalBox}
+              initial={{ y: 60, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 60, opacity: 0 }}
+              transition={{ duration: 0.22, ease: "easeOut" }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className={styles.modalHandle} />
+              <h3 className={styles.modalTitle}>Confirmer la réception</h3>
+              <p className={styles.modalSubtitle}>
+                Saisissez le code de livraison affiché sur cette page pour valider votre réception.
+              </p>
+
+              {/* OTP 4 chiffres */}
+              <div className={styles.otpRow}>
+                {otpDigits.map((d, i) => (
+                  <input
+                    key={i}
+                    ref={otpRefs[i]}
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={1}
+                    value={d}
+                    className={`${styles.otpDigit}${d ? ` ${styles.otpFilled}` : ""}`}
+                    onChange={(e) => handleOtpDigit(i, e.target.value)}
+                    onKeyDown={(e) => handleOtpKeyDown(i, e)}
+                    autoComplete="one-time-code"
+                  />
+                ))}
+              </div>
+
+              {otpError && <p className={styles.otpError}>{otpError}</p>}
+
+              <div className={styles.modalActions}>
+                <button type="button" className={styles.cancelBtn} onClick={closeModal}>
+                  Annuler
+                </button>
+                <button
+                  type="button"
+                  className={styles.submitBtn}
+                  disabled={!otpComplete || confirming}
+                  onClick={handleConfirm}
+                >
+                  {confirming ? "Validation…" : "Confirmer"}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
   );
 }

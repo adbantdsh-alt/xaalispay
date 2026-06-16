@@ -1,18 +1,20 @@
+/* ──────────────────────────────────────────────
+   Conteneur principal — fond blanc, compact
+─────────────────────────────────────────────── */
 .deliverySecure {
   position: relative;
   isolation: isolate;
   user-select: none;
   -webkit-user-select: none;
-  border-radius: 20px;
+  border-radius: 16px;
   overflow: hidden;
-  background: linear-gradient(145deg, #0f1f66 0%, #152a7a 45%, #0a1547 100%);
-  color: #f8fafc;
-  padding: 1.25rem 1.25rem 1.35rem;
-  box-shadow:
-    0 12px 40px rgba(15, 31, 102, 0.35),
-    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  background: #ffffff;
+  color: #0f172a;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.07);
 }
 
+/* Overlay anti-capture discret */
 .captureShield {
   pointer-events: none;
   position: absolute;
@@ -20,34 +22,31 @@
   z-index: 3;
   background: repeating-linear-gradient(
     -45deg,
-    rgba(255, 255, 255, 0.015) 0,
-    rgba(255, 255, 255, 0.015) 2px,
+    rgba(0, 0, 0, 0.012) 0,
+    rgba(0, 0, 0, 0.012) 2px,
     transparent 2px,
-    transparent 6px
+    transparent 8px
   );
-  mix-blend-mode: overlay;
 }
 
 .glassInner {
   position: relative;
   z-index: 2;
-  border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.06);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  padding: 1rem;
+  padding: 1.25rem 1.25rem 1.35rem;
 }
 
+/* ──────────────────────────────────────────────
+   Badge "live"
+─────────────────────────────────────────────── */
 .liveBadge {
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
   font-size: 0.6875rem;
   font-weight: 700;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.07em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.75);
+  color: #475569;
 }
 
 .liveDot {
@@ -55,21 +54,59 @@
   height: 8px;
   border-radius: 999px;
   background: #0fd5c7;
-  box-shadow: 0 0 12px rgba(15, 213, 199, 0.8);
+  box-shadow: 0 0 8px rgba(15, 213, 199, 0.7);
 }
 
+/* ──────────────────────────────────────────────
+   Titres & textes
+─────────────────────────────────────────────── */
 .title {
-  margin: 0.75rem 0 0.25rem;
+  margin: 0.6rem 0 0.2rem;
   font-size: 1.0625rem;
   font-weight: 800;
   letter-spacing: -0.02em;
+  color: #0f172a;
 }
 
 .subtitle {
   margin: 0;
   font-size: 0.8125rem;
   line-height: 1.5;
-  color: rgba(255, 255, 255, 0.72);
+  color: #64748b;
+}
+
+/* ──────────────────────────────────────────────
+   Case à cocher consentement
+─────────────────────────────────────────────── */
+.consent {
+  margin-top: 1rem;
+  padding: 0.75rem;
+  border-radius: 10px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+}
+
+.consent label {
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-start;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: #334155;
+  cursor: pointer;
+}
+
+.consent input {
+  margin-top: 0.15rem;
+  accent-color: #0fd5c7;
+  flex-shrink: 0;
+}
+
+/* ──────────────────────────────────────────────
+   Code PIN + animation
+─────────────────────────────────────────────── */
+.pinReveal {
+  margin-top: 1rem;
 }
 
 .pulseWrap {
@@ -77,30 +114,32 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 1.25rem auto 0.75rem;
-  width: 168px;
-  height: 168px;
+  margin: 0.5rem auto;
+  width: 140px;
+  height: 140px;
 }
 
 .pulseRing {
   position: absolute;
   inset: 0;
   border-radius: 999px;
-  border: 2px solid rgba(15, 213, 199, 0.35);
+  border: 2px solid rgba(15, 213, 199, 0.3);
 }
 
 .pinCode {
   position: relative;
   z-index: 1;
-  font-size: 2.75rem;
+  font-size: 2.5rem;
   font-weight: 800;
-  letter-spacing: 0.35em;
+  letter-spacing: 0.3em;
   font-variant-numeric: tabular-nums;
-  text-indent: 0.35em;
-  color: #fff;
-  text-shadow: 0 0 24px rgba(15, 213, 199, 0.35);
+  text-indent: 0.3em;
+  color: #0f172a;
 }
 
+/* ──────────────────────────────────────────────
+   Compte à rebours
+─────────────────────────────────────────────── */
 .countdown {
   text-align: center;
   margin-top: 0.5rem;
@@ -110,47 +149,63 @@
   margin: 0;
   font-size: 0.6875rem;
   font-weight: 600;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.55);
+  color: #94a3b8;
 }
 
 .countdownTime {
-  margin: 0.25rem 0 0;
-  font-size: 1.5rem;
+  margin: 0.2rem 0 0;
+  font-size: 1.375rem;
   font-weight: 800;
   font-variant-numeric: tabular-nums;
-  color: #0fd5c7;
+  color: #0bbfb3;
 }
 
-.consent {
-  margin-top: 1rem;
-  padding: 0.75rem;
-  border-radius: 12px;
-  background: rgba(0, 0, 0, 0.15);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+.protectionBar {
+  margin-top: 0.75rem;
+  height: 4px;
+  border-radius: 999px;
+  background: #e2e8f0;
+  overflow: hidden;
 }
 
-.consent label {
+.protectionFill {
+  height: 100%;
+  background: linear-gradient(90deg, #0fd5c7, #5eead4);
+  border-radius: inherit;
+  transition: width 1s linear;
+}
+
+.expiredNote {
+  margin: 0.5rem 0 0;
+  font-size: 0.78rem;
+  color: #d97706;
+  text-align: center;
+}
+
+/* ──────────────────────────────────────────────
+   Boutons Copier / Partager (même ligne)
+─────────────────────────────────────────────── */
+.shareRow {
   display: flex;
   gap: 0.5rem;
-  align-items: flex-start;
-  font-size: 0.8125rem;
-  line-height: 1.45;
-  color: rgba(255, 255, 255, 0.85);
-  cursor: pointer;
+  margin-top: 0.75rem;
 }
 
-.consent input {
-  margin-top: 0.15rem;
-  accent-color: #0fd5c7;
+.shareRow :global(.pay-code-action) {
+  flex: 1;
+  min-width: 0;
 }
 
+/* ──────────────────────────────────────────────
+   Zone action principale
+─────────────────────────────────────────────── */
 .actions {
+  margin-top: 1rem;
   display: flex;
   flex-direction: column;
-  gap: 0.65rem;
-  margin-top: 1rem;
+  gap: 0.5rem;
 }
 
 .confirmBtn {
@@ -162,41 +217,65 @@
   font-weight: 800;
   font-size: 0.9375rem;
   cursor: pointer;
-  transition: opacity 0.2s ease;
+  transition: opacity 0.18s ease, transform 0.12s ease;
+}
+
+.confirmBtn:hover:not(:disabled) {
+  opacity: 0.92;
+  transform: translateY(-1px);
 }
 
 .confirmBtn:disabled {
-  opacity: 0.45;
+  opacity: 0.4;
   cursor: not-allowed;
+}
+
+.renewBtn {
+  min-height: 40px;
+  border: 1.5px solid #0fd5c7;
+  border-radius: 999px;
+  background: transparent;
+  color: #0bbfb3;
+  font-weight: 700;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.renewBtn:hover {
+  background: rgba(15, 213, 199, 0.07);
 }
 
 .hint {
   margin: 0;
-  font-size: 0.75rem;
-  line-height: 1.45;
-  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.73rem;
+  color: #94a3b8;
   text-align: center;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.35rem;
+  gap: 0.3rem;
+  line-height: 1.45;
 }
 
 .hintIcon {
   flex-shrink: 0;
-  opacity: 0.85;
+  opacity: 0.7;
 }
 
 .error {
   margin: 0.75rem 0 0;
-  padding: 0.65rem 0.75rem;
+  padding: 0.6rem 0.75rem;
   border-radius: 10px;
-  background: rgba(220, 38, 38, 0.15);
-  border: 1px solid rgba(248, 113, 113, 0.35);
-  color: #fecaca;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #dc2626;
   font-size: 0.8125rem;
 }
 
+/* ──────────────────────────────────────────────
+   Panel succès (réception confirmée / libéré)
+─────────────────────────────────────────────── */
 .successPanel {
   text-align: center;
   padding: 0.5rem 0;
@@ -206,80 +285,208 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 56px;
-  height: 56px;
+  width: 52px;
+  height: 52px;
   border-radius: 999px;
-  background: rgba(15, 213, 199, 0.15);
+  background: #f0fdf9;
   color: #0fd5c7;
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.65rem;
+  border: 1.5px solid #ccfbf1;
 }
 
 .successTitle {
   margin: 0;
-  font-size: 1.125rem;
+  font-size: 1.0625rem;
   font-weight: 800;
+  color: #0f172a;
 }
 
 .successText {
-  margin: 0.5rem 0 0;
+  margin: 0.4rem 0 0;
   font-size: 0.8125rem;
-  line-height: 1.55;
-  color: rgba(255, 255, 255, 0.75);
+  line-height: 1.5;
+  color: #64748b;
 }
 
-.protectionBar {
-  margin-top: 1rem;
-  height: 4px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.12);
-  overflow: hidden;
-}
-
-.protectionFill {
-  height: 100%;
-  background: linear-gradient(90deg, #0fd5c7, #5eead4);
-  border-radius: inherit;
-  transition: width 1s linear;
-}
-
-.shareRow {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  justify-content: center;
-  margin-top: 0.75rem;
-}
-
-.shareRow :global(.pay-code-action) {
-  flex: 1;
-  min-width: 120px;
-}
-
-.expiredNote {
-  margin: 0.5rem 0 0;
-  font-size: 0.75rem;
-  color: #fcd34d;
-  text-align: center;
-}
-
+/* ──────────────────────────────────────────────
+   En attente de paiement (pending)
+─────────────────────────────────────────────── */
 .pendingTimer {
-  margin: 0.75rem 0 0;
+  margin: 0.65rem 0 0;
   font-size: 0.78rem;
-  color: rgba(255, 255, 255, 0.5);
+  color: #94a3b8;
   text-align: center;
-  letter-spacing: 0.02em;
 }
 
 .pendingTimeout {
-  margin: 0.75rem 0 0;
+  margin: 0.65rem 0 0;
   font-size: 0.82rem;
-  color: #fcd34d;
+  color: #d97706;
   text-align: center;
   line-height: 1.5;
 }
 
 .pendingLink {
-  color: #0fd5c7;
+  color: #0bbfb3;
   text-decoration: underline;
   text-underline-offset: 2px;
+}
+
+/* ──────────────────────────────────────────────
+   Dispute link
+─────────────────────────────────────────────── */
+.shareRow :global(.dispute-link) {
+  display: inline-block;
+  color: #64748b;
+  font-size: 0.8125rem;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+/* ──────────────────────────────────────────────
+   Modal confirmation PIN
+─────────────────────────────────────────────── */
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 0 0 env(safe-area-inset-bottom, 0);
+}
+
+@media (min-width: 480px) {
+  .modalOverlay {
+    align-items: center;
+  }
+}
+
+.modalBox {
+  width: 100%;
+  max-width: 420px;
+  background: #ffffff;
+  border-radius: 20px 20px 0 0;
+  padding: 1.5rem 1.5rem 2rem;
+  box-shadow: 0 -8px 40px rgba(0, 0, 0, 0.12);
+}
+
+@media (min-width: 480px) {
+  .modalBox {
+    border-radius: 20px;
+    padding: 1.75rem;
+  }
+}
+
+.modalHandle {
+  width: 36px;
+  height: 4px;
+  border-radius: 999px;
+  background: #e2e8f0;
+  margin: 0 auto 1.25rem;
+}
+
+@media (min-width: 480px) {
+  .modalHandle {
+    display: none;
+  }
+}
+
+.modalTitle {
+  margin: 0 0 0.25rem;
+  font-size: 1.0625rem;
+  font-weight: 800;
+  color: #0f172a;
+  text-align: center;
+}
+
+.modalSubtitle {
+  margin: 0 0 1.25rem;
+  font-size: 0.8125rem;
+  color: #64748b;
+  text-align: center;
+  line-height: 1.5;
+}
+
+/* Inputs OTP 4 chiffres */
+.otpRow {
+  display: flex;
+  gap: 0.625rem;
+  justify-content: center;
+  margin-bottom: 1.25rem;
+}
+
+.otpDigit {
+  width: 56px;
+  height: 64px;
+  border-radius: 12px;
+  border: 2px solid #e2e8f0;
+  background: #f8fafc;
+  font-size: 1.75rem;
+  font-weight: 800;
+  text-align: center;
+  color: #0f172a;
+  font-variant-numeric: tabular-nums;
+  transition: border-color 0.15s;
+  outline: none;
+  caret-color: transparent;
+}
+
+.otpDigit:focus {
+  border-color: #0fd5c7;
+  background: #f0fdfa;
+}
+
+.otpDigit.otpFilled {
+  border-color: #0fd5c7;
+}
+
+.otpError {
+  margin: -0.75rem 0 0.75rem;
+  font-size: 0.8125rem;
+  color: #dc2626;
+  text-align: center;
+}
+
+.modalActions {
+  display: flex;
+  gap: 0.625rem;
+}
+
+.cancelBtn {
+  flex: 1;
+  min-height: 48px;
+  border-radius: 999px;
+  border: 1.5px solid #e2e8f0;
+  background: transparent;
+  color: #475569;
+  font-weight: 700;
+  font-size: 0.9375rem;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.cancelBtn:hover {
+  background: #f8fafc;
+}
+
+.submitBtn {
+  flex: 2;
+  min-height: 48px;
+  border-radius: 999px;
+  border: none;
+  background: linear-gradient(135deg, #0fd5c7, #0bbfb3);
+  color: #0a1547;
+  font-weight: 800;
+  font-size: 0.9375rem;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.submitBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
