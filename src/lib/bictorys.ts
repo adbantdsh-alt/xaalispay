@@ -339,7 +339,6 @@ export async function refundBictorysTransaction(transactionId: string): Promise<
     headers: {
       "Content-Type": "application/json",
       "X-Api-Key": getRefundKey(),
-      Authorization: `Bearer ${getRefundKey()}`,
       "idempotency-key": transactionId,
     },
   });
