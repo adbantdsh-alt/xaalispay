@@ -6,6 +6,7 @@ import { buildShopPath } from "@/lib/site-url";
 import { DashboardSkeleton } from "@/components/ui/Skeleton";
 import { SettingsPhoneEditor } from "@/components/seller/SettingsPhoneEditor";
 import { SettingsProfileEditor } from "@/components/seller/SettingsProfileEditor";
+import { SettingsNotificationPrefs } from "@/components/seller/SettingsNotificationPrefs";
 import { useSellerData } from "@/components/seller/SellerDataProvider";
 
 const ACCOUNT_LINKS = [
@@ -127,6 +128,8 @@ export default function SettingsPage() {
             await refresh({ silent: true });
           }}
         />
+
+        <SettingsNotificationPrefs />
 
         <Link href={buildShopPath(profile.username)} className="settings-public-link">
           Voir ma page publique

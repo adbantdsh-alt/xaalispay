@@ -1,0 +1,107 @@
+# XaalisPay — Checklist lancement manuel
+
+À faire **une fois** avant d'ouvrir aux vrais vendeurs (prod). Coche au fur et à mesure.
+
+---
+
+## 1. Supabase
+
+1. Créer le projet Supabase (région proche du Sénégal si possible).
+2. **SQL Editor** → exécuter dans l'ordre :
+   - `supabase/setup_prod.sql`
+   - `supabase/schema_v1.sql`
+3. **Authentication → URL Configuration** :
+   - Site URL : `https://xaalispay.com`
+   - Redirect URLs : `https://xaalispay.com/auth/callback`
+4. Récupérer **Project URL**, **anon key**, **service_role key**.
+
+---
+
+## 2. Vercel — variables d'environnement
+
+Copier depuis `.env.example` et remplir en **Production** :
+
+| Variable | Valeur |
+|----------|--------|
+| `NEXT_PUBLIC_SITE_URL` | `https://xaalispay.com` |
+| `NEXT_PUBLIC_SUPABASE_URL` | URL projet Supabase |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | clé anon |
+| `SUPABASE_SERVICE_ROLE_KEY` | clé service (secrète) |
+| `AUTH_SECRET` | 32+ caractères aléatoires |
+| `CRON_SECRET` | secret pour cron maintenance |
+| `DEV_AUTO_LOGIN` | **`false`** |
+| `BICTORYS_PUBLIC_KEY` + `BICTORYS_API_KEY` | clés **prod** Bictorys |
+| `BICTORYS_BASE_URL` | `https://api.bictorys.com` |
+| `BICTORYS_WEBHOOK_SECRET` | secret webhook payin |
+| `BICTORYS_REFUND_API_KEY` | remboursements |
+| `BICTORYS_PAYOUT_API_KEY` | retraits vendeurs |
+
+---
+
+## 3. Vercel — Cron
+
+Créer un cron job :
+
+- **URL** : `GET https://xaalispay.com/api/maintenance`
+- **Fréquence** : toutes les heures (ou selon besoin)
+- **Header** : `Authorization: Bearer <CRON_SECRET>`
+
+---
+
+## 4. Bictorys
+
+1. Passer en compte **production** (pas test.bictorys.com).
+2. Configurer l'URL webhook : `https://xaalispay.com/api/webhook`
+3. Tester un paiement Wave/Orange de bout en bout (petit montant).
+4. Tester un remboursement litige / annulation.
+5. Tester un retrait vendeur vers votre numéro.
+
+---
+
+## 5. Admin XaalisPay
+
+1. Se connecter avec le compte **super_admin**.
+2. Aller sur `/admin` → **Checklist production** = tout vert.
+3. **Synchroniser app_state → tables** (une fois, puis après gros imports).
+4. Vérifier qu'un litige test s'arbitre correctement.
+
+---
+
+## 6. Compte vendeur pilote
+
+1. Inscription réelle (email vérifié).
+2. Créer 1 produit avec photo.
+3. Payer en tant qu'acheteur (autre téléphone).
+4. Valider livraison (PIN).
+5. Retirer vers Wave/Orange.
+6. Vérifier **Portefeuille → Mouvements** et **Historique retraits**.
+
+---
+
+## 7. Dev local (optionnel)
+
+| Variable | Usage |
+|----------|--------|
+| `DEV_AUTO_LOGIN=true` | auto-login sur `/auth` et routes vendeur |
+| Landing `/` | visible sans redirect — bannière « Dashboard démo » en dev |
+
+**Ne jamais** activer `DEV_AUTO_LOGIN=true` en production.
+
+---
+
+## 8. Go live
+
+- [ ] DNS `xaalispay.com` → Vercel
+- [ ] SSL actif
+- [ ] Test paiement prod OK
+- [ ] Test retrait prod OK
+- [ ] 5–10 vendeurs pilotes identifiés
+- [ ] Support WhatsApp / contact prêt
+
+---
+
+## En cas de problème
+
+- **Admin → Santé système** : Supabase, Bictorys, webhooks
+- Logs Vercel : Functions → `/api/webhook`, `/api/maintenance`
+- Table `app_state` dans Supabase : backup JSON avant migration manuelle

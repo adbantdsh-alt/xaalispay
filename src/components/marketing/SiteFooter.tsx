@@ -7,6 +7,7 @@ const COLS = [
     links: [
       { label: "Comment ça marche", href: "/#comment" },
       { label: "FAQ", href: "/#faq" },
+      { label: "Blog", href: "/blog" },
       { label: "Nous contacter", href: "/contact" },
     ],
   },

@@ -365,6 +365,90 @@ const POSTS: BlogPost[] = [
       },
     ],
   },
+  {
+    slug: "paiement-sequestre-instagram-dakar-2026",
+    title: "Paiement séquestre Instagram à Dakar : le guide 2026",
+    description:
+      "Pourquoi les vendeurs et acheteurs d'Instagram à Dakar passent au séquestre XaalisPay — cas concrets, étapes et erreurs à éviter.",
+    category: "Guides",
+    publishedAt: "2026-06-10",
+    updatedAt: "2026-06-10",
+    readingTime: 7,
+    sections: [
+      {
+        type: "p",
+        text: "En 2026, une grande partie du e-commerce sénégalais se joue encore en DM Instagram. Le problème n'est pas le canal — c'est l'absence de garantie quand l'argent part directement sur Wave ou Orange Money.",
+      },
+      {
+        type: "h2",
+        text: "Le scénario classique (et dangereux)",
+      },
+      {
+        type: "p",
+        text: "L'acheteur hésite à payer avant livraison. Le vendeur refuse d'expédier sans acompte. Résultat : vente perdue ou arnaque. Le séquestre coupe ce nœud gordien.",
+      },
+      {
+        type: "h2",
+        text: "Comment structurer une vente Instagram avec XaalisPay",
+      },
+      {
+        type: "ul",
+        items: [
+          "Publier le produit avec photo et prix dans votre boutique XaalisPay",
+          "Envoyer le lien de paiement en DM (pas votre numéro perso)",
+          "L'acheteur paie — fonds bloqués en séquestre",
+          "Vous livrez sachant que l'argent est garanti",
+          "Code PIN + Séquestre Flash 30 min pour protéger les deux parties",
+        ],
+      },
+      {
+        type: "h2",
+        text: "Argument vendeur qui convertit",
+      },
+      {
+        type: "p",
+        text: "« Payez via XaalisPay, votre argent est protégé jusqu'à réception. » Cette phrase rassure les clients méfiants et augmente le taux de closing sur les ventes à distance.",
+      },
+    ],
+  },
+  {
+    slug: "vendeur-en-ligne-wave-orange-sequestre",
+    title: "Vendeur en ligne : recevoir Wave et Orange Money en séquestre",
+    description:
+      "Comment encaisser Wave et Orange Money sans risque d'impayé ni litige — workflow vendeur XaalisPay étape par étape.",
+    category: "Vendeurs",
+    publishedAt: "2026-06-12",
+    updatedAt: "2026-06-12",
+    readingTime: 6,
+    sections: [
+      {
+        type: "p",
+        text: "Wave et Orange Money sont parfaits pour encaisser vite — mais en paiement direct, vous n'avez aucune preuve structurée de la commande. XaalisPay transforme ces mêmes moyens de paiement en flux professionnel avec séquestre.",
+      },
+      {
+        type: "h2",
+        text: "Ce que vous gagnez comme vendeur",
+      },
+      {
+        type: "ul",
+        items: [
+          "Commande tracée (produit, client, montant, statut)",
+          "Fonds garantis avant expédition",
+          "Réception automatique après validation livraison",
+          "Retrait Wave/Orange depuis votre portefeuille vendeur",
+          "Historique des mouvements et retraits",
+        ],
+      },
+      {
+        type: "h2",
+        text: "Bonnes pratiques pour limiter les litiges",
+      },
+      {
+        type: "p",
+        text: "Photo réelle du produit, délai de livraison réaliste, réponse rapide sur WhatsApp. Un vendeur transparent a moins de litiges — et un meilleur taux de conversion grâce à la confiance XaalisPay.",
+      },
+    ],
+  },
 ];
 
 export function getAllBlogPosts(): BlogPost[] {

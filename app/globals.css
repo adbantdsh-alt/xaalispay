@@ -5955,6 +5955,106 @@ input, button, textarea, select { font: inherit; color: var(--text); }
   color: #15803d;
 }
 
+/* ── Phase 4 : landing dev + notifications commandes ── */
+.dev-landing-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  padding: 0.5rem 1rem;
+  background: #fef3c7;
+  border-bottom: 1px solid #fde68a;
+  font-size: 0.8125rem;
+  color: #92400e;
+}
+
+.dev-landing-banner-label {
+  font-weight: 800;
+  text-transform: uppercase;
+  font-size: 0.6875rem;
+  letter-spacing: 0.04em;
+}
+
+.dev-landing-banner-link {
+  font-weight: 700;
+  color: #1a4fd6;
+  text-decoration: underline;
+}
+
+.seller-order-toast {
+  position: fixed;
+  top: calc(3.5rem + env(safe-area-inset-top));
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 90;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: min(400px, calc(100% - 2rem));
+  padding: 0.875rem 1rem;
+  border-radius: 14px;
+  background: #0f1f66;
+  color: #fff;
+  box-shadow: 0 8px 32px rgba(15, 31, 102, 0.35);
+}
+
+.seller-order-toast-title {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.seller-order-toast-detail {
+  margin: 0.15rem 0 0;
+  font-size: 0.8125rem;
+  opacity: 0.85;
+}
+
+.seller-order-toast-link {
+  margin-left: auto;
+  flex-shrink: 0;
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.seller-order-toast-close {
+  flex-shrink: 0;
+  border: none;
+  background: none;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 0.15rem;
+}
+
+.settings-notify-prefs {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-seller, #e2e8f0);
+}
+
+.settings-notify-desc {
+  margin: 0.35rem 0 0.75rem;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+}
+
+.settings-notify-btn {
+  width: 100%;
+}
+
+.settings-notify-status {
+  margin: 0.5rem 0 0;
+  font-size: 0.8125rem;
+  color: var(--accent-blue, #1a4fd6);
+}
+
 .admin-kpi,
 .admin-card {
   background: #fff;
