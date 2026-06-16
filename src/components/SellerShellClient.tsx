@@ -44,6 +44,7 @@ function SellerShellInner({ children }: { children: React.ReactNode }) {
         open={settingsOpen}
         onClose={() => setSettingsOpen(false)}
         onLogout={logout}
+        showAdmin={dashboard?.profile?.role === "super_admin"}
       />
     </div>
   );

@@ -17,5 +17,7 @@ export const config = {
     "/profile/:path*",
     "/history",
     "/history/:path*",
+    "/admin",
+    "/admin/:path*",
   ],
 };

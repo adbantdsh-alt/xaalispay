@@ -48,7 +48,8 @@ export async function updateSession(request: NextRequest) {
     (request.nextUrl.pathname.startsWith("/dashboard") ||
       request.nextUrl.pathname.startsWith("/wallet") ||
       request.nextUrl.pathname.startsWith("/create") ||
-      request.nextUrl.pathname.startsWith("/profile"))
+      request.nextUrl.pathname.startsWith("/profile") ||
+      request.nextUrl.pathname.startsWith("/admin"))
   ) {
     const redirect = request.nextUrl.clone();
     redirect.pathname = "/auth";

@@ -17,14 +17,22 @@ export function SettingsSheet({
   open,
   onClose,
   onLogout,
+  showAdmin = false,
 }: {
   open: boolean;
   onClose: () => void;
   onLogout: () => void;
+  showAdmin?: boolean;
 }) {
   return (
     <FloatingSheet open={open} onClose={onClose} title="Paramètres">
       <nav className="settings-sheet-list">
+        {showAdmin && (
+          <Link href="/admin" className="settings-sheet-item settings-sheet-item-admin" onClick={onClose}>
+            <span className="settings-sheet-item-label">Administration</span>
+            <span className="settings-sheet-item-desc">Piloter XaalisPay</span>
+          </Link>
+        )}
         {SETTINGS_LINKS.map((item) => (
           <Link
             key={item.href}

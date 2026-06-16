@@ -206,3 +206,22 @@ export async function processAutomaticPayouts() {
 
   return results;
 }
+
+export async function retryFailedPayout(
+  payoutId: string
+): Promise<{ ok: boolean; payout?: Payout; message: string }> {
+  const db = await getDb();
+  const failed = db.payouts.find(
+    (payout) => payout.id === payoutId && payout.status === "failed"
+  );
+  if (!failed) {
+    return { ok: false, message: "Retrait introuvable ou déjà traité" };
+  }
+
+  return createPayoutRequest({
+    sellerId: failed.sellerId,
+    amount: failed.amount,
+    method: failed.method,
+    phone: failed.phone,
+  });
+}
