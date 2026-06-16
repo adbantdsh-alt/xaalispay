@@ -48,6 +48,18 @@ export interface OverviewData {
     lastMigratedAt: string | null;
     counts: Record<string, number>;
   };
+  bictorys?: {
+    webhooks24h: number;
+    webhooksFailed24h: number;
+    pendingPayments: number;
+    recentWebhooks: Array<{
+      id: string;
+      eventKey: string;
+      status: string;
+      reference: string;
+      createdAt: string;
+    }>;
+  };
 }
 
 export interface PayoutRow {

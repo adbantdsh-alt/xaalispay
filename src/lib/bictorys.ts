@@ -34,16 +34,24 @@ function firstEnvValue(names: string[]): string | undefined {
   return undefined;
 }
 
-const BICTORYS_PAYOUT_KEY_NAMES = [
-  "BICTORYS_PAYOUT_API_KEY",
+const BICTORYS_PUBLIC_KEY_NAMES = [
   "BICTORYS_API_KEY",
+  "BICTORYS_PUBLIC_KEY",
+  "bictorys_xaalispay_encaissement",
+] as const;
+
+const BICTORYS_PAYOUT_KEY_NAMES = [
+  "BICTORYS_PRIVATE_KEY",
+  "BICTORYS_PAYOUT_API_KEY",
   "BICTORYS_SECRET_KEY",
+  "BICTORYS_API_KEY",
   "bictorys_payout_key",
   "bictorys_xaalispay_encaissement",
 ] as const;
 
 const BICTORYS_REFUND_KEY_NAMES = [
   "BICTORYS_REFUND_API_KEY",
+  "BICTORYS_PRIVATE_KEY",
   "BICTORYS_API_KEY",
   "BICTORYS_SECRET_KEY",
   "BICTORYS_PAYOUT_API_KEY",
@@ -52,11 +60,8 @@ const BICTORYS_REFUND_KEY_NAMES = [
 ] as const;
 
 function getPublicKey(): string {
-  const key = firstEnvValue([
-    "BICTORYS_PUBLIC_KEY",
-    "bictorys_xaalispay_encaissement",
-  ]);
-  if (!key) throw new Error("BICTORYS_PUBLIC_KEY manquante");
+  const key = firstEnvValue([...BICTORYS_PUBLIC_KEY_NAMES]);
+  if (!key) throw new Error("BICTORYS_API_KEY / BICTORYS_PUBLIC_KEY manquante");
   return key;
 }
 
@@ -114,13 +119,43 @@ export function normalizeSenegalPhone(phone: string): string {
   return `221${digits}`;
 }
 
-/** Numéro local Sénégal pour payout Bictorys (sans 221 — l'API ajoute +221). */
-export function toBictorysPayoutPhone(phone: string): string {
-  let digits = phone.replace(/\D/g, "");
-  while (digits.startsWith("221") && digits.length > 9) {
-    digits = digits.slice(3);
+/** Format Bictorys charges/payouts : +221771234567 */
+export function toBictorysInternationalPhone(phone: string, country = "SN"): string {
+  const trimmed = phone.trim();
+  if (trimmed.startsWith("+")) return trimmed.replace(/\s/g, "");
+  const digits = trimmed.replace(/\D/g, "");
+  if (country === "SN") {
+    if (digits.startsWith("221")) return `+${digits}`;
+    return `+221${digits.replace(/^0+/, "")}`;
   }
-  return digits.replace(/^0+/, "");
+  return `+${digits}`;
+}
+
+/** Numéro local Sénégal pour payout Bictorys (legacy). Préférer toBictorysInternationalPhone. */
+export function toBictorysPayoutPhone(phone: string): string {
+  return toBictorysInternationalPhone(phone, "SN");
+}
+
+async function fetchBictorysWithRetry(
+  url: string,
+  init: RequestInit,
+  maxRetries = 3
+): Promise<Response> {
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    if (attempt > 0) {
+      await new Promise((r) => setTimeout(r, Math.pow(2, attempt) * 1000));
+    }
+    const response = await fetch(url, init);
+    if (response.ok) return response;
+
+    const text = await response.clone().text();
+    const isWaf =
+      response.status === 403 &&
+      (text.includes("Forbidden") || text.includes("<html"));
+    if (isWaf && attempt < maxRetries) continue;
+    return response;
+  }
+  throw new Error("Bictorys: max retries reached");
 }
 
 function extractChargePayload(raw: unknown): Record<string, unknown> {
@@ -149,16 +184,20 @@ function findPaymentUrl(value: unknown): string | undefined {
 export async function createBictorysMobileMoneyCharge({
   order,
   method,
+  otp,
 }: {
   order: Order;
   method: MobileMoneyMethod;
+  otp?: string;
 }): Promise<BictorysChargeResult> {
   const reference = order.paymentReference || order.slug;
   const amount = getCheckoutChargeAmount(order);
   const customerName = order.clientName || order.clientFirstName || "Client XaalisPay";
-  const phone = normalizeSenegalPhone(order.clientPhone);
+  const phone = toBictorysInternationalPhone(order.clientPhone, "SN");
+  const successUrl = `${buildPaymentLinkUrl(order.slug)}?payment=success`;
+  const errorUrl = `${buildPaymentLinkUrl(order.slug)}?payment=failed`;
 
-  const payload = {
+  const payload: Record<string, unknown> = {
     amount,
     merchantReference: reference,
     paymentReference: reference,
@@ -167,12 +206,13 @@ export async function createBictorysMobileMoneyCharge({
     customerObject: {
       name: customerName,
       email: "client@xaalispay.com",
-      phoneNumber: phone,
       phone,
+      country: "SN",
     },
     allowUpdateCustomer: false,
-    successRedirectUrl: `${buildPaymentLinkUrl(order.slug)}?payment=success`,
-    errorRedirectUrl: `${buildPaymentLinkUrl(order.slug)}?payment=failed`,
+    successRedirectUrl: successUrl,
+    ErrorRedirectUrl: errorUrl,
+    errorRedirectUrl: errorUrl,
     callbackUrl: buildPaymentLinkUrl(order.slug),
     orderDetails: [
       {
@@ -194,7 +234,11 @@ export async function createBictorysMobileMoneyCharge({
     ],
   };
 
-  const res = await fetch(
+  if (otp?.trim()) {
+    payload.otp = otp.trim();
+  }
+
+  const res = await fetchBictorysWithRetry(
     `${getBaseUrl()}/pay/v1/charges?payment_type=${mapPaymentMethodToPaymentType(method)}`,
     {
       method: "POST",
@@ -279,32 +323,49 @@ async function readBictorysResponse(res: Response): Promise<unknown> {
 
 export async function createBictorysPayout(payout: Payout): Promise<BictorysPayoutResult> {
   const paymentType = mapPaymentMethodToPaymentType(payout.method);
-  const secretCode = process.env.BICTORYS_PAYOUT_SECRET_CODE?.trim();
+  const secretCode =
+    process.env.BICTORYS_MERCHANT_SECRET_CODE?.trim() ||
+    process.env.BICTORYS_PAYOUT_SECRET_CODE?.trim();
+
   const payload = {
     amount: payout.netAmount ?? payout.amount,
     currency: "XOF",
     country: "SN",
-    transactionType: "transfer",
+    transactionType: "payment",
     paymentReason: "Retrait vendeur XaalisPay",
     merchantReference: payout.id,
     customerObject: {
       name: "Vendeur XaalisPay",
-      phone: toBictorysPayoutPhone(payout.phone),
+      phone: toBictorysInternationalPhone(payout.phone, "SN"),
+      email: "vendeur@xaalispay.com",
       country: "SN",
       locale: "fr-FR",
     },
     ...(secretCode ? { merchant: { secretCode } } : {}),
   };
 
-  const res = await fetch(`${getBaseUrl()}/pay/v1/payouts?payment_type=${paymentType}`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-Api-Key": getPayoutKey(),
-      "idempotency-key": payout.id,
-    },
-    body: JSON.stringify(payload),
-  });
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 30_000);
+
+  let res: Response;
+  try {
+    res = await fetchBictorysWithRetry(
+      `${getBaseUrl()}/pay/v1/payouts?payment_type=${paymentType}`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          accept: "application/json",
+          "X-API-Key": getPayoutKey(),
+          "idempotency-key": payout.id,
+        },
+        body: JSON.stringify(payload),
+        signal: controller.signal,
+      }
+    );
+  } finally {
+    clearTimeout(timeout);
+  }
   const raw = await readBictorysResponse(res);
   if (!res.ok) {
     throw new Error(extractBictorysMessage(raw, `Payout Bictorys refusé (HTTP ${res.status})`));
@@ -366,11 +427,84 @@ export async function refundBictorysTransaction(transactionId: string): Promise<
   };
 }
 
+export function normalizeBictorysStatus(status?: string | number): string {
+  if (status === 0 || status === "0") return "succeeded";
+  if (typeof status !== "string") return String(status ?? "").toLowerCase();
+  return status.toLowerCase();
+}
+
 export function isBictorysSuccessEvent(payload: unknown): boolean {
   if (!payload || typeof payload !== "object") return false;
   const obj = payload as Record<string, unknown>;
-  const data = (obj.data && typeof obj.data === "object" ? obj.data : obj) as Record<string, unknown>;
-  return obj.event === "charge.successful" || data.status === "success";
+  const data = (obj.data && typeof obj.data === "object" ? obj.data : obj) as Record<
+    string,
+    unknown
+  >;
+  const status = normalizeBictorysStatus(
+    (data.status as string | number | undefined) ?? (obj.status as string | number | undefined)
+  );
+  return (
+    obj.event === "charge.successful" ||
+    status === "success" ||
+    status === "succeeded" ||
+    status === "authorized"
+  );
+}
+
+export function isBictorysFailureEvent(payload: unknown): boolean {
+  if (!payload || typeof payload !== "object") return false;
+  const obj = payload as Record<string, unknown>;
+  const data = (obj.data && typeof obj.data === "object" ? obj.data : obj) as Record<
+    string,
+    unknown
+  >;
+  const status = normalizeBictorysStatus(
+    (data.status as string | number | undefined) ?? (obj.status as string | number | undefined)
+  );
+  return (
+    status === "failed" ||
+    status === "cancelled" ||
+    status === "canceled" ||
+    status === "reversed"
+  );
+}
+
+export function getBictorysAmount(payload: unknown): number | undefined {
+  if (!payload || typeof payload !== "object") return undefined;
+  const obj = payload as Record<string, unknown>;
+  const data = (obj.data && typeof obj.data === "object" ? obj.data : obj) as Record<
+    string,
+    unknown
+  >;
+  const amount = data.amount ?? obj.amount;
+  if (typeof amount === "number" && Number.isFinite(amount)) {
+    return Math.abs(Math.round(amount));
+  }
+  return undefined;
+}
+
+export async function checkBictorysTransactionStatus(
+  transactionId: string
+): Promise<string | undefined> {
+  const res = await fetchBictorysWithRetry(
+    `${getBaseUrl()}/pay/v1/transactions/${transactionId}/status`,
+    {
+      headers: { "X-Api-Key": getPublicKey(), accept: "application/json" },
+    },
+    2
+  );
+  if (!res.ok) return undefined;
+  const raw = await readBictorysResponse(res);
+  const data = extractChargePayload(raw);
+  const status = data.status ?? (raw as Record<string, unknown>).status;
+  return typeof status === "string" || typeof status === "number"
+    ? normalizeBictorysStatus(status)
+    : undefined;
+}
+
+export function isBictorysStatusPaid(status?: string): boolean {
+  const s = normalizeBictorysStatus(status);
+  return s === "succeeded" || s === "authorized" || s === "success";
 }
 
 export function getBictorysReference(payload: unknown): string | null {

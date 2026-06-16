@@ -61,10 +61,35 @@ export function getProdConfigChecks(): ProdConfigCheck[] {
     },
     {
       id: "bictorys_payin",
-      label: "BICTORYS_PUBLIC_KEY + BICTORYS_API_KEY",
-      ok: !!(process.env.BICTORYS_PUBLIC_KEY && process.env.BICTORYS_API_KEY),
+      label: "BICTORYS_API_KEY / BICTORYS_PUBLIC_KEY",
+      ok: !!(
+        process.env.BICTORYS_API_KEY ||
+        process.env.BICTORYS_PUBLIC_KEY ||
+        process.env.bictorys_xaalispay_encaissement
+      ),
       required: prod,
-      hint: "Clés prod Bictorys (pas test)",
+      hint: "Clé publique — charges et status check",
+    },
+    {
+      id: "bictorys_private",
+      label: "BICTORYS_PRIVATE_KEY / BICTORYS_PAYOUT_API_KEY",
+      ok: !!(
+        process.env.BICTORYS_PRIVATE_KEY ||
+        process.env.BICTORYS_PAYOUT_API_KEY ||
+        process.env.bictorys_payout_key
+      ),
+      required: false,
+      hint: "Clé privée — retraits vendeurs",
+    },
+    {
+      id: "merchant_secret",
+      label: "BICTORYS_MERCHANT_SECRET_CODE",
+      ok: !!(
+        process.env.BICTORYS_MERCHANT_SECRET_CODE ||
+        process.env.BICTORYS_PAYOUT_SECRET_CODE
+      ),
+      required: false,
+      hint: "Code marchand payouts (dashboard Bictorys)",
     },
     {
       id: "bictorys_prod_url",

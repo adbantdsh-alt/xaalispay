@@ -44,9 +44,12 @@ function getAutomaticPayoutAmount(profile: Profile, available: number) {
   return available;
 }
 
-function normalizePayoutStatus(status?: string): Payout["status"] {
-  const clean = (status || "").toLowerCase();
-  if (clean.includes("success") || clean.includes("complete") || clean === "paid") return "success";
+function normalizePayoutStatus(status?: string | number): Payout["status"] {
+  if (status === 0 || status === "0") return "success";
+  const clean = String(status ?? "").toLowerCase();
+  if (clean.includes("success") || clean.includes("complete") || clean === "paid" || clean === "succeeded") {
+    return "success";
+  }
   if (clean.includes("fail") || clean.includes("error") || clean.includes("cancel")) return "failed";
   return "processing";
 }
@@ -59,7 +62,7 @@ export async function updatePayoutFromProvider({
 }: {
   reference?: string | null;
   providerId?: string;
-  status?: string;
+  status?: string | number;
   message?: string;
 }): Promise<Payout | null> {
   let updated: Payout | null = null;

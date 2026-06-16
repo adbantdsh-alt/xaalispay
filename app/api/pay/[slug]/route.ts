@@ -8,6 +8,7 @@ import {
   markPaymentInitiated,
   openDispute,
   processOrderMaintenance,
+  tryConfirmPaymentFromBictorys,
 } from "@/lib/orders";
 import { createBictorysMobileMoneyCharge } from "@/lib/bictorys";
 import { getProtectionDurationMinutes } from "@/lib/protection";
@@ -111,6 +112,16 @@ export async function GET(
   const order = await getOrderBySlug(slug);
 
   if (order) {
+    if (order.status === "pending_payment") {
+      await tryConfirmPaymentFromBictorys(order.slug);
+      const refreshed = await getOrderBySlug(slug);
+      if (refreshed) {
+        return NextResponse.json({
+          order: await buildOrderPayPayload(refreshed),
+          protectionMinutes: getProtectionDurationMinutes(),
+        });
+      }
+    }
     return NextResponse.json({
       order: await buildOrderPayPayload(order),
       protectionMinutes: getProtectionDurationMinutes(),
@@ -145,6 +156,7 @@ export async function POST(
       clientName,
       clientPhone,
       clientAddress,
+      otp,
     } = body;
 
     if (action === "pay") {
@@ -229,6 +241,7 @@ export async function POST(
       const charge = await createBictorysMobileMoneyCharge({
         order: payableOrder,
         method: paymentMethod,
+        otp: typeof otp === "string" ? otp : undefined,
       });
 
       await markPaymentInitiated(payableOrder.slug, {

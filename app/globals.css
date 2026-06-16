@@ -6142,6 +6142,57 @@ input, button, textarea, select { font: inherit; color: var(--text); }
   align-items: center;
 }
 
+.admin-webhook-list {
+  list-style: none;
+  margin: 0.75rem 0 0;
+  padding: 0;
+  font-size: 0.8125rem;
+}
+
+.admin-webhook-list li {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 0.5rem;
+  padding: 0.35rem 0;
+  border-bottom: 1px solid rgba(15, 31, 102, 0.06);
+}
+
+.admin-webhook-status {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 0.15rem 0.45rem;
+  border-radius: 999px;
+  background: rgba(15, 31, 102, 0.08);
+}
+
+.admin-webhook-status--processed {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.admin-webhook-status--failed {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.admin-webhook-status--ignored {
+  background: #f3f4f6;
+  color: #6b7280;
+}
+
+.admin-webhook-ref {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: rgba(15, 31, 102, 0.75);
+}
+
+.admin-webhook-date {
+  color: rgba(15, 31, 102, 0.5);
+  white-space: nowrap;
+}
+
 /* ── Phase 4 : landing dev + notifications commandes ── */
 .dev-landing-banner {
   display: flex;

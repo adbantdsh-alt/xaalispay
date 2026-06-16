@@ -4,14 +4,27 @@ import {
   getBictorysStatus,
   getBictorysTransactionId,
   getRefundWebhookSecret,
+  isBictorysSuccessEvent,
+  normalizeBictorysStatus,
 } from "@/lib/bictorys";
 import { recordWebhookEvent } from "@/lib/ledger";
 import { markOrderRefundedByReference } from "@/lib/orders";
-import { isWebhookSecretValid } from "@/lib/webhook-auth";
+import {
+  parseBictorysWebhookPayload,
+  verifyBictorysWebhookSignature,
+  webhookResponse,
+} from "@/lib/bictorys-webhook";
 
-function isRefundSuccess(status?: string) {
-  const clean = (status || "").toLowerCase();
-  return clean.includes("success") || clean.includes("complete") || clean.includes("refund");
+function isRefundSuccess(status?: string, payload?: unknown) {
+  if (payload && isBictorysSuccessEvent(payload)) return true;
+  const clean = normalizeBictorysStatus(status);
+  return (
+    clean.includes("success") ||
+    clean.includes("succeeded") ||
+    clean.includes("complete") ||
+    clean.includes("refund") ||
+    clean === "reversed"
+  );
 }
 
 export async function GET() {
@@ -19,37 +32,46 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  try {
-    const auth = isWebhookSecretValid(request, getRefundWebhookSecret());
-    if (!auth.ok) {
-      return NextResponse.json({ error: auth.error }, { status: auth.status });
-    }
+  const rawBody = await request.text();
+  let payload: unknown = {};
 
-    const payload = await request.json();
-    const reference = getBictorysReference(payload);
-    const providerId = getBictorysTransactionId(payload);
-    const status = getBictorysStatus(payload);
-    const eventKey = `refund:${providerId || reference || JSON.stringify(payload)}`;
+  try {
+    payload = rawBody ? JSON.parse(rawBody) : {};
+  } catch {
+    return webhookResponse({ received: true, parse_error: true });
+  }
+
+  const auth = verifyBictorysWebhookSignature(request, rawBody, getRefundWebhookSecret());
+  if (!auth.ok) {
+    console.error("[webhook refund] auth échouée:", auth.reason);
+    return webhookResponse({ received: true, unauthorized: true });
+  }
+
+  try {
+    const parsed = parseBictorysWebhookPayload(payload, "refund");
+    const status = normalizeBictorysStatus(parsed.status ?? getBictorysStatus(payload));
 
     const event = await recordWebhookEvent({
       provider: "bictorys",
-      eventKey,
-      reference: reference || providerId,
-      status: "processed",
+      eventKey: parsed.eventKey,
+      reference: parsed.reference || parsed.providerId,
+      status: parsed.failure ? "failed" : "processed",
       payload,
     });
     if (event.duplicate) {
-      return NextResponse.json({ received: true, duplicate: true });
+      return webhookResponse({ received: true, duplicate: true });
     }
 
-    const refundReference = reference || providerId;
+    const refundReference =
+      parsed.reference || getBictorysReference(payload) || getBictorysTransactionId(payload);
     const order =
-      refundReference && isRefundSuccess(status)
+      refundReference && isRefundSuccess(status, payload)
         ? await markOrderRefundedByReference(refundReference)
         : null;
 
-    return NextResponse.json({ received: true, order: order?.slug || null });
-  } catch {
-    return NextResponse.json({ error: "Erreur webhook refund" }, { status: 500 });
+    return webhookResponse({ received: true, order: order?.slug || null });
+  } catch (err) {
+    console.error("[webhook refund] erreur:", err);
+    return webhookResponse({ received: true, error: true });
   }
 }

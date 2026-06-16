@@ -111,7 +111,9 @@ function createOrderEntry(
 
 function normalizeAttemptStatus(status?: string): PaymentAttempt["status"] {
   const clean = (status || "").toLowerCase();
-  if (clean.includes("success") || clean === "paid") return "success";
+  if (clean.includes("success") || clean === "paid" || clean === "succeeded" || clean === "authorized") {
+    return "success";
+  }
   if (clean.includes("fail") || clean.includes("error") || clean.includes("cancel")) return "failed";
   if (clean.includes("pending")) return "pending";
   return "initiated";

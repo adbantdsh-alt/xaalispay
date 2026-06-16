@@ -127,6 +127,51 @@ export function AdminOverviewSection({
         </ul>
       </article>
 
+      {overview.bictorys && (
+        <article className="admin-card">
+          <h2 className="admin-card-title">
+            Bictorys — monitoring
+            {overview.bictorys.webhooksFailed24h > 0 && (
+              <span className="admin-health-bad admin-card-title-tag">
+                — {overview.bictorys.webhooksFailed24h} échec(s) 24h
+              </span>
+            )}
+          </h2>
+          <ul className="admin-health-list">
+            <li>
+              <span>Webhooks (24h)</span>
+              <strong>{overview.bictorys.webhooks24h}</strong>
+            </li>
+            <li>
+              <span>Paiements en attente</span>
+              <strong className={overview.bictorys.pendingPayments > 0 ? "admin-health-bad" : ""}>
+                {overview.bictorys.pendingPayments}
+              </strong>
+            </li>
+          </ul>
+          {overview.bictorys.recentWebhooks.length > 0 && (
+            <ul className="admin-webhook-list">
+              {overview.bictorys.recentWebhooks.map((event) => (
+                <li key={event.id}>
+                  <span className={`admin-webhook-status admin-webhook-status--${event.status}`}>
+                    {event.status}
+                  </span>
+                  <span className="admin-webhook-ref">{event.reference}</span>
+                  <span className="admin-webhook-date">
+                    {new Date(event.createdAt).toLocaleString("fr-FR", {
+                      day: "2-digit",
+                      month: "short",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </article>
+      )}
+
       <article className="admin-card">
         <h2 className="admin-card-title">Exports CSV</h2>
         <p className="admin-section-hint">

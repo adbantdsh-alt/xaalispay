@@ -414,6 +414,25 @@ export async function getOrderByPaymentReference(
   );
 }
 
+/** Fallback polling Bictorys si le webhook tarde (Phase 6C). */
+export async function tryConfirmPaymentFromBictorys(slug: string): Promise<Order | null> {
+  const db = await getDb();
+  const order = db.orders.find((o) => o.slug === slug);
+  if (!order || order.status !== "pending_payment") return null;
+
+  const attempt = [...db.paymentAttempts]
+    .filter((item) => item.orderId === order.id && item.providerId)
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt))[0];
+
+  if (!attempt?.providerId) return null;
+
+  const { checkBictorysTransactionStatus, isBictorysStatusPaid } = await import("./bictorys");
+  const status = await checkBictorysTransactionStatus(attempt.providerId);
+  if (!isBictorysStatusPaid(status)) return null;
+
+  return processPayment(order.slug, order.paymentMethod || attempt.paymentMethod || "wave");
+}
+
 export async function markOrderRefundedByReference(
   reference: string
 ): Promise<Order | null> {

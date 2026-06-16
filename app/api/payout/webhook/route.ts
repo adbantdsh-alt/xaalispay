@@ -4,47 +4,61 @@ import {
   getBictorysStatus,
   getBictorysTransactionId,
   getPayoutWebhookSecret,
+  normalizeBictorysStatus,
 } from "@/lib/bictorys";
 import { recordWebhookEvent } from "@/lib/ledger";
 import { updatePayoutFromProvider } from "@/lib/payouts";
-import { isWebhookSecretValid } from "@/lib/webhook-auth";
+import {
+  parseBictorysWebhookPayload,
+  verifyBictorysWebhookSignature,
+  webhookResponse,
+} from "@/lib/bictorys-webhook";
 
 export async function GET() {
   return NextResponse.json({ ok: true, webhook: "payout" });
 }
 
 export async function POST(request: Request) {
-  try {
-    const auth = isWebhookSecretValid(request, getPayoutWebhookSecret());
-    if (!auth.ok) {
-      return NextResponse.json({ error: auth.error }, { status: auth.status });
-    }
+  const rawBody = await request.text();
+  let payload: unknown = {};
 
-    const payload = await request.json();
-    const reference = getBictorysReference(payload);
-    const providerId = getBictorysTransactionId(payload);
-    const status = getBictorysStatus(payload);
-    const eventKey = `payout:${providerId || reference || JSON.stringify(payload)}`;
+  try {
+    payload = rawBody ? JSON.parse(rawBody) : {};
+  } catch {
+    return webhookResponse({ received: true, parse_error: true });
+  }
+
+  const secret = getPayoutWebhookSecret();
+  const auth = verifyBictorysWebhookSignature(request, rawBody, secret);
+  if (!auth.ok) {
+    console.error("[webhook payout] auth échouée:", auth.reason);
+    return webhookResponse({ received: true, unauthorized: true });
+  }
+
+  try {
+    const parsed = parseBictorysWebhookPayload(payload, "payout");
+    const status = normalizeBictorysStatus(parsed.status ?? getBictorysStatus(payload));
 
     const event = await recordWebhookEvent({
       provider: "bictorys",
-      eventKey,
-      reference: reference || providerId,
-      status: "processed",
+      eventKey: parsed.eventKey,
+      reference: parsed.reference || parsed.providerId,
+      status: parsed.failure ? "failed" : "processed",
       payload,
     });
     if (event.duplicate) {
-      return NextResponse.json({ received: true, duplicate: true });
+      return webhookResponse({ received: true, duplicate: true });
     }
 
     const payout = await updatePayoutFromProvider({
-      reference,
-      providerId,
+      reference: parsed.reference || getBictorysReference(payload),
+      providerId: parsed.providerId || getBictorysTransactionId(payload),
       status,
     });
 
-    return NextResponse.json({ received: true, payout: payout?.id || null });
-  } catch {
-    return NextResponse.json({ error: "Erreur webhook payout" }, { status: 500 });
+    return webhookResponse({ received: true, payout: payout?.id || null });
+  } catch (err) {
+    console.error("[webhook payout] erreur:", err);
+    return webhookResponse({ received: true, error: true });
   }
 }

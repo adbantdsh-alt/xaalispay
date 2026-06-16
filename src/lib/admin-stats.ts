@@ -32,6 +32,12 @@ export async function getAdminOverview() {
 
   const remote = await checkRemoteStore();
   const relational = await getRelationalMigrationStatus();
+  const since24h = Date.now() - 24 * 60 * 60 * 1000;
+  const recentWebhooks = [...db.webhookEvents]
+    .filter((event) => new Date(event.createdAt).getTime() >= since24h)
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  const webhooksFailed24h = recentWebhooks.filter((event) => event.status === "failed").length;
+  const pendingPayments = orders.filter((order) => order.status === "pending_payment").length;
 
   return {
     stats: {
@@ -60,7 +66,11 @@ export async function getAdminOverview() {
       storage: getDbStorageMode(),
       remoteOk: remote.ok,
       bictorysBaseUrl: process.env.BICTORYS_BASE_URL || "https://api.bictorys.com (défaut)",
-      bictorysPayinKeySet: !!(process.env.BICTORYS_PUBLIC_KEY || process.env.bictorys_xaalispay_encaissement),
+      bictorysPayinKeySet: !!(
+        process.env.BICTORYS_API_KEY ||
+        process.env.BICTORYS_PUBLIC_KEY ||
+        process.env.bictorys_xaalispay_encaissement
+      ),
       bictorysRefundKeyName: (
         process.env.BICTORYS_REFUND_API_KEY ? "BICTORYS_REFUND_API_KEY" :
         process.env.bictorys_refund_key ? "bictorys_refund_key" :
@@ -85,6 +95,18 @@ export async function getAdminOverview() {
     },
     prodConfig: getProdConfigSummary(),
     relational,
+    bictorys: {
+      webhooks24h: recentWebhooks.length,
+      webhooksFailed24h,
+      pendingPayments,
+      recentWebhooks: recentWebhooks.slice(0, 8).map((event) => ({
+        id: event.id,
+        eventKey: event.eventKey,
+        status: event.status,
+        reference: event.reference || "—",
+        createdAt: event.createdAt,
+      })),
+    },
   };
 }
 
