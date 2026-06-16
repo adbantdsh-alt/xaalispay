@@ -1,9 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { formatCurrency } from "@/lib/utils";
 import { ORDER_STATUS_LABELS, type OrderStatus } from "@/lib/types";
+
+const AUTO_REFRESH_MS = 15_000;
 
 type Tab = "overview" | "vendors" | "orders" | "payouts" | "disputes";
 
@@ -146,10 +148,17 @@ export function AdminDashboard() {
   const [resolving, setResolving] = useState<string | null>(null);
   const [retryingId, setRetryingId] = useState<string | null>(null);
   const [selectedOrder, setSelectedOrder] = useState<OrderRow | null>(null);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [autoRefreshing, setAutoRefreshing] = useState(false);
+  const refreshingRef = useRef(false);
 
-  const loadAll = useCallback(async () => {
-    setError("");
-    setLoading(true);
+  /** Charge silencieusement sans spinner plein écran. */
+  const refreshData = useCallback(async (silent = false) => {
+    if (refreshingRef.current) return;
+    refreshingRef.current = true;
+    if (silent) setAutoRefreshing(true);
+    else { setError(""); setLoading(true); }
+
     try {
       const noCache = { cache: "no-store" as const };
       const [overviewRes, vendorsRes, ordersRes, payoutsRes, disputesRes] = await Promise.all([
@@ -160,31 +169,43 @@ export function AdminDashboard() {
         fetch("/api/admin/disputes", noCache),
       ]);
 
-      if (overviewRes.status === 401) {
-        router.replace("/auth?redirect=/admin");
-        return;
-      }
-      if (overviewRes.status === 403) {
-        router.replace("/dashboard");
-        return;
-      }
-      if (!overviewRes.ok) throw new Error("Impossible de charger l'admin");
+      if (overviewRes.status === 401) { router.replace("/auth?redirect=/admin"); return; }
+      if (overviewRes.status === 403) { router.replace("/dashboard"); return; }
+      if (!overviewRes.ok) { if (!silent) setError("Impossible de charger l'admin"); return; }
 
       setOverview(await overviewRes.json());
       if (vendorsRes.ok) setVendors((await vendorsRes.json()).vendors || []);
       if (ordersRes.ok) setOrders((await ordersRes.json()).orders || []);
       if (payoutsRes.ok) setPayouts((await payoutsRes.json()).payouts || []);
-      if (disputesRes.ok) setDisputes((await disputesRes.json()).disputes || []);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Erreur admin");
+      if (disputesRes.ok) {
+        const freshDisputes = (await disputesRes.json()).disputes || [];
+        setDisputes(freshDisputes);
+        // Sync le litige sélectionné si toujours ouvert
+        setSelectedDispute((prev) =>
+          prev ? (freshDisputes.find((d: DisputeRow) => d.id === prev.id) ?? null) : null
+        );
+      }
+      setLastUpdated(new Date());
+    } catch {
+      if (!silent) setError("Erreur de chargement");
     } finally {
-      setLoading(false);
+      refreshingRef.current = false;
+      if (silent) setAutoRefreshing(false);
+      else setLoading(false);
     }
   }, [router]);
+
+  const loadAll = useCallback(() => refreshData(false), [refreshData]);
 
   useEffect(() => {
     loadAll();
   }, [loadAll]);
+
+  // Auto-refresh silencieux toutes les 15 secondes
+  useEffect(() => {
+    const id = setInterval(() => refreshData(true), AUTO_REFRESH_MS);
+    return () => clearInterval(id);
+  }, [refreshData]);
 
   const filteredOrders = useMemo(() => {
     if (orderFilter === "all") return orders;
@@ -274,9 +295,23 @@ export function AdminDashboard() {
             )}
           </button>
         ))}
-        <button type="button" className="admin-refresh" onClick={loadAll}>
-          Actualiser
-        </button>
+        <div className="admin-refresh-group">
+          {lastUpdated && (
+            <span className={`admin-last-updated ${autoRefreshing ? "admin-last-updated--syncing" : ""}`}>
+              {autoRefreshing ? (
+                <><span className="btn-spinner admin-sync-spinner" aria-hidden="true" />Sync…</>
+              ) : (
+                <>
+                  <span className="admin-live-dot" aria-hidden="true" />
+                  {lastUpdated.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
+                </>
+              )}
+            </span>
+          )}
+          <button type="button" className="admin-refresh" onClick={loadAll}>
+            Actualiser
+          </button>
+        </div>
       </nav>
 
       {error && <p className="admin-error">{error}</p>}
