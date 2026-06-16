@@ -236,3 +236,22 @@ export async function retryFailedPayout(
     phone: failed.phone,
   });
 }
+
+export async function getSellerPayouts(sellerId: string, limit = 30) {
+  const db = await getDb();
+  return [...db.payouts]
+    .filter((payout) => payout.sellerId === sellerId)
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+    .slice(0, limit)
+    .map((payout) => ({
+      id: payout.id,
+      amount: payout.amount,
+      netAmount: payout.netAmount,
+      fee: payout.fee,
+      method: payout.method,
+      phone: payout.phone,
+      status: payout.status,
+      failureReason: payout.failureReason,
+      createdAt: payout.createdAt,
+    }));
+}

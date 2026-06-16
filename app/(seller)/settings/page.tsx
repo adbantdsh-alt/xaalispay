@@ -82,6 +82,16 @@ export default function SettingsPage() {
         <h1 className="settings-page-title">Paramètres</h1>
       </header>
 
+      {data && data.emailVerified === false && (
+        <div className="settings-email-alert" role="alert">
+          <p className="settings-email-alert-title">Confirmez votre email</p>
+          <p className="settings-email-alert-desc">
+            Vérifiez votre boîte mail pour activer la création de produits et les retraits.
+            Consultez aussi vos spams.
+          </p>
+        </div>
+      )}
+
       <section className="settings-profile-card">
         <div className="settings-profile-hero">
           <div className="settings-profile-avatar">{initial}</div>

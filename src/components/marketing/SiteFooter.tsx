@@ -6,18 +6,15 @@ const COLS = [
     title: "Produit",
     links: [
       { label: "Comment ça marche", href: "/#comment" },
-      { label: "Tarifs & simulateur", href: "/#tarifs" },
-      { label: "Blog", href: "/blog" },
-      { label: "Notre histoire", href: "/histoire" },
+      { label: "FAQ", href: "/#faq" },
       { label: "Nous contacter", href: "/contact" },
     ],
   },
   {
     title: "Acheteurs",
     links: [
-      { label: "Acheter en sécurité", href: "/#acheteurs" },
       { label: "Le séquestre", href: "/#comment" },
-      { label: "Ouvrir un litige", href: "/contact" },
+      { label: "Ouvrir un litige", href: "/litige" },
     ],
   },
   {
@@ -25,7 +22,6 @@ const COLS = [
     links: [
       { label: "Créer un compte", href: "/auth?mode=signup" },
       { label: "Se connecter", href: "/auth" },
-      { label: "XaalisTag", href: "/#vendeurs" },
     ],
   },
   {
@@ -74,7 +70,6 @@ export function SiteFooter() {
         <span className="lp-footer-partner">Wave</span>
         <span className="lp-footer-partner">Orange Money</span>
         <span className="lp-footer-partner">Free Money</span>
-        <span className="lp-footer-partner">Conforme BCEAO</span>
       </div>
 
       <div className="lp-footer-bottom">

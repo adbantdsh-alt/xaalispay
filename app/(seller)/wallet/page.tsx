@@ -1,11 +1,12 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { computeWalletBreakdown } from "@/lib/wallet-breakdown";
 import { calculatePayoutFee, getPayoutNetAmount, FEE_POLICY } from "@/lib/fees";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, formatSenegalPhoneDisplay } from "@/lib/utils";
 import { PayMethodButtons } from "@/components/pay/PayMethodButtons";
+import { WalletPayoutHistory } from "@/components/seller/WalletPayoutHistory";
 import type { Order } from "@/lib/types";
 import { DashboardSkeleton } from "@/components/ui/Skeleton";
 import { useSellerData } from "@/components/seller/SellerDataProvider";
@@ -14,9 +15,17 @@ export default function WalletPage() {
   const { data, loading, refresh } = useSellerData();
   const [amount, setAmount] = useState("");
   const [phone, setPhone] = useState("");
+  const [phoneTouched, setPhoneTouched] = useState(false);
   const [withdrawing, setWithdrawing] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [payoutRefreshKey, setPayoutRefreshKey] = useState(0);
+
+  useEffect(() => {
+    if (data?.profile?.phone && !phoneTouched && !phone) {
+      setPhone(formatSenegalPhoneDisplay(data.profile.phone));
+    }
+  }, [data?.profile?.phone, phone, phoneTouched]);
 
   const parsedAmount = Number(amount) || 0;
   const withdrawPreview = useMemo(() => {
@@ -52,6 +61,7 @@ export default function WalletPage() {
 
     setSuccess(result.message);
     setAmount("");
+    setPayoutRefreshKey((k) => k + 1);
     await refresh({ silent: true });
   };
 
@@ -96,6 +106,12 @@ export default function WalletPage() {
             <span className="wallet-balance-meta-label">Bientôt dispo.</span>
             <span className="wallet-balance-meta-value">{formatCurrency(breakdown.pendingRefund)}</span>
           </div>
+          {breakdown.blocked > 0 && (
+            <div>
+              <span className="wallet-balance-meta-label">Bloqué (litige)</span>
+              <span className="wallet-balance-meta-value">{formatCurrency(breakdown.blocked)}</span>
+            </div>
+          )}
         </div>
       </section>
 
@@ -128,7 +144,10 @@ export default function WalletPage() {
               type="tel"
               placeholder="77 123 45 67"
               value={phone}
-              onChange={(e) => setPhone(e.target.value)}
+              onChange={(e) => {
+                setPhoneTouched(true);
+                setPhone(e.target.value);
+              }}
             />
           </div>
         </label>
@@ -165,6 +184,8 @@ export default function WalletPage() {
           </p>
         )}
       </section>
+
+      <WalletPayoutHistory refreshKey={payoutRefreshKey} />
     </div>
   );
 }

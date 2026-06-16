@@ -85,6 +85,16 @@ export function SellerDataProvider({ children }: { children: React.ReactNode }) 
     return () => window.removeEventListener("focus", onFocus);
   }, [refresh]);
 
+  useEffect(() => {
+    const interval = window.setInterval(() => {
+      if (document.visibilityState === "visible") {
+        refresh({ silent: true });
+      }
+    }, 45_000);
+
+    return () => window.clearInterval(interval);
+  }, [refresh]);
+
   const value = useMemo(
     () => ({ data, loading, refresh }),
     [data, loading, refresh]
