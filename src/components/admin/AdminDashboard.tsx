@@ -186,19 +186,34 @@ export function AdminDashboard() {
     return orders.filter((order) => order.status === orderFilter);
   }, [orders, orderFilter]);
 
-  const resolveDispute = async (disputeId: string, action: "refund" | "release") => {
+  const resolveDispute = async (disputeId: string, action: "refund" | "release", force = false) => {
     setResolving(disputeId + action);
     setError("");
     const res = await fetch(`/api/admin/disputes/${disputeId}/resolve`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action }),
+      body: JSON.stringify({ action, force }),
     });
     const data = await res.json();
     setResolving(null);
+
     if (!res.ok) {
+      if (data.canForce) {
+        // Proposer l'option de forcer si Bictorys est indisponible
+        const confirmForce = window.confirm(
+          `${data.error}\n\nVoulez-vous quand même marquer la commande comme remboursée localement ?\n(À utiliser seulement si le remboursement a été confirmé côté Bictorys)`
+        );
+        if (confirmForce) {
+          await resolveDispute(disputeId, action, true);
+        }
+        return;
+      }
       setError(data.error || "Action impossible");
       return;
+    }
+
+    if (data.warning) {
+      setError(`⚠️ ${data.warning}`);
     }
     setDisputes(data.disputes || []);
     setSelectedDispute(null);
