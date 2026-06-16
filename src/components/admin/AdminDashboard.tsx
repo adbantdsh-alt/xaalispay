@@ -207,8 +207,19 @@ export function AdminDashboard() {
   }, [loadAll]);
 
   // Auto-refresh silencieux toutes les 15 secondes
+  // Pause quand un modal est ouvert ou une action est en cours
+  const selectedDisputeRef = useRef<DisputeRow | null>(null);
+  const selectedOrderRef = useRef<typeof selectedOrder>(null);
+  const resolvingRef = useRef<string | null>(null);
+  selectedDisputeRef.current = selectedDispute;
+  selectedOrderRef.current = selectedOrder;
+  resolvingRef.current = resolving;
+
   useEffect(() => {
-    const id = setInterval(() => refreshData(true), AUTO_REFRESH_MS);
+    const id = setInterval(() => {
+      const busy = selectedDisputeRef.current || selectedOrderRef.current || resolvingRef.current;
+      if (!busy) refreshData(true);
+    }, AUTO_REFRESH_MS);
     return () => clearInterval(id);
   }, [refreshData]);
 
@@ -259,8 +270,8 @@ export function AdminDashboard() {
     }
     setDisputes(data.disputes || []);
     setSelectedDispute(null);
-    // Rechargement de sécurité après 2s pour synchroniser l'état complet
-    setTimeout(() => loadAll(), 2000);
+    // Rechargement de sécurité après 2s (silencieux — pas de spinner)
+    setTimeout(() => refreshData(true), 2000);
   };
 
   const retryPayout = async (payoutId: string) => {
@@ -273,7 +284,7 @@ export function AdminDashboard() {
       setError(data.error || "Relance impossible");
       return;
     }
-    await loadAll();
+    await refreshData(true);
   };
 
   if (loading) {
