@@ -55,16 +55,20 @@ export async function getAdminOverview() {
       bictorysPayinKeySet: !!(process.env.BICTORYS_PUBLIC_KEY || process.env.bictorys_xaalispay_encaissement),
       bictorysRefundKeyName: (
         process.env.BICTORYS_REFUND_API_KEY ? "BICTORYS_REFUND_API_KEY" :
+        process.env.bictorys_refund_key ? "bictorys_refund_key" :
         process.env.BICTORYS_API_KEY ? "BICTORYS_API_KEY" :
         process.env.BICTORYS_SECRET_KEY ? "BICTORYS_SECRET_KEY" :
         process.env.BICTORYS_PAYOUT_API_KEY ? "BICTORYS_PAYOUT_API_KEY (fallback)" :
+        process.env.bictorys_payout_key ? "bictorys_payout_key (fallback)" :
         "❌ AUCUNE"
       ),
       bictorysRefundKeySet: !!(
         process.env.BICTORYS_REFUND_API_KEY ||
+        process.env.bictorys_refund_key ||
         process.env.BICTORYS_API_KEY ||
         process.env.BICTORYS_SECRET_KEY ||
-        process.env.BICTORYS_PAYOUT_API_KEY
+        process.env.BICTORYS_PAYOUT_API_KEY ||
+        process.env.bictorys_payout_key
       ),
       webhookSecretSet: !!(getWebhookSecret()),
     },
