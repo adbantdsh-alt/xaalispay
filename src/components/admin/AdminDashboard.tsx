@@ -30,6 +30,7 @@ interface OverviewData {
     bictorysBaseUrl?: string;
     bictorysPayinKeySet?: boolean;
     bictorysRefundKeySet?: boolean;
+    bictorysRefundKeyName?: string;
     webhookSecretSet?: boolean;
   };
 }
@@ -393,7 +394,9 @@ export function AdminDashboard() {
               <li>
                 <span>Clé Remboursement</span>
                 <strong style={{ color: overview.health.bictorysRefundKeySet ? "#15803d" : "#b91c1c" }}>
-                  {overview.health.bictorysRefundKeySet ? "✅ Définie" : "❌ Manquante"}
+                  {overview.health.bictorysRefundKeySet
+                    ? `✅ ${overview.health.bictorysRefundKeyName}`
+                    : "❌ Manquante — ajouter BICTORYS_REFUND_API_KEY dans Vercel"}
                 </strong>
               </li>
             </ul>

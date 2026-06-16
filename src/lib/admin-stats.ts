@@ -53,7 +53,19 @@ export async function getAdminOverview() {
       remoteOk: remote.ok,
       bictorysBaseUrl: process.env.BICTORYS_BASE_URL || "https://api.bictorys.com (défaut)",
       bictorysPayinKeySet: !!(process.env.BICTORYS_PUBLIC_KEY || process.env.bictorys_xaalispay_encaissement),
-      bictorysRefundKeySet: !!(process.env.BICTORYS_REFUND_API_KEY),
+      bictorysRefundKeyName: (
+        process.env.BICTORYS_REFUND_API_KEY ? "BICTORYS_REFUND_API_KEY" :
+        process.env.BICTORYS_API_KEY ? "BICTORYS_API_KEY" :
+        process.env.BICTORYS_SECRET_KEY ? "BICTORYS_SECRET_KEY" :
+        process.env.BICTORYS_PAYOUT_API_KEY ? "BICTORYS_PAYOUT_API_KEY (fallback)" :
+        "❌ AUCUNE"
+      ),
+      bictorysRefundKeySet: !!(
+        process.env.BICTORYS_REFUND_API_KEY ||
+        process.env.BICTORYS_API_KEY ||
+        process.env.BICTORYS_SECRET_KEY ||
+        process.env.BICTORYS_PAYOUT_API_KEY
+      ),
       webhookSecretSet: !!(getWebhookSecret()),
     },
   };
