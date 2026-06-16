@@ -6,7 +6,26 @@ import { SellerShopClient } from "@/components/shop/SellerShopClient";
 import { BrandMark } from "@/components/ui/BrandMark";
 import { buildPageMetadata } from "@/lib/seo";
 
+const RESERVED_REDIRECTS: Record<string, string> = {
+  admin: "/admin",
+  auth: "/auth",
+  dashboard: "/dashboard",
+  wallet: "/wallet",
+  create: "/create",
+  profile: "/profile",
+  history: "/history",
+  blog: "/blog",
+  litige: "/litige",
+  contact: "/contact",
+  histoire: "/histoire",
+  cgv: "/cgv",
+  confidentialite: "/confidentialite",
+  "mentions-legales": "/mentions-legales",
+  home: "/",
+};
+
 const RESERVED = [
+  ...Object.keys(RESERVED_REDIRECTS),
   "auth", "dashboard", "wallet", "create", "profile", "pay", "api",
   "seller", "orderlink", "home", "histoire", "contact", "cgv",
   "confidentialite", "mentions-legales", "blog", "litige", "admin",
@@ -44,7 +63,10 @@ export default async function SellerPublicPage({
   params: Promise<{ username: string }>;
 }) {
   const { username } = await params;
-  if (RESERVED.includes(username.toLowerCase())) redirect("/");
+  const reservedKey = username.toLowerCase();
+  if (RESERVED.includes(reservedKey)) {
+    redirect(RESERVED_REDIRECTS[reservedKey] ?? "/");
+  }
 
   const profile = await getProfileByUsername(username);
   if (!profile) {
