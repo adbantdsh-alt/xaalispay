@@ -5812,3 +5812,224 @@ input, button, textarea, select { font: inherit; color: var(--text); }
   align-items: center;
   justify-content: center;
 }
+
+/* ====================================================
+   ORDER QUICK VIEW (popup détail commande dashboard)
+   ==================================================== */
+.order-quick-view {
+  max-height: 85dvh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+.oqv-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0 0 1rem;
+}
+.oqv-status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.oqv-status-dot--teal  { background: #0ea5e9; }
+.oqv-status-dot--amber { background: #f59e0b; }
+.oqv-status-dot--danger{ background: #ef4444; }
+.oqv-status-dot--muted { background: #94a3b8; }
+.oqv-status-dot--blue  { background: #6366f1; }
+.oqv-header-texts { flex: 1; min-width: 0; }
+.oqv-product {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-primary, #0f172a);
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.oqv-status-label {
+  font-size: 0.78rem;
+  color: var(--text-muted, #64748b);
+  margin: 0.1rem 0 0;
+}
+.oqv-close-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #f1f5f9;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #64748b;
+  flex-shrink: 0;
+}
+.oqv-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+.oqv-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 0.55rem 0;
+  border-bottom: 1px solid #f1f5f9;
+}
+.oqv-row:last-child { border-bottom: none; }
+.oqv-row--danger .oqv-value { color: #dc2626; }
+.oqv-label {
+  font-size: 0.8125rem;
+  color: var(--text-muted, #64748b);
+  flex-shrink: 0;
+}
+.oqv-value {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-primary, #0f172a);
+  text-align: right;
+  word-break: break-word;
+}
+.oqv-amount {
+  font-weight: 800;
+  font-size: 1rem;
+  color: #0f172a;
+}
+.oqv-link { color: #0ea5e9; text-decoration: none; }
+.oqv-link:hover { text-decoration: underline; }
+.oqv-divider {
+  height: 1px;
+  background: #e2e8f0;
+  margin: 0.25rem 0;
+}
+.oqv-footer {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding-top: 1.25rem;
+}
+.oqv-cancel-btn { width: 100%; }
+
+/* ====================================================
+   ANNULATION COMMANDE (modal)
+   ==================================================== */
+.cancel-modal {
+  max-width: 420px;
+}
+.cancel-modal-title {
+  font-size: 1.0625rem;
+  font-weight: 700;
+  color: #dc2626;
+  margin: 0 0 0.5rem;
+}
+.cancel-modal-desc {
+  font-size: 0.875rem;
+  color: #64748b;
+  margin: 0 0 0.75rem;
+  line-height: 1.5;
+}
+.cancel-modal-order {
+  font-size: 0.875rem;
+  color: #0f172a;
+  background: #f8fafc;
+  border-radius: 10px;
+  padding: 0.6rem 0.875rem;
+}
+.cancel-modal-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+.btn-danger {
+  background: #dc2626;
+  color: #fff;
+  border: none;
+  border-radius: 999px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.15s;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+}
+.btn-danger:disabled { opacity: 0.45; cursor: not-allowed; }
+
+/* Bouton annuler dans ActionRequiredCard */
+.action-card-cancel-btn {
+  background: none;
+  border: none;
+  color: #94a3b8;
+  font-size: 0.8rem;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 0.4rem 0 0;
+  text-align: left;
+}
+.action-card-cancel-btn:hover { color: #ef4444; }
+
+/* ====================================================
+   COMMANDES - voir plus / historique
+   ==================================================== */
+.asset-list-see-more {
+  width: 100%;
+  padding: 0.7rem;
+  background: #f8fafc;
+  border: 1.5px dashed #e2e8f0;
+  border-radius: 12px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #0ea5e9;
+  cursor: pointer;
+  text-align: center;
+  margin-top: 0.25rem;
+}
+.asset-list-see-more:hover { background: #f0f9ff; }
+.asset-list-history-link {
+  display: block;
+  text-align: center;
+  font-size: 0.8125rem;
+  color: #94a3b8;
+  text-decoration: none;
+  padding: 0.5rem 0 0;
+}
+.asset-list-history-link:hover { color: #0ea5e9; }
+
+/* ====================================================
+   CHARGEBACK ALERT
+   ==================================================== */
+.chargeback-alert {
+  border-radius: 14px;
+  padding: 0.875rem 1rem;
+  margin: 0.75rem 0;
+}
+.chargeback-alert--warning {
+  background: #fffbeb;
+  border: 1.5px solid #fde68a;
+}
+.chargeback-alert--danger {
+  background: #fef2f2;
+  border: 1.5px solid #fecaca;
+}
+.chargeback-alert-title {
+  font-size: 0.875rem;
+  font-weight: 700;
+  margin: 0 0 0.3rem;
+  color: #92400e;
+}
+.chargeback-alert--danger .chargeback-alert-title { color: #dc2626; }
+.chargeback-alert-desc {
+  font-size: 0.8125rem;
+  margin: 0;
+  line-height: 1.5;
+  color: #78350f;
+}
+.chargeback-alert--danger .chargeback-alert-desc { color: #7f1d1d; }

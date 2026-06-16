@@ -4,7 +4,8 @@ export type OrderStatus =
   | "protection"
   | "released"
   | "dispute"
-  | "refunded";
+  | "refunded"
+  | "cancelled";
 
 export interface Profile {
   id: string;
@@ -92,6 +93,8 @@ export interface Order {
   disputeOpenedAt?: string;
   releasedAt?: string;
   refundedAt?: string;
+  cancelledAt?: string;
+  cancellationReason?: string;
   /** Frais protection séquestre côté acheteur (1 %, plafond 500 F). */
   buyerProtectionFee?: number;
   /** Commission vendeur prélevée à la libération (2 %). */
@@ -199,4 +202,5 @@ export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
   released: "Libérée",
   dispute: "Litige",
   refunded: "Remboursée",
+  cancelled: "Annulée",
 };

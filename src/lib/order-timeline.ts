@@ -40,6 +40,7 @@ export function getBuyerTimeline(status: OrderStatus): TimelineStep[] {
     released: 3,
     dispute: 2,
     refunded: 3,
+    cancelled: 0,
   };
   if (status === "dispute") {
     return BUYER_STEPS.map((step, i) => ({
@@ -68,6 +69,7 @@ export function getSellerTimeline(status: OrderStatus): TimelineStep[] {
     released: 3,
     dispute: 2,
     refunded: 3,
+    cancelled: 0,
   };
   if (status === "dispute") {
     return SELLER_STEPS.map((step, i) => ({
@@ -88,6 +90,7 @@ export function getSellerHumanStatus(status: OrderStatus): string {
     released: "Disponible sur votre compte",
     dispute: "Bloqué — litige",
     refunded: "Remboursée au client",
+    cancelled: "Annulée par le vendeur",
   };
   return labels[status];
 }
@@ -100,6 +103,7 @@ export function getBuyerHumanStatus(status: OrderStatus): string {
     released: "Transaction terminée",
     dispute: "Litige en cours",
     refunded: "Remboursé",
+    cancelled: "Commande annulée — remboursement en cours",
   };
   return labels[status];
 }

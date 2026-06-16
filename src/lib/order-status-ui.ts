@@ -13,6 +13,7 @@ export function getOrderStatusVisual(status: OrderStatus): OrderStatusVisual {
     released: { icon: "done", tone: "teal" },
     dispute: { icon: "warn", tone: "danger" },
     refunded: { icon: "refund", tone: "muted" },
+    cancelled: { icon: "refund", tone: "muted" },
   };
   return map[status];
 }
