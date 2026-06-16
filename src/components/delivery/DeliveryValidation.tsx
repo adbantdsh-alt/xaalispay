@@ -374,20 +374,21 @@ export function DeliveryValidation({
             Code livraison {productName} — à donner au livreur après réception
           </p>
 
-          {/* Consentement */}
-          <div className={styles.consent}>
-            <label>
-              <input
-                type="checkbox"
-                checked={consent}
-                onChange={(e) => setConsent(e.target.checked)}
-              />
-              <span>
-                J&apos;ai reçu et vérifié mon colis. Je donne ce code uniquement au livreur,
-                après réception.
-              </span>
-            </label>
-          </div>
+          {/* Avertissement + bouton révélation */}
+          {!consent ? (
+            <div className={styles.consent}>
+              <p className={styles.consentWarn}>
+                ⚠️ Ne donnez ce code qu&apos;une fois le colis <strong>entre vos mains</strong>.
+              </p>
+              <button
+                type="button"
+                className={styles.revealBtn}
+                onClick={() => setConsent(true)}
+              >
+                Afficher le code
+              </button>
+            </div>
+          ) : null}
 
           {/* Révélation du code */}
           <AnimatePresence>
