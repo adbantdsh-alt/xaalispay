@@ -93,6 +93,11 @@ export async function PATCH(request: Request) {
     if (raw.price !== undefined) data.price = Number(raw.price);
     if (raw.deliveryCost !== undefined) data.deliveryCost = Number(raw.deliveryCost);
     if (raw.deliveryHours !== undefined) data.deliveryHours = Number(raw.deliveryHours);
+    // Ne pas écraser l'image existante si le client envoie une chaîne vide
+    // sans avoir explicitement supprimé l'image (hasImage flag absent)
+    if (data.image === "" && raw.clearImage !== true) {
+      delete data.image;
+    }
 
     const product = await updateProduct(id, user.id, data);
     if (!product) {

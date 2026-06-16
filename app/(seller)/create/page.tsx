@@ -92,19 +92,8 @@ function CreatePageContent() {
       return;
     }
 
-    const fromList = products.find((p) => p.id === editProductId);
-    if (fromList) {
-      setEditingProduct(fromList);
-      setEditForm(productToFormValues(fromList));
-      setEditLoading(false);
-      return;
-    }
-
-    if (loading) {
-      setEditLoading(true);
-      return;
-    }
-
+    // Toujours charger le produit complet (avec image) depuis l'API
+    // La liste /api/products strip les images pour alléger les réponses
     let cancelled = false;
     setEditLoading(true);
     fetch(`/api/products?id=${encodeURIComponent(editProductId)}`)
@@ -115,21 +104,34 @@ function CreatePageContent() {
           setEditingProduct(data.product);
           setEditForm(productToFormValues(data.product));
         } else {
-          setEditingProduct(null);
+          // Fallback sur la liste si l'API échoue
+          const fromList = products.find((p) => p.id === editProductId);
+          if (fromList) {
+            setEditingProduct(fromList);
+            setEditForm(productToFormValues(fromList));
+          } else {
+            setEditingProduct(null);
+          }
         }
-        setEditLoading(false);
       })
       .catch(() => {
         if (!cancelled) {
+          const fromList = products.find((p) => p.id === editProductId);
+          if (fromList) {
+            setEditingProduct(fromList);
+            setEditForm(productToFormValues(fromList));
+          }
           setEditingProduct(null);
-          setEditLoading(false);
         }
+      })
+      .finally(() => {
+        if (!cancelled) setEditLoading(false);
       });
 
     return () => {
       cancelled = true;
     };
-  }, [view, editProductId, products, loading]);
+  }, [view, editProductId]);
 
   const shopUrl = profile ? buildShopUrl(profile.username) : "";
 
@@ -273,6 +275,8 @@ function CreatePageContent() {
         deliveryHours: Number(editForm.deliveryHours),
         note: editForm.note,
         image: editForm.image,
+        // Signal explicite de suppression d'image (bouton "Supprimer la photo")
+        clearImage: editForm.image === "" && editingProduct.image !== "",
       }),
     });
 
