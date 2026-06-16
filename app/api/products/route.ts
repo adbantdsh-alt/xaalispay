@@ -27,10 +27,9 @@ export async function GET(request: Request) {
 
   const products = await getProductsBySeller(user.id);
   return NextResponse.json({
-    products: products.map(({ image, ...product }) => ({
+    products: products.map((product) => ({
       ...product,
-      image: "",
-      hasImage: Boolean(image),
+      hasImage: Boolean(product.image),
     })),
   });
 }

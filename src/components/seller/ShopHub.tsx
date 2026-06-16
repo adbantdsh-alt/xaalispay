@@ -29,7 +29,7 @@ export function ShopBackBar({ title }: { title: string }) {
 export function ShopActionButtons() {
   return (
     <div className="shop-action-grid">
-      <Link href="/create?tab=product" className="shop-action-card shop-action-card-product">
+      <Link href="/create?tab=product" className="shop-action-card shop-action-card-product shop-action-card-full">
         <span className="shop-action-icon" aria-hidden="true">
           <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
@@ -37,16 +37,6 @@ export function ShopActionButtons() {
         </span>
         <span className="shop-action-label">Créer un produit</span>
         <span className="shop-action-hint">Image, prix, lien auto</span>
-      </Link>
-
-      <Link href="/create?tab=link" className="shop-action-card shop-action-card-link">
-        <span className="shop-action-icon" aria-hidden="true">
-          <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-          </svg>
-        </span>
-        <span className="shop-action-label">Partager un lien</span>
-        <span className="shop-action-hint">Lien permanent du produit</span>
       </Link>
     </div>
   );

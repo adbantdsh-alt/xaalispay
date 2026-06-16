@@ -1,4 +1,4 @@
-﻿@import "tailwindcss";
+@import "tailwindcss";
 
 :root {
   --bg: #FAFAF7;
@@ -2747,6 +2747,10 @@ input, button, textarea, select { font: inherit; color: var(--text); }
 .seller-app .shop-action-card-product {
   border-color: rgba(26, 79, 214, 0.2);
   background: linear-gradient(160deg, #fff 0%, rgba(26, 79, 214, 0.06) 100%);
+}
+
+.seller-app .shop-action-card-full {
+  grid-column: 1 / -1;
 }
 
 .seller-app .shop-action-card-link {
