@@ -21,7 +21,7 @@ export function AdminOverviewSection({
   const runMigration = async () => {
     if (
       !window.confirm(
-        "Copier app_state vers les tables relationnelles Supabase ?\n\nLa source de vérité reste app_state pour l'instant."
+        "Copier app_state vers les tables relationnelles Supabase ?\n\nEn production, la sync auto (dual-write) s'exécute aussi après chaque écriture."
       )
     ) {
       return;
@@ -112,7 +112,34 @@ export function AdminOverviewSection({
               {overview.health.webhookSecretSet ? "OK" : "Manquant"}
             </strong>
           </li>
+          <li>
+            <span>Dual-write xp_*</span>
+            <strong className={overview.health.relationalDualWrite ? "admin-health-ok" : ""}>
+              {overview.health.relationalDualWrite ? "Actif" : "Désactivé"}
+            </strong>
+          </li>
+          <li>
+            <span>Emails transactionnels</span>
+            <strong className={overview.health.emailConfigured ? "admin-health-ok" : ""}>
+              {overview.health.emailConfigured ? "Resend OK" : "Non configuré"}
+            </strong>
+          </li>
         </ul>
+      </article>
+
+      <article className="admin-card">
+        <h2 className="admin-card-title">Exports CSV</h2>
+        <p className="admin-section-hint">
+          Données depuis les tables xp_* si synchronisées, sinon app_state.
+        </p>
+        <div className="admin-export-actions">
+          <a className="admin-action-btn" href="/api/admin/export/orders">
+            Télécharger commandes
+          </a>
+          <a className="admin-action-btn" href="/api/admin/export/payouts">
+            Télécharger retraits
+          </a>
+        </div>
       </article>
 
       {overview.prodConfig && (
@@ -152,6 +179,18 @@ export function AdminOverviewSection({
                 {relational.schemaReady ? "Installé" : "Exécuter schema_v1.sql"}
               </strong>
             </li>
+            <li>
+              <span>Dual-write auto</span>
+              <strong className={overview.health.relationalDualWrite ? "admin-health-ok" : ""}>
+                {overview.health.relationalDualWrite ? "Actif (prod)" : "Manuel uniquement"}
+              </strong>
+            </li>
+            {overview.health.relationalRead && (
+              <li>
+                <span>Lecture xp_*</span>
+                <strong className="admin-health-ok">XP_RELATIONAL_READ=true</strong>
+              </li>
+            )}
             {relational.lastMigratedAt && (
               <li>
                 <span>Dernière sync</span>

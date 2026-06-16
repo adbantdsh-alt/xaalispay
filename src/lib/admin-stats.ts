@@ -3,6 +3,11 @@ import { getDb, getDbStorageMode } from "./db";
 import { checkRemoteStore } from "./data-store";
 import { getProdConfigSummary } from "./prod-config";
 import { getRelationalMigrationStatus } from "./relational-store";
+import {
+  isRelationalDualWriteEnabled,
+  isRelationalReadEnabled,
+  isTransactionalEmailEnabled,
+} from "./runtime-env";
 import type { DisputeMedia, Order, Payout, Profile } from "./types";
 import { getOrderTotal } from "./utils";
 
@@ -74,6 +79,9 @@ export async function getAdminOverview() {
         process.env.bictorys_payout_key
       ),
       webhookSecretSet: !!(getWebhookSecret()),
+      relationalDualWrite: isRelationalDualWriteEnabled(),
+      relationalRead: isRelationalReadEnabled(),
+      emailConfigured: isTransactionalEmailEnabled(),
     },
     prodConfig: getProdConfigSummary(),
     relational,

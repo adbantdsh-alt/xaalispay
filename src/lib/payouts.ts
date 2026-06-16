@@ -63,6 +63,7 @@ export async function updatePayoutFromProvider({
   message?: string;
 }): Promise<Payout | null> {
   let updated: Payout | null = null;
+  let previousStatus: Payout["status"] | undefined;
   const nextStatus = normalizePayoutStatus(status);
   const now = new Date().toISOString();
 
@@ -75,6 +76,7 @@ export async function updatePayoutFromProvider({
     );
     if (!payout) return;
 
+    previousStatus = payout.status;
     const wasFailed = payout.status === "failed";
     payout.status = nextStatus;
     payout.providerId = providerId || payout.providerId;
@@ -85,6 +87,13 @@ export async function updatePayoutFromProvider({
     }
     updated = payout;
   });
+
+  if (updated && nextStatus === "success" && previousStatus !== "success") {
+    const db = await getDb();
+    const seller = db.profiles.find((p) => p.id === updated!.sellerId);
+    const { notifySellerPayoutSuccess } = await import("./transactional-email");
+    void notifySellerPayoutSuccess(updated, seller?.displayName || seller?.username || "Vendeur");
+  }
 
   return updated;
 }

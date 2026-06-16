@@ -25,6 +25,9 @@ export interface OverviewData {
     bictorysRefundKeySet?: boolean;
     bictorysRefundKeyName?: string;
     webhookSecretSet?: boolean;
+    relationalDualWrite?: boolean;
+    relationalRead?: boolean;
+    emailConfigured?: boolean;
   };
   prodConfig?: {
     production: boolean;

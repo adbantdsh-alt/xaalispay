@@ -6130,6 +6130,18 @@ input, button, textarea, select { font: inherit; color: var(--text); }
   color: rgba(15, 31, 102, 0.5);
 }
 
+.admin-export-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.admin-export-actions .admin-action-btn {
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+}
+
 /* ── Phase 4 : landing dev + notifications commandes ── */
 .dev-landing-banner {
   display: flex;

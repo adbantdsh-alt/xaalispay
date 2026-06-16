@@ -8,6 +8,14 @@ import {
   loadRemoteDatabase,
   saveRemoteDatabase,
 } from "./data-store";
+import {
+  loadRelationalDatabase,
+  syncDatabaseToRelational,
+} from "./relational-store";
+import {
+  isRelationalDualWriteEnabled,
+  isRelationalReadEnabled,
+} from "./runtime-env";
 
 const DATA_DIR = process.env.VERCEL
   ? path.join("/tmp", "xaalispay-data")
@@ -268,6 +276,12 @@ function saveLocalDatabase(db: Database) {
 }
 
 async function loadRemoteOrDefault(): Promise<Database> {
+  if (isRelationalReadEnabled()) {
+    const relational = await loadRelationalDatabase();
+    if (relational) return finalizeDb(relational);
+    console.warn("[db] XP_RELATIONAL_READ actif mais tables vides — fallback app_state");
+  }
+
   const remote = await loadRemoteDatabase();
   if (remote) return finalizeDb(remote);
 
@@ -358,6 +372,17 @@ export async function updateDb(mutator: (db: Database) => void): Promise<Databas
     }
   } else {
     saveLocalDatabase(memoryDb);
+  }
+
+  if (isRemoteStoreEnabled() && isRelationalDualWriteEnabled()) {
+    try {
+      const sync = await syncDatabaseToRelational(memoryDb);
+      if (!sync.ok) {
+        console.error("[relational] dual-write errors:", sync.errors.join("; "));
+      }
+    } catch (err) {
+      console.error("[relational] dual-write failed", err);
+    }
   }
 
   return memoryDb;

@@ -108,6 +108,21 @@ Créer un cron job :
 
 ---
 
+## 9. Phase 5B — Infra durable (post-pilote)
+
+| Variable | Rôle |
+|----------|------|
+| `XP_RELATIONAL_DUAL_WRITE` | Sync auto app_state → xp_* après chaque écriture (défaut : `true` en prod) |
+| `XP_RELATIONAL_READ` | Lire depuis xp_* au lieu de app_state (`true` après validation) |
+| `RESEND_API_KEY` + `EMAIL_FROM` | Emails vendeur (commande payée, retrait confirmé) |
+| `ADMIN_ALERT_EMAIL` | Alerte email litige ouvert |
+
+**Admin → Exports CSV** : commandes et retraits (depuis xp_* si synchronisé).
+
+**Cron maintenance** : sync relationnelle de secours toutes les heures si dual-write actif.
+
+---
+
 ## En cas de problème
 
 - **Admin → Santé système** : Supabase, Bictorys, webhooks

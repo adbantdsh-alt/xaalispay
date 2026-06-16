@@ -3,7 +3,11 @@ import { checkRemoteStore } from "./data-store";
 import { getDb } from "./db";
 import { getProdConfigSummary } from "./prod-config";
 import { getRelationalMigrationStatus } from "./relational-store";
-import { isProductionRuntime } from "./runtime-env";
+import {
+  isProductionRuntime,
+  isRelationalDualWriteEnabled,
+  isTransactionalEmailEnabled,
+} from "./runtime-env";
 
 export type PilotCheckGroup = "env" | "infra" | "bictorys" | "data";
 
@@ -102,6 +106,22 @@ export async function getPilotPreflightReport(): Promise<PilotPreflightReport> {
       ok: isBictorysPayoutConfigured(),
       required: false,
       hint: "Requis pour les vrais retraits vendeurs",
+    },
+    {
+      id: "relational_dual_write",
+      group: "data" as const,
+      label: "Dual-write xp_* (Phase 5B)",
+      ok: !prod || isRelationalDualWriteEnabled(),
+      required: false,
+      hint: "XP_RELATIONAL_DUAL_WRITE — actif par défaut en prod",
+    },
+    {
+      id: "transactional_email",
+      group: "infra" as const,
+      label: "Emails transactionnels (Resend)",
+      ok: isTransactionalEmailEnabled(),
+      required: false,
+      hint: "RESEND_API_KEY + EMAIL_FROM",
     },
   ];
 

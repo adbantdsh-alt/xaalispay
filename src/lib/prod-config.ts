@@ -100,6 +100,13 @@ export function getProdConfigChecks(): ProdConfigCheck[] {
       ok: process.env.DEV_AUTO_LOGIN === "false" || !prod,
       required: prod,
     },
+    {
+      id: "email_resend",
+      label: "RESEND_API_KEY + EMAIL_FROM",
+      ok: !!(process.env.RESEND_API_KEY && process.env.EMAIL_FROM),
+      required: false,
+      hint: "Emails commande payée, retrait, alerte litige",
+    },
   ];
 
   return checks;

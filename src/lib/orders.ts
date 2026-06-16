@@ -392,6 +392,13 @@ export async function processPayment(
     result = order;
   });
 
+  if (result) {
+    const db = await getDb();
+    const seller = db.profiles.find((p) => p.id === result!.sellerId);
+    const { notifySellerOrderPaid } = await import("./transactional-email");
+    void notifySellerOrderPaid(result, seller?.displayName || seller?.username || "Vendeur");
+  }
+
   return result;
 }
 
@@ -503,6 +510,16 @@ export async function openDispute(
     holdDisputedEscrowForOrder(db, order);
     ok = true;
   });
+
+  if (ok) {
+    const db = await getDb();
+    const order = db.orders.find((o) => o.slug === slug);
+    const seller = order ? db.profiles.find((p) => p.id === order.sellerId) : undefined;
+    if (order) {
+      const { notifyAdminDisputeOpened } = await import("./transactional-email");
+      void notifyAdminDisputeOpened(order, seller?.displayName || seller?.username || "Vendeur");
+    }
+  }
 
   return ok;
 }
