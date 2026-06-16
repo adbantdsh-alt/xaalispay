@@ -11,6 +11,7 @@ import { PaySkeleton } from "@/components/ui/Skeleton";
 import { DeliveryValidation } from "@/components/delivery/DeliveryValidation";
 import { PayOrderSummary, PayProtectionBlock, PayClientFields, PayMethodButtons, PayCheckoutSection } from "@/components/pay/PayPageSections";
 import { calculateBuyerProtectionFee } from "@/lib/fees";
+import { formatDeliveryWindow } from "@/lib/delivery-window";
 import type { OrderStatus } from "@/lib/types";
 
 interface PayOrder {
@@ -266,7 +267,7 @@ export default function PayPage() {
 
         {order.deliveryHours ? (
           <p className="pay-delivery-meta">
-            Livraison estimée : <strong>{order.deliveryHours} h</strong>
+            Livraison estimée : <strong>{formatDeliveryWindow(order.deliveryHours)}</strong>
           </p>
         ) : null}
 

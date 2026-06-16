@@ -10,11 +10,13 @@ export function ActionRequiredCard({
   onValidate,
   onCancel,
   error,
+  protectionMinutes = 30,
 }: {
   order: Order;
-  onValidate: (orderId: string, pin: string) => Promise<void>;
+  onValidate: (orderId: string, pin: string) => Promise<boolean>;
   onCancel?: (orderId: string, reason: string) => Promise<void>;
   error?: string;
+  protectionMinutes?: number;
 }) {
   const [pin, setPin] = useState("");
   const [loading, setLoading] = useState(false);
@@ -28,8 +30,10 @@ export function ActionRequiredCard({
     e.preventDefault();
     if (!pin.trim()) return;
     setLoading(true);
-    await onValidate(order.id, pin);
+    setSuccess(false);
+    const ok = await onValidate(order.id, pin);
     setLoading(false);
+    if (!ok) return;
     setSuccess(true);
     setPin("");
     setTimeout(() => setSuccess(false), 2500);
@@ -88,7 +92,7 @@ export function ActionRequiredCard({
         )}
         {success && (
           <p className="toast-success" role="status">
-            PIN validé — libération dans 30 min
+            PIN validé — libération dans {protectionMinutes} min
           </p>
         )}
         {onCancel && (

@@ -1,29 +1,40 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { CopyButton } from "@/components/ui/CopyButton";
-import { IconCheck } from "@/components/ui/AppIcon";
+import { IconCheck, IconPackage } from "@/components/ui/AppIcon";
+import { ProductImage } from "@/components/ui/ProductImage";
 import { buildPaymentLinkMessage, buildWhatsAppUrl, copyToClipboard } from "@/lib/share";
 import { formatPublicUrl } from "@/lib/site-url";
 
 export function PaymentLinkSuccessPanel({
   payUrl,
   productName,
+  productImage,
+  productId,
+  editHref,
   title = "Produit créé !",
   subtitle,
   onReset,
   resetLabel = "+ Créer un autre produit",
   autoCopy = true,
   showWhatsApp = true,
+  showEdit = true,
 }: {
   payUrl: string;
   productName: string;
+  productImage?: string;
+  productId?: string;
+  /** Lien vers la page d'édition (ex. /create?tab=edit&id=...) */
+  editHref?: string;
   title?: string;
   subtitle?: string;
   onReset?: () => void;
   resetLabel?: string;
   autoCopy?: boolean;
   showWhatsApp?: boolean;
+  showEdit?: boolean;
 }) {
   const [copiedHint, setCopiedHint] = useState(false);
 
@@ -47,8 +58,25 @@ export function PaymentLinkSuccessPanel({
   const desc =
     subtitle || `${productName} — partagez ce lien à vos clients.`;
 
+  const editLink =
+    editHref || (productId ? `/create?tab=edit&id=${encodeURIComponent(productId)}` : undefined);
+
   return (
     <div className="link-success-panel">
+      {productImage ? (
+        <ProductImage
+          src={productImage}
+          alt={productName}
+          className="link-success-product-img"
+          placeholderClassName="link-success-product-img link-success-product-img-empty"
+          iconSize={36}
+        />
+      ) : (
+        <div className="link-success-product-img link-success-product-img-empty" aria-hidden>
+          <IconPackage size={36} />
+        </div>
+      )}
+
       <div className="link-success-icon">
         <IconCheck size={26} />
       </div>
@@ -73,28 +101,35 @@ export function PaymentLinkSuccessPanel({
         <span className="link-success-url-hint">Appuyer pour copier</span>
       </button>
 
-      <CopyButton
-        text={payUrl}
-        label="Copier le lien"
-        copiedLabel="✓ Lien copié"
-        className="btn-seller-primary link-copy-main"
-      />
+      <div className="link-success-actions">
+        <CopyButton
+          text={payUrl}
+          label="Copier le lien"
+          copiedLabel="✓ Copié"
+          className="btn-seller-primary link-success-action-btn"
+        />
+        {showWhatsApp && (
+          <button
+            type="button"
+            className="btn-whatsapp-compact link-success-action-btn"
+            onClick={() =>
+              window.open(
+                buildWhatsAppUrl(
+                  buildPaymentLinkMessage(payUrl, productName || "votre commande")
+                ),
+                "_blank"
+              )
+            }
+          >
+            WhatsApp
+          </button>
+        )}
+      </div>
 
-      {showWhatsApp && (
-        <button
-          type="button"
-          className="btn-whatsapp-full"
-          onClick={() =>
-            window.open(
-              buildWhatsAppUrl(
-                buildPaymentLinkMessage(payUrl, productName || "votre commande")
-              ),
-              "_blank"
-            )
-          }
-        >
-          Envoyer sur WhatsApp
-        </button>
+      {showEdit && editLink && (
+        <Link href={editLink} className="btn-secondary link-success-edit">
+          Modifier le produit
+        </Link>
       )}
 
       {onReset && (

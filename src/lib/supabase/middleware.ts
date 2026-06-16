@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { COOKIE_NAME, verifySessionToken } from "@/lib/auth-local";
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
+import { isDevAutoLoginEnabled, isProtectedSellerPath } from "@/lib/demo-account";
 
 type CookieToSet = { name: string; value: string; options?: CookieOptions };
 
@@ -43,18 +44,33 @@ export async function updateSession(request: NextRequest) {
     }
   }
 
-  if (
-    !userId &&
-    (request.nextUrl.pathname.startsWith("/dashboard") ||
-      request.nextUrl.pathname.startsWith("/wallet") ||
-      request.nextUrl.pathname.startsWith("/create") ||
-      request.nextUrl.pathname.startsWith("/profile") ||
-      request.nextUrl.pathname.startsWith("/admin"))
-  ) {
+  if (!userId && isProtectedSellerPath(request.nextUrl.pathname)) {
+    if (isDevAutoLoginEnabled()) {
+      const loginUrl = request.nextUrl.clone();
+      loginUrl.pathname = "/api/dev/auto-login";
+      loginUrl.searchParams.set("redirect", request.nextUrl.pathname);
+      return NextResponse.redirect(loginUrl);
+    }
+
     const redirect = request.nextUrl.clone();
     redirect.pathname = "/auth";
     redirect.searchParams.set("redirect", request.nextUrl.pathname);
     return NextResponse.redirect(redirect);
+  }
+
+  // En dev : /auth → dashboard auto-connecté
+  if (
+    isDevAutoLoginEnabled() &&
+    !userId &&
+    (request.nextUrl.pathname === "/auth" || request.nextUrl.pathname === "/auth/")
+  ) {
+    const loginUrl = request.nextUrl.clone();
+    loginUrl.pathname = "/api/dev/auto-login";
+    loginUrl.searchParams.set(
+      "redirect",
+      request.nextUrl.searchParams.get("redirect") || "/dashboard"
+    );
+    return NextResponse.redirect(loginUrl);
   }
 
   return response;

@@ -4,14 +4,16 @@ import {
   computeProtectionEndsAt,
   getProtectionDurationMinutes,
 } from "./protection";
-import type { DisputeMedia, Order, OrderStatus, Product, Profile } from "./types";
+import type { Database, DisputeMedia, Order, OrderStatus, Product, Profile } from "./types";
 import {
   collectUsedPins,
   generateUniquePaymentSlug,
   collectUsedPaymentSlugs,
   generateUniquePin,
   getOrderTotal,
+  isValidSenegalMobilePhone,
   isValidUsername,
+  normalizeSenegalPhoneLocal,
 } from "./utils";
 import { calculateBuyerProtectionFee } from "./fees";
 import { issueDeliveryCodeTimestamps } from "./delivery-code";
@@ -105,6 +107,33 @@ export async function updateProfileUsername(
       p.username = clean;
       p.usernameChangedAt = new Date().toISOString();
     }
+  });
+
+  return { profile: (await getProfileById(userId))! };
+}
+
+export async function updateProfilePhone(
+  userId: string,
+  phone: string
+): Promise<{ profile: Profile } | { error: string }> {
+  const trimmed = phone.trim();
+
+  if (!trimmed) {
+    await updateDb((db) => {
+      const p = db.profiles.find((x) => x.id === userId);
+      if (p) delete p.phone;
+    });
+    return { profile: (await getProfileById(userId))! };
+  }
+
+  const local = normalizeSenegalPhoneLocal(trimmed);
+  if (!isValidSenegalMobilePhone(local)) {
+    return { error: "Numéro invalide — 9 chiffres commençant par 7 (ex. 771234567)" };
+  }
+
+  await updateDb((db) => {
+    const p = db.profiles.find((x) => x.id === userId);
+    if (p) p.phone = local;
   });
 
   return { profile: (await getProfileById(userId))! };
@@ -430,6 +459,24 @@ export async function openDisputeByPin(
   return ok ? (await getOrderBySlug(order.slug)) || null : null;
 }
 
+async function refundOrderViaBictorysIfPaid(db: Database, order: Order): Promise<void> {
+  const successAttempt = db.paymentAttempts.find(
+    (a) => a.orderId === order.id && (a.status === "success" || a.providerId)
+  );
+  const transactionId = order.paymentProviderId || successAttempt?.providerId || null;
+  if (!transactionId) {
+    console.warn("[maintenance] Remboursement auto sans transaction Bictorys", order.id);
+    return;
+  }
+
+  const { refundBictorysTransaction } = await import("./bictorys");
+  try {
+    await refundBictorysTransaction(transactionId);
+  } catch (err) {
+    console.error("[maintenance] Remboursement Bictorys échoué", order.id, err);
+  }
+}
+
 export async function processOrderMaintenance(): Promise<boolean> {
   const db = await getDb();
   let changed = false;
@@ -442,6 +489,7 @@ export async function processOrderMaintenance(): Promise<boolean> {
       order.deliveryDeadlineAt &&
       new Date(order.deliveryDeadlineAt).getTime() <= now
     ) {
+      await refundOrderViaBictorysIfPaid(db, order);
       order.status = "refunded";
       order.refundedAt = nowIso;
       order.updatedAt = order.refundedAt;
@@ -474,16 +522,16 @@ export async function getWalletData(
   if (!options?.skipMaintenance) {
     await processOrderMaintenance();
   }
+  const db = await getDb();
   const orders = options?.orders ?? (await getOrdersBySeller(sellerId));
+  const hasLedger = db.ledgerEntries.some((entry) => entry.sellerId === sellerId);
+  const ledgerBalance = db.sellerBalances.find((item) => item.sellerId === sellerId);
 
-  let available = 0;
   const sequestered: WalletSequesteredItem[] = [];
 
   for (const order of orders) {
     const total = getOrderTotal(order);
-    if (order.status === "released") {
-      available += total;
-    } else if (HELD_STATUSES.includes(order.status)) {
+    if (HELD_STATUSES.includes(order.status)) {
       sequestered.push({
         orderId: order.id,
         productName: order.productName,
@@ -492,6 +540,17 @@ export async function getWalletData(
         status: order.status,
         protectionEndsAt: order.protectionEndsAt,
       });
+    }
+  }
+
+  let available = 0;
+  if (hasLedger && ledgerBalance) {
+    available = Math.max(0, ledgerBalance.availableBalance);
+  } else {
+    for (const order of orders) {
+      if (order.status === "released") {
+        available += getOrderTotal(order);
+      }
     }
   }
 

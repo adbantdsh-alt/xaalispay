@@ -2,10 +2,12 @@
 
 import { useId, useRef, useState } from "react";
 import type { Product } from "@/lib/types";
-import { formatCurrency, formatDeliveryHours } from "@/lib/utils";
+import { formatCurrency } from "@/lib/utils";
+import { formatDeliveryWindow, hoursToDeliveryWindow, deliveryWindowToHours, type DeliveryWindow, DELIVERY_DEADLINE_HOURS } from "@/lib/delivery-window";
 import { uploadProductImageFile, MAX_IMAGE_INPUT_MB } from "@/lib/product-form";
 import { IconCheck, IconPackage } from "@/components/ui/AppIcon";
 import { ProductImage } from "@/components/ui/ProductImage";
+import { ChargebackExplainDialog } from "@/components/seller/ChargebackExplainDialog";
 import { copyToClipboard } from "@/lib/share";
 import { buildProductPaymentUrl, formatPublicUrl } from "@/lib/site-url";
 
@@ -23,7 +25,7 @@ export const emptyProductForm = (): ProductFormValues => ({
   name: "",
   price: "",
   deliveryCost: "0",
-  deliveryHours: "48",
+  deliveryHours: "24",
   note: "",
   description: "",
   image: "",
@@ -52,8 +54,14 @@ export function ProductFields({
 }) {
   const [imageError, setImageError] = useState("");
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [chargebackOpen, setChargebackOpen] = useState(false);
   const fileId = useId();
   const fileRef = useRef<HTMLInputElement>(null);
+  const deliveryWindow = hoursToDeliveryWindow(Number(form.deliveryHours) || 24);
+
+  const setDeliveryWindow = (window: DeliveryWindow) => {
+    onChange({ ...form, deliveryHours: String(deliveryWindowToHours(window)) });
+  };
 
   const handleImage = async (file: File | null) => {
     if (!file) return;
@@ -93,7 +101,8 @@ export function ProductFields({
               <span>Envoi…</span>
             </>
           ) : form.image ? (
-            <ProductImage src={form.image} alt="" className="photo-picker-preview" />
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={form.image} alt="" className="photo-picker-preview" />
           ) : (
             <>
               <span className="photo-picker-icon">📷</span>
@@ -153,18 +162,40 @@ export function ProductFields({
         </label>
       </div>
 
-      <label className="field-block">
-        <span className="field-block-label">Délai livraison (heures)</span>
-        <input
-          className="input-field input-compact"
-          type="number"
-          placeholder="48"
-          value={form.deliveryHours}
-          onChange={(e) => onChange({ ...form, deliveryHours: e.target.value })}
-          required
-          min={1}
-        />
-      </label>
+      <div className="field-block">
+        <span className="field-block-label">Délai de livraison</span>
+        <div className="delivery-window-picker" role="group" aria-label="Délai de livraison">
+          <button
+            type="button"
+            className={`delivery-window-option ${deliveryWindow === "today" ? "is-active" : ""}`}
+            onClick={() => setDeliveryWindow("today")}
+          >
+            Aujourd&apos;hui
+          </button>
+          <button
+            type="button"
+            className={`delivery-window-option ${deliveryWindow === "tomorrow" ? "is-active" : ""}`}
+            onClick={() => setDeliveryWindow("tomorrow")}
+          >
+            Demain
+          </button>
+        </div>
+        <p className="delivery-policy-notice">
+          Si le produit n&apos;est pas livré dans les{" "}
+          <strong>{DELIVERY_DEADLINE_HOURS} h après paiement</strong>, remboursement automatique
+          au client — compté comme un{" "}
+          <button
+            type="button"
+            className="chargeback-link"
+            onClick={() => setChargebackOpen(true)}
+          >
+            chargeback
+          </button>
+          .
+        </p>
+      </div>
+
+      <ChargebackExplainDialog open={chargebackOpen} onClose={() => setChargebackOpen(false)} />
 
       {showDescription && (
         <label className="field-block">
@@ -228,7 +259,7 @@ export function ProductListItem({
           {formatCurrency(product.price)}
           {(product.deliveryCost || 0) > 0 && ` + ${formatCurrency(product.deliveryCost)} livr.`}
           {" · "}
-          {formatDeliveryHours(product.deliveryHours)}
+          {formatDeliveryWindow(product.deliveryHours)}
         </p>
         {product.description && (
           <p className="product-row-note">{product.description}</p>

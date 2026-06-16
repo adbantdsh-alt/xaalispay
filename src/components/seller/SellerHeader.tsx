@@ -1,47 +1,9 @@
-"use client";
+import { BrandMark } from "@/components/ui/BrandMark";
 
-import { IconGlobe } from "@/components/ui/AppIcon";
-
-export function SellerHeader({
-  displayName,
-  onProfileClick,
-  onSettingsClick,
-}: {
-  displayName: string;
-  onProfileClick: () => void;
-  onSettingsClick: () => void;
-}) {
-  const initial = displayName.charAt(0).toUpperCase();
-
+export function SellerHeader() {
   return (
-    <header className="seller-header">
-      <button
-        type="button"
-        className="seller-header-avatar"
-        aria-label="Profil"
-        onClick={onProfileClick}
-      >
-        {initial}
-      </button>
-
-      <div className="seller-header-pill">
-        <span className="seller-header-flag" aria-hidden="true">
-          <IconGlobe size={14} />
-        </span>
-        <span>FCFA</span>
-      </div>
-
-      <button
-        type="button"
-        className="seller-header-settings"
-        aria-label="Paramètres"
-        onClick={onSettingsClick}
-      >
-        <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-          <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-        </svg>
-      </button>
+    <header className="seller-header seller-header-logo-only">
+      <BrandMark size="sm" href="/dashboard" />
     </header>
   );
 }

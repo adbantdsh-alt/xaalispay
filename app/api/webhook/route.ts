@@ -9,23 +9,13 @@ import {
   isBictorysSuccessEvent,
 } from "@/lib/bictorys";
 import { recordWebhookEvent } from "@/lib/ledger";
-
-function getSecretFromHeaders(request: Request): string | null {
-  return (
-    request.headers.get("x-secret-key") ||
-    request.headers.get("x-webhook-secret") ||
-    request.headers.get("x-bictorys-secret")
-  );
-}
+import { isWebhookSecretValid } from "@/lib/webhook-auth";
 
 export async function POST(request: Request) {
   try {
-    const expectedSecret = getWebhookSecret();
-    if (expectedSecret) {
-      const receivedSecret = getSecretFromHeaders(request);
-      if (receivedSecret !== expectedSecret) {
-        return NextResponse.json({ error: "Webhook non autorisé" }, { status: 401 });
-      }
+    const auth = isWebhookSecretValid(request, getWebhookSecret());
+    if (!auth.ok) {
+      return NextResponse.json({ error: auth.error }, { status: auth.status });
     }
 
     const payload = await request.json();

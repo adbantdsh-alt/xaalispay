@@ -7,14 +7,7 @@ import {
 } from "@/lib/bictorys";
 import { recordWebhookEvent } from "@/lib/ledger";
 import { markOrderRefundedByReference } from "@/lib/orders";
-
-function getSecretFromHeaders(request: Request): string | null {
-  return (
-    request.headers.get("x-secret-key") ||
-    request.headers.get("x-webhook-secret") ||
-    request.headers.get("x-bictorys-secret")
-  );
-}
+import { isWebhookSecretValid } from "@/lib/webhook-auth";
 
 function isRefundSuccess(status?: string) {
   const clean = (status || "").toLowerCase();
@@ -27,9 +20,9 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const expectedSecret = getRefundWebhookSecret();
-    if (expectedSecret && getSecretFromHeaders(request) !== expectedSecret) {
-      return NextResponse.json({ error: "Webhook refund non autorisé" }, { status: 401 });
+    const auth = isWebhookSecretValid(request, getRefundWebhookSecret());
+    if (!auth.ok) {
+      return NextResponse.json({ error: auth.error }, { status: auth.status });
     }
 
     const payload = await request.json();

@@ -15,6 +15,7 @@ export default function robots(): MetadataRoute.Robots {
           "/wallet",
           "/create",
           "/profile",
+          "/settings",
           "/history",
           "/orderlink/",
           "/pay/",

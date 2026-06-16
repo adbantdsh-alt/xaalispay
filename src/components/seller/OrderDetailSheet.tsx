@@ -1,7 +1,8 @@
 "use client";
 
 import { FloatingSheet } from "@/components/ui/FloatingSheet";
-import { formatCurrency, formatDeliveryHours, getOrderTotal } from "@/lib/utils";
+import { formatCurrency, getOrderTotal } from "@/lib/utils";
+import { formatDeliveryWindow } from "@/lib/delivery-window";
 import { getSellerHumanStatus, getSellerTimeline } from "@/lib/order-timeline";
 import { getOrderStatusVisual } from "@/lib/order-status-ui";
 import { MOBILE_MONEY_LABELS, isMobileMoneyMethod } from "@/lib/payment-methods";
@@ -178,7 +179,7 @@ export function OrderDetailSheet({
           )}
           <div className="profile-sheet-row">
             <span className="text-muted">Délai de livraison</span>
-            <span>{formatDeliveryHours(order.deliveryHours)}</span>
+            <span>{formatDeliveryWindow(order.deliveryHours)}</span>
           </div>
           {order.releasedAt && (
             <div className="profile-sheet-row">

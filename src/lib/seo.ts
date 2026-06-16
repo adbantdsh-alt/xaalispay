@@ -130,6 +130,7 @@ export const NOINDEX_PREFIXES = [
   "/wallet",
   "/create",
   "/profile",
+  "/settings",
   "/history",
   "/admin",
   "/api",

@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import type { Order } from "@/lib/types";
+import { formatCurrency, getOrderTotal } from "@/lib/utils";
+import { filterOrders, type OrderFilterKey } from "@/lib/order-filters";
 import { computeWalletBreakdown } from "@/lib/wallet-breakdown";
 import { computeChargebackStats } from "@/lib/chargeback";
 import { SellerOnboarding } from "@/components/seller/SellerOnboarding";
@@ -10,17 +12,17 @@ import { ActionRequiredCard } from "@/components/seller/ActionRequiredCard";
 import { DashboardSkeleton } from "@/components/ui/Skeleton";
 import { WalletOverview } from "@/components/seller/WalletOverview";
 import { AssetRow } from "@/components/seller/AssetRow";
+import { OrderFilterTabs } from "@/components/seller/OrderFilterTabs";
 import { OrderQuickView } from "@/components/seller/OrderQuickView";
 import { buildShopUrl } from "@/lib/site-url";
 import { useSellerData } from "@/components/seller/SellerDataProvider";
-
-const ORDERS_PREVIEW = 3;
 
 export default function DashboardPage() {
   const { data, loading, refresh } = useSellerData();
   const [productCount, setProductCount] = useState(0);
   const [error, setError] = useState("");
-  const [showAllOrders, setShowAllOrders] = useState(false);
+  const [pinErrorOrderId, setPinErrorOrderId] = useState<string | null>(null);
+  const [orderFilter, setOrderFilter] = useState<OrderFilterKey>("all");
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [cancelWarning, setCancelWarning] = useState("");
 
@@ -37,6 +39,7 @@ export default function DashboardPage() {
 
   const validateDelivery = async (orderId: string, pin: string) => {
     setError("");
+    setPinErrorOrderId(null);
     const res = await fetch("/api/dashboard", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -45,9 +48,11 @@ export default function DashboardPage() {
     const result = await res.json();
     if (!res.ok) {
       setError(result.error || "Validation impossible");
-      return;
+      setPinErrorOrderId(orderId);
+      return false;
     }
     await refresh({ silent: true });
+    return true;
   };
 
   const cancelOrder = async (orderId: string, reason: string) => {
@@ -100,11 +105,10 @@ export default function DashboardPage() {
         new Date(a.protectionEndsAt!).getTime() - new Date(b.protectionEndsAt!).getTime()
     )[0];
 
-  const actionOrder = data.orders.find((o) => o.status === "paid");
-  const visibleOrders = showAllOrders
-    ? data.orders
-    : data.orders.slice(0, ORDERS_PREVIEW);
-  const hasMore = data.orders.length > ORDERS_PREVIEW;
+  const actionOrders = data.orders.filter((o) => o.status === "paid");
+  const paidOrders = data.orders.filter((o) => o.status !== "pending_payment");
+  const totalSales = paidOrders.reduce((sum, o) => sum + getOrderTotal(o), 0);
+  const filteredOrders = filterOrders(data.orders, orderFilter);
   const hasValidatedDelivery = data.orders.some(
     (o) => o.status === "protection" || o.status === "released"
   );
@@ -121,14 +125,23 @@ export default function DashboardPage() {
         shopUrl={shopUrl}
         username={data.profile.username}
         actionSlot={
-          actionOrder ? (
-            <div id="pin-action">
-              <ActionRequiredCard
-                order={actionOrder}
-                onValidate={validateDelivery}
-                onCancel={cancelOrder}
-                error={error}
-              />
+          actionOrders.length > 0 ? (
+            <div id="pin-action" className="action-cards-stack">
+              {actionOrders.length > 1 && (
+                <p className="action-cards-stack-label">
+                  {actionOrders.length} livraisons à valider
+                </p>
+              )}
+              {actionOrders.map((order) => (
+                <ActionRequiredCard
+                  key={order.id}
+                  order={order}
+                  onValidate={validateDelivery}
+                  onCancel={cancelOrder}
+                  error={pinErrorOrderId === order.id ? error : undefined}
+                  protectionMinutes={data.protectionMinutes}
+                />
+              ))}
             </div>
           ) : undefined
         }
@@ -171,12 +184,6 @@ export default function DashboardPage() {
         </p>
       )}
 
-      <SellerOnboarding
-        productCount={productCount}
-        orderCount={data.orders.length}
-        hasValidatedDelivery={hasValidatedDelivery}
-      />
-
       {showEmpty ? (
         <section className="seller-tip-card animate-fade-up-d2">
           <p className="seller-tip-title">Lancez votre boutique</p>
@@ -188,53 +195,52 @@ export default function DashboardPage() {
           </Link>
         </section>
       ) : (
-        <section className="seller-assets animate-fade-up-d2">
-          <div className="seller-assets-head">
+        <section className="seller-assets dashboard-orders animate-fade-up-d2">
+          <div className="dashboard-orders-head">
             <h2 className="seller-section-title">Commandes</h2>
-            <span className="seller-assets-count">{data.orders.length}</span>
+            {data.orders.length > 0 && (
+              <p className="dashboard-orders-summary text-muted">
+                {paidOrders.length} vente{paidOrders.length !== 1 ? "s" : ""}
+                {totalSales > 0 ? ` · ${formatCurrency(totalSales)}` : ""}
+              </p>
+            )}
           </div>
+
+          {data.orders.length > 0 && (
+            <OrderFilterTabs
+              orders={data.orders}
+              filter={orderFilter}
+              onFilterChange={setOrderFilter}
+            />
+          )}
+
           <div className="asset-list">
             {data.orders.length === 0 ? (
               <p className="text-muted">Aucune commande</p>
+            ) : filteredOrders.length === 0 ? (
+              <p className="history-empty text-muted">Aucune commande dans cette catégorie.</p>
             ) : (
-              <>
-                {visibleOrders.map((order) => (
-                  <AssetRow
-                    key={order.id}
-                    title={order.productName}
-                    subtitle={order.clientName || "Client"}
-                    amount={order.productPrice}
-                    status={order.status}
-                    imageUrl={order.productImage}
-                    onClick={() => setSelectedOrder(order)}
-                  />
-                ))}
-                {hasMore && !showAllOrders && (
-                  <button
-                    type="button"
-                    className="asset-list-see-more"
-                    onClick={() => setShowAllOrders(true)}
-                  >
-                    Voir toutes les commandes ({data.orders.length})
-                  </button>
-                )}
-                {showAllOrders && data.orders.length > ORDERS_PREVIEW && (
-                  <button
-                    type="button"
-                    className="asset-list-see-more"
-                    onClick={() => setShowAllOrders(false)}
-                  >
-                    Réduire
-                  </button>
-                )}
-              </>
+              filteredOrders.map((order) => (
+                <AssetRow
+                  key={order.id}
+                  title={order.productName}
+                  subtitle={order.clientName || "Client"}
+                  amount={getOrderTotal(order)}
+                  status={order.status}
+                  imageUrl={order.productImage}
+                  onClick={() => setSelectedOrder(order)}
+                />
+              ))
             )}
           </div>
-          <Link href="/history" className="asset-list-history-link">
-            Historique complet →
-          </Link>
         </section>
       )}
+
+      <SellerOnboarding
+        productCount={productCount}
+        orderCount={data.orders.length}
+        hasValidatedDelivery={hasValidatedDelivery}
+      />
 
       {/* Popup détail commande */}
       {selectedOrder && (

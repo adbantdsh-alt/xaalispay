@@ -1,15 +1,15 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { Product } from "@/lib/types";
 import { slugifyUsername, isValidUsername } from "@/lib/utils";
 import {
-  ShopActionButtons,
   ShopBackBar,
   useShopView,
 } from "@/components/seller/ShopHub";
+import { ShopHomeToolbar } from "@/components/seller/ShopHomeToolbar";
 import {
   ProductFields,
   ProductListItem,
@@ -17,10 +17,6 @@ import {
   productToFormValues,
   type ProductFormValues,
 } from "@/components/seller/ProductForm";
-import {
-  buildShopShareMessage,
-  buildWhatsAppUrl,
-} from "@/lib/share";
 import { buildShopUrl, buildProductPaymentUrl, formatPublicUrl } from "@/lib/site-url";
 import { PaymentLinkForm } from "@/components/seller/PaymentLinkForm";
 import { PaymentLinkSuccessPanel } from "@/components/seller/PaymentLinkSuccessPanel";
@@ -47,6 +43,8 @@ function CreatePageContent() {
   const [inlineProduct, setInlineProduct] = useState<ProductFormValues>(emptyProductForm());
   const [createdPayUrl, setCreatedPayUrl] = useState("");
   const [createdProductName, setCreatedProductName] = useState("");
+  const [createdProductId, setCreatedProductId] = useState("");
+  const [createdProductImage, setCreatedProductImage] = useState("");
 
   const [pseudo, setPseudo] = useState("");
   const [pseudoSaving, setPseudoSaving] = useState(false);
@@ -54,6 +52,7 @@ function CreatePageContent() {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [editSaved, setEditSaved] = useState(false);
   const [editLoading, setEditLoading] = useState(false);
+  const [productSearch, setProductSearch] = useState("");
 
   const loadProducts = async () => {
     const prodRes = await fetch("/api/products");
@@ -135,6 +134,19 @@ function CreatePageContent() {
 
   const shopUrl = profile ? buildShopUrl(profile.username) : "";
 
+  const filteredProducts = useMemo(() => {
+    const q = productSearch.trim().toLowerCase();
+    if (!q) return products;
+    return products.filter(
+      (p) =>
+        p.name.toLowerCase().includes(q) ||
+        p.description?.toLowerCase().includes(q) ||
+        p.note?.toLowerCase().includes(q) ||
+        String(p.price).includes(q) ||
+        p.paymentSlug?.toLowerCase().includes(q)
+    );
+  }, [products, productSearch]);
+
   const resetMessages = () => {
     setError("");
     setSuccess("");
@@ -171,9 +183,12 @@ function CreatePageContent() {
       return;
     }
 
+    const savedImage = data.product?.image || productForm.image;
     setProductForm(emptyProductForm());
     setCreatedPayUrl(data.payUrl || buildProductPaymentUrl(data.product));
     setCreatedProductName(data.product.name);
+    setCreatedProductId(data.product.id || "");
+    setCreatedProductImage(savedImage);
     setSuccess("Produit créé — lien de paiement prêt");
     loadProducts();
   };
@@ -332,55 +347,51 @@ function CreatePageContent() {
     <div className="seller-dashboard shop-page">
       {view === "home" && (
         <>
-          <header className="shop-page-head">
-            <div>
+          <header className="shop-page-head shop-page-head-compact">
+            <div className="shop-page-head-main">
               <h1 className="shop-page-title">Mes produits</h1>
-              {profile && <p className="shop-page-sub text-muted">@{profile.username}</p>}
+              {profile && (
+                <p className="shop-page-sub text-muted">
+                  @{profile.username}
+                  <span className="shop-page-dot"> · </span>
+                  <Link href="/create?tab=tag" className="shop-pseudo-inline">
+                    Mon XaalisTag
+                  </Link>
+                </p>
+              )}
             </div>
-            <Link href="/create?tab=tag" className="shop-pseudo-link">
-              Mon XaalisTag
-            </Link>
           </header>
 
-          <p className="shop-hub-desc text-muted">
-            Gérez vos produits et leurs liens de paiement uniques. Chaque produit créé génère automatiquement son lien à partager.
-          </p>
-
-          {shopUrl && (
-            <div className="shop-url-chip">
-              <span className="shop-url-text">{formatPublicUrl(shopUrl)}</span>
-              <div className="shop-url-actions">
-                <CopyButton text={shopUrl} label="Copier" className="shop-url-copy" />
-                <button
-                  type="button"
-                  className="shop-url-share"
-                  onClick={() =>
-                    window.open(
-                      buildWhatsAppUrl(buildShopShareMessage(shopUrl, profile!.username)),
-                      "_blank"
-                    )
-                  }
-                >
-                  Partager
-                </button>
-              </div>
-            </div>
-          )}
-
-          <ShopActionButtons />
+          <ShopHomeToolbar
+            shopUrl={shopUrl}
+            username={profile?.username || ""}
+            search={productSearch}
+            onSearchChange={setProductSearch}
+            productCount={products.length}
+            filteredCount={filteredProducts.length}
+          />
 
           {error && <p className="alert-danger">{error}</p>}
           {success && <p className="toast-success" role="status">{success}</p>}
 
-          <section className="shop-section">
-            <p className="shop-section-label">Mes produits ({products.length})</p>
+          <section className="shop-section shop-section-list">
             {products.length === 0 ? (
+              <div className="shop-empty-card">
+                <p className="shop-empty-title">Aucun produit</p>
+                <p className="text-muted shop-empty-desc">
+                  Créez votre premier produit pour obtenir un lien de paiement.
+                </p>
+                <Link href="/create?tab=product" className="btn-seller-primary btn-compact">
+                  + Créer un produit
+                </Link>
+              </div>
+            ) : filteredProducts.length === 0 ? (
               <p className="text-muted shop-empty">
-                Aucun produit — commencez par « Créer un produit ».
+                Aucun produit pour « {productSearch} ».
               </p>
             ) : (
               <div className="product-list">
-                {products.map((product) => (
+                {filteredProducts.map((product) => (
                   <ProductListItem
                     key={product.id}
                     product={product}
@@ -410,9 +421,13 @@ function CreatePageContent() {
             <PaymentLinkSuccessPanel
               payUrl={createdPayUrl}
               productName={createdProductName}
+              productImage={createdProductImage}
+              productId={createdProductId}
               onReset={() => {
                 setCreatedPayUrl("");
                 setCreatedProductName("");
+                setCreatedProductId("");
+                setCreatedProductImage("");
                 setSuccess("");
               }}
             />
@@ -476,9 +491,12 @@ function CreatePageContent() {
             <PaymentLinkSuccessPanel
               payUrl={buildProductPaymentUrl(editingProduct)}
               productName={editingProduct.name}
+              productImage={editingProduct.image}
+              productId={editingProduct.id}
               title="Produit mis à jour !"
               subtitle={`${editingProduct.name} — votre lien de paiement est inchangé.`}
               autoCopy={false}
+              showEdit={false}
               onReset={() => router.push("/create")}
               resetLabel="← Retour à mes produits"
             />

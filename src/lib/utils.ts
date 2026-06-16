@@ -82,6 +82,27 @@ export function isValidUsername(username: string): boolean {
   return /^[a-z0-9_]{3,20}$/.test(username);
 }
 
+/** Numéro local Sénégal sans indicatif (+221). */
+export function normalizeSenegalPhoneLocal(phone: string): string {
+  let digits = phone.replace(/\D/g, "");
+  while (digits.startsWith("221") && digits.length > 9) {
+    digits = digits.slice(3);
+  }
+  return digits.replace(/^0+/, "");
+}
+
+/** Mobile Sénégal : 9 chiffres commençant par 7 (Wave / Orange Money). */
+export function isValidSenegalMobilePhone(phone: string): boolean {
+  const local = normalizeSenegalPhoneLocal(phone);
+  return /^7\d{8}$/.test(local);
+}
+
+export function formatSenegalPhoneDisplay(phone: string): string {
+  const local = normalizeSenegalPhoneLocal(phone);
+  if (local.length !== 9) return phone;
+  return `${local.slice(0, 2)} ${local.slice(2, 5)} ${local.slice(5, 7)} ${local.slice(7)}`;
+}
+
 export function slugifyUsername(input: string): string {
   return input
     .toLowerCase()

@@ -94,7 +94,7 @@ export function normalizeProductFields(data: {
     description: (data.description || "").trim(),
     price: Number(data.price) || 0,
     deliveryCost: Number(data.deliveryCost) || 0,
-    deliveryHours: Number(data.deliveryHours) || 48,
+    deliveryHours: Number(data.deliveryHours) || 24,
     note: (data.note || "").trim(),
     image: data.image || "",
   };
