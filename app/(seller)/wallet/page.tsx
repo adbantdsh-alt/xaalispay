@@ -7,6 +7,7 @@ import { calculatePayoutFee, getPayoutNetAmount, FEE_POLICY } from "@/lib/fees";
 import { formatCurrency, formatSenegalPhoneDisplay } from "@/lib/utils";
 import { PayMethodButtons } from "@/components/pay/PayMethodButtons";
 import { WalletPayoutHistory } from "@/components/seller/WalletPayoutHistory";
+import { WalletTransactionHistory } from "@/components/seller/WalletTransactionHistory";
 import type { Order } from "@/lib/types";
 import { DashboardSkeleton } from "@/components/ui/Skeleton";
 import { useSellerData } from "@/components/seller/SellerDataProvider";
@@ -20,6 +21,7 @@ export default function WalletPage() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [payoutRefreshKey, setPayoutRefreshKey] = useState(0);
+  const [txnRefreshKey, setTxnRefreshKey] = useState(0);
 
   useEffect(() => {
     if (data?.profile?.phone && !phoneTouched && !phone) {
@@ -62,6 +64,7 @@ export default function WalletPage() {
     setSuccess(result.message);
     setAmount("");
     setPayoutRefreshKey((k) => k + 1);
+    setTxnRefreshKey((k) => k + 1);
     await refresh({ silent: true });
   };
 
@@ -184,6 +187,8 @@ export default function WalletPage() {
           </p>
         )}
       </section>
+
+      <WalletTransactionHistory refreshKey={txnRefreshKey} />
 
       <WalletPayoutHistory refreshKey={payoutRefreshKey} />
     </div>

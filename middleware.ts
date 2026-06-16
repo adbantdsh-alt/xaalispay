@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { updateSession } from "@/lib/supabase/middleware";
+import { isDevAutoLoginEnabled } from "@/lib/runtime-env";
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -10,8 +11,7 @@ export async function middleware(request: NextRequest) {
 
   // Dev : accueil → dashboard démo auto-connecté
   if (
-    process.env.NODE_ENV === "development" &&
-    process.env.DEV_AUTO_LOGIN !== "false" &&
+    isDevAutoLoginEnabled() &&
     (pathname === "/" || pathname === "")
   ) {
     const loginUrl = request.nextUrl.clone();

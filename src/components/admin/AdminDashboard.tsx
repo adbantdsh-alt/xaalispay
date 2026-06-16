@@ -33,6 +33,19 @@ interface OverviewData {
     bictorysRefundKeyName?: string;
     webhookSecretSet?: boolean;
   };
+  prodConfig?: {
+    production: boolean;
+    ready: boolean;
+    missingCount: number;
+    missingLabels: string[];
+    checks: Array<{
+      id: string;
+      label: string;
+      ok: boolean;
+      required: boolean;
+      hint?: string;
+    }>;
+  };
 }
 
 interface VendorRow {
@@ -412,6 +425,35 @@ export function AdminDashboard() {
               </li>
             </ul>
           </article>
+
+          {overview.prodConfig && (
+            <article className="admin-card">
+              <h2 className="admin-card-title">
+                Checklist production
+                {overview.prodConfig.ready ? (
+                  <span style={{ color: "#15803d", fontSize: "0.8125rem", marginLeft: "0.5rem" }}>
+                    — Prêt
+                  </span>
+                ) : (
+                  <span style={{ color: "#b91c1c", fontSize: "0.8125rem", marginLeft: "0.5rem" }}>
+                    — {overview.prodConfig.missingCount} manquant(s)
+                  </span>
+                )}
+              </h2>
+              <ul className="admin-health-list">
+                {overview.prodConfig.checks
+                  .filter((check) => check.required || !check.ok)
+                  .map((check) => (
+                    <li key={check.id}>
+                      <span>{check.label}</span>
+                      <strong style={{ color: check.ok ? "#15803d" : "#b91c1c" }}>
+                        {check.ok ? "OK" : "Manquant"}
+                      </strong>
+                    </li>
+                  ))}
+              </ul>
+            </article>
+          )}
         </section>
       )}
 

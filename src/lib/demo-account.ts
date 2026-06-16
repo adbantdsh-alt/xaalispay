@@ -1,3 +1,5 @@
+import { isDevAutoLoginEnabled as isDevAutoLoginEnabledRuntime } from "./runtime-env";
+
 /** Compte vendeur de démo (localhost uniquement). */
 export const DEMO_ACCOUNT = {
   id: "seed-seller-001",
@@ -8,10 +10,7 @@ export const DEMO_ACCOUNT = {
 } as const;
 
 export function isDevAutoLoginEnabled(): boolean {
-  return (
-    process.env.NODE_ENV === "development" &&
-    process.env.DEV_AUTO_LOGIN !== "false"
-  );
+  return isDevAutoLoginEnabledRuntime();
 }
 
 export function isProtectedSellerPath(pathname: string): boolean {

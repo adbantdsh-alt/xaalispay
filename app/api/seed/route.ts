@@ -7,10 +7,11 @@
 import { NextResponse } from "next/server";
 import { hashPassword } from "@/lib/auth-local";
 import { writeDb } from "@/lib/db";
+import { isDevToolsAllowed } from "@/lib/runtime-env";
 import type { Database, Order, LedgerEntry } from "@/lib/types";
 
 export async function POST() {
-  if (process.env.NODE_ENV !== "development") {
+  if (!isDevToolsAllowed()) {
     return NextResponse.json({ error: "Non disponible en production" }, { status: 403 });
   }
 

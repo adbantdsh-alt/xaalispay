@@ -4489,6 +4489,63 @@ input, button, textarea, select { font: inherit; color: var(--text); }
   line-height: 1.35;
 }
 
+/* ── Relevé transactions vendeur ── */
+.wallet-txn-history {
+  margin-top: 1.25rem;
+}
+
+.wallet-txn-empty {
+  margin: 0.75rem 0 0;
+  font-size: 0.875rem;
+  line-height: 1.45;
+}
+
+.wallet-txn-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.wallet-txn-item {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.35rem 0.75rem;
+  align-items: start;
+  padding: 0.9375rem 1rem;
+  border-radius: var(--radius-lg);
+  background: var(--surface-seller);
+  border: 1px solid var(--border-seller);
+  box-shadow: var(--shadow-seller);
+}
+
+.wallet-txn-item-label {
+  margin: 0;
+  font-weight: 700;
+  font-size: 0.875rem;
+}
+
+.wallet-txn-item-detail,
+.wallet-txn-item-date {
+  margin: 0.2rem 0 0;
+  font-size: 0.75rem;
+}
+
+.wallet-txn-amount {
+  font-weight: 800;
+  font-size: 0.9375rem;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.wallet-txn-amount--in {
+  color: #059669;
+}
+
+.wallet-txn-amount--out {
+  color: #dc2626;
+}
+
 .modal-backdrop-stacked {
   z-index: 110;
 }
