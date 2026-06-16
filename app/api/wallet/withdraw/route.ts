@@ -52,6 +52,8 @@ export async function POST(request: Request) {
       status: result.payout?.status || "pending",
       message: result.message,
       reference: result.payout?.id,
+      fee: result.fee,
+      netAmount: result.netAmount,
       apiConnected: result.payout?.providerId ? true : result.payout?.status !== "failed",
     });
   } catch {

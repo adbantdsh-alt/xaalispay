@@ -11,6 +11,7 @@ import { IconLock, IconCheck, IconAlert, IconUndo } from "@/components/ui/AppIco
 import { PaySkeleton } from "@/components/ui/Skeleton";
 import { buildPinShareMessage, buildWhatsAppUrl } from "@/lib/share";
 import { PayOrderSummary, PayProtectionBlock, PayClientFields, PayMethodButtons, PayCheckoutSection, PinConsentGate } from "@/components/pay/PayPageSections";
+import { calculateBuyerProtectionFee } from "@/lib/fees";
 import type { OrderStatus } from "@/lib/types";
 
 interface PayOrder {
@@ -34,6 +35,11 @@ interface PayOrder {
   paymentProviderStatus?: string;
   paymentProviderMessage?: string;
   seller: { displayName: string; username: string; phone?: string };
+  fees?: {
+    subtotal: number;
+    buyerProtectionFee: number;
+    checkoutTotal: number;
+  };
 }
 
 export default function PayPage() {
@@ -308,6 +314,10 @@ export default function PayPage() {
           productImage={order.productImage}
           productPrice={order.productPrice}
           deliveryCost={order.deliveryCost || 0}
+          buyerProtectionFee={
+            order.fees?.buyerProtectionFee ??
+            calculateBuyerProtectionFee(order.productPrice + (order.deliveryCost || 0))
+          }
           seller={order.seller}
         />
 

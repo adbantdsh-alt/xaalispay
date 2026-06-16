@@ -4492,6 +4492,13 @@ input, button, textarea, select { font: inherit; color: var(--text); }
 /* ── Section générique ───────────────────────────────────── */
 .lp-section { padding: clamp(3.5rem, 7vw, 6rem) 0; }
 .lp-section-head { max-width: 40rem; }
+.lp-section-lead {
+  margin-top: 0.75rem;
+  font-size: 1.0625rem;
+  line-height: 1.65;
+  color: var(--text-muted);
+  max-width: 36rem;
+}
 .lp-kicker {
   font-size: 0.72rem;
   font-weight: 600;
@@ -5334,3 +5341,181 @@ input, button, textarea, select { font: inherit; color: var(--text); }
   border: 1px solid rgba(15, 212, 199, 0.35);
   background: rgba(15, 212, 199, 0.08);
 }
+
+/* ── Tarifs & simulateur ── */
+.lp-pricing { padding-bottom: 2rem; }
+.lp-pricing-grid {
+  display: grid;
+  gap: 1.5rem;
+  margin-top: 2rem;
+}
+@media (min-width: 960px) {
+  .lp-pricing-grid {
+    grid-template-columns: 1fr 1.1fr;
+    align-items: start;
+  }
+}
+.lp-pricing-cards {
+  display: grid;
+  gap: 1rem;
+}
+@media (min-width: 640px) {
+  .lp-pricing-cards { grid-template-columns: repeat(3, 1fr); }
+}
+@media (min-width: 960px) {
+  .lp-pricing-cards { grid-template-columns: 1fr; }
+}
+.lp-pricing-card {
+  padding: 1.25rem 1.35rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+.lp-pricing-card-accent {
+  border: 1px solid rgba(15, 31, 102, 0.14);
+  box-shadow: var(--shadow-card);
+}
+.lp-pricing-role {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-subtle);
+}
+.lp-pricing-rate {
+  font-size: 1.75rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: var(--accent);
+  line-height: 1.1;
+}
+.lp-pricing-name { font-weight: 700; font-size: 0.9375rem; }
+.lp-pricing-desc {
+  font-size: 0.8125rem;
+  line-height: 1.55;
+  color: var(--text-muted);
+}
+.lp-pricing-list {
+  margin: 0.5rem 0 0;
+  padding-left: 1.1rem;
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+  line-height: 1.55;
+}
+.lp-pricing-list li { margin-bottom: 0.35rem; }
+.lp-fee-simulator { padding: 1.5rem; }
+.lp-simulator-title { font-size: 1.125rem; font-weight: 800; margin: 0; }
+.lp-simulator-lead {
+  margin: 0.5rem 0 1rem;
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  line-height: 1.55;
+}
+.lp-simulator-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+.lp-simulator-input {
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+  border: 1px solid rgba(15, 31, 102, 0.12);
+  background: #fff;
+  font-weight: 700;
+}
+.lp-simulator-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0.75rem 0 1rem;
+}
+.lp-simulator-preset {
+  padding: 0.4rem 0.75rem;
+  border-radius: 999px;
+  border: 1px solid rgba(15, 31, 102, 0.1);
+  background: #fff;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.lp-simulator-preset.is-active {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+.lp-simulator-breakdown {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+.lp-simulator-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  font-size: 0.8125rem;
+  padding: 0.35rem 0;
+}
+.lp-simulator-row dt { color: var(--text-muted); margin: 0; }
+.lp-simulator-row dd { margin: 0; font-weight: 700; font-variant-numeric: tabular-nums; }
+.lp-simulator-row-head {
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-subtle);
+  border-bottom: 1px solid rgba(15, 31, 102, 0.08);
+  padding-bottom: 0.5rem;
+}
+.lp-simulator-row-buyer dd { color: #0a8a80; }
+.lp-simulator-row-total {
+  font-weight: 800;
+  padding-top: 0.25rem;
+}
+.lp-simulator-divider {
+  height: 1px;
+  background: rgba(15, 31, 102, 0.08);
+  margin: 0.35rem 0;
+}
+.lp-simulator-row-highlight {
+  margin-top: 0.25rem;
+  padding: 0.65rem 0.75rem;
+  border-radius: 12px;
+  background: rgba(15, 31, 102, 0.05);
+}
+.lp-simulator-row-highlight dt { color: var(--text); font-weight: 700; }
+.lp-simulator-row-highlight dd { color: var(--accent); font-size: 1rem; }
+.lp-simulator-note {
+  margin: 1rem 0 0;
+  font-size: 0.75rem;
+  color: var(--text-subtle);
+  line-height: 1.5;
+}
+.wallet-fee-preview {
+  margin: 0.75rem 0 1rem;
+  padding: 1rem;
+  border-radius: 14px;
+  background: rgba(15, 31, 102, 0.04);
+  border: 1px solid rgba(15, 31, 102, 0.08);
+}
+.wallet-fee-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  font-size: 0.8125rem;
+  padding: 0.25rem 0;
+  color: var(--text-seller-muted);
+}
+.wallet-fee-row strong {
+  color: var(--text-seller);
+  font-variant-numeric: tabular-nums;
+}
+.wallet-fee-row-net {
+  margin-top: 0.35rem;
+  padding-top: 0.5rem;
+  border-top: 1px dashed rgba(15, 31, 102, 0.12);
+  font-weight: 700;
+}
+.wallet-fee-row-net span,
+.wallet-fee-row-net strong { color: var(--accent-blue); }

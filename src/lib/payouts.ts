@@ -1,5 +1,6 @@
 import { getDb, updateDb } from "./db";
 import { createBictorysPayout } from "./bictorys";
+import { calculatePayoutFee, getPayoutNetAmount } from "./fees";
 import { debitAvailableForPayout, reverseFailedPayout } from "./ledger";
 import { getWalletData } from "./orders";
 import type { Payout, Profile } from "./types";
@@ -100,8 +101,14 @@ export async function createPayoutRequest({
   method: "wave" | "orange";
   phone: string;
   automatic?: boolean;
-}): Promise<{ ok: boolean; payout?: Payout; message: string }> {
+}): Promise<{ ok: boolean; payout?: Payout; message: string; fee?: number; netAmount?: number }> {
   if (amount <= 0) return { ok: false, message: "Montant invalide" };
+
+  const fee = calculatePayoutFee(amount);
+  const netAmount = getPayoutNetAmount(amount);
+  if (netAmount <= 0) {
+    return { ok: false, message: "Montant trop faible après frais de retrait" };
+  }
 
   const wallet = await getWalletData(sellerId);
   if (amount > wallet.available) {
@@ -115,6 +122,8 @@ export async function createPayoutRequest({
       id: crypto.randomUUID(),
       sellerId,
       amount,
+      fee,
+      netAmount,
       method,
       phone,
       status: "pending",
@@ -153,7 +162,9 @@ export async function createPayoutRequest({
     payout: created,
     message: automatic
       ? "Retrait automatique enregistré."
-      : "Demande de retrait enregistrée.",
+      : `Retrait enregistré. ${netAmount.toLocaleString("fr-FR")} FCFA seront envoyés sur votre ${method === "wave" ? "Wave" : "Orange Money"}.`,
+    fee,
+    netAmount,
   };
 }
 

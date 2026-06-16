@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { buildPageMetadata } from "@/lib/seo";
+import { FEE_POLICY } from "@/lib/fees";
 
 export const metadata: Metadata = buildPageMetadata({
   title: "Conditions générales",
@@ -65,7 +66,32 @@ export default function CgvPage() {
         </section>
 
         <section>
-          <h2>6. Remboursements</h2>
+          <h2>6. Tarifs et commissions</h2>
+          <p>
+            XaalisPay applique une grille transparente, sans frais cachés ni abonnement :
+          </p>
+          <ul>
+            <li>
+              <strong>Acheteur</strong> : {FEE_POLICY.buyer.shortLabel} au titre de la protection
+              séquestre (plafond {FEE_POLICY.buyer.capFcfa} FCFA), affiché au checkout avant
+              paiement Wave ou Orange Money.
+            </li>
+            <li>
+              <strong>Vendeur</strong> : {FEE_POLICY.seller.shortLabel} de commission prélevée
+              uniquement à la libération des fonds (après livraison validée et Séquestre Flash).
+            </li>
+            <li>
+              <strong>Retrait</strong> : {FEE_POLICY.payout.shortLabel} lors d&apos;un virement
+              vers Wave ou Orange Money ; le montant net est affiché avant confirmation.
+            </li>
+          </ul>
+          <p>
+            L&apos;inscription, la création de boutique et les liens de paiement sont gratuits.
+          </p>
+        </section>
+
+        <section>
+          <h2>7. Remboursements</h2>
           <p>
             Un remboursement automatique peut intervenir si le vendeur n&apos;a pas validé la
             livraison dans le délai contractuel défini pour la commande.
@@ -73,7 +99,7 @@ export default function CgvPage() {
         </section>
 
         <section>
-          <h2>7. Limitation de responsabilité</h2>
+          <h2>8. Limitation de responsabilité</h2>
           <p>
             XaalisPay ne peut être tenu responsable si l&apos;acheteur communique son code PIN avant
             réception du colis. La plateforme n&apos;est pas responsable de la qualité des produits
@@ -82,7 +108,7 @@ export default function CgvPage() {
         </section>
 
         <section>
-          <h2>8. Contact</h2>
+          <h2>9. Contact</h2>
           <p>
             Pour toute question :{" "}
             <a href="mailto:contact@xaalispay.sn" className="content-link">

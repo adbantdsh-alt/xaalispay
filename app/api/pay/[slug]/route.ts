@@ -12,9 +12,26 @@ import {
 import { createBictorysMobileMoneyCharge } from "@/lib/bictorys";
 import { getProtectionDurationMinutes } from "@/lib/protection";
 import { isMobileMoneyMethod } from "@/lib/payment-methods";
+import { getCheckoutBreakdown, calculateSellerCommission, FEE_POLICY } from "@/lib/fees";
+import { getOrderTotal } from "@/lib/utils";
 import { updateDb } from "@/lib/db";
 import { getReusablePaymentAttempt, recordPaymentAttempt } from "@/lib/ledger";
 import type { Order, Product } from "@/lib/types";
+
+function buildFeesPayload(
+  prices: Pick<Order, "productPrice" | "deliveryCost" | "buyerProtectionFee">
+) {
+  const breakdown = getCheckoutBreakdown(prices);
+  return {
+    ...breakdown,
+    sellerCommissionEstimate: calculateSellerCommission(breakdown.subtotal),
+    policy: {
+      buyer: FEE_POLICY.buyer.shortLabel,
+      seller: FEE_POLICY.seller.shortLabel,
+      payout: FEE_POLICY.payout.shortLabel,
+    },
+  };
+}
 
 async function buildSellerPayload(sellerId: string) {
   const seller = await getProfileById(sellerId);
@@ -42,6 +59,7 @@ function buildProductPayPayload(
     slug: product.paymentSlug,
     isProductLink: true,
     seller,
+    fees: buildFeesPayload({ productPrice: product.price, deliveryCost: product.deliveryCost || 0 }),
   };
 }
 
@@ -75,6 +93,11 @@ async function buildOrderPayPayload(order: Order) {
     protectionEndsAt: order.protectionEndsAt,
     deliveryDeadlineAt: order.deliveryDeadlineAt,
     seller,
+    fees: buildFeesPayload({
+      productPrice: order.productPrice,
+      deliveryCost: order.deliveryCost || 0,
+      buyerProtectionFee: order.buyerProtectionFee,
+    }),
   };
 }
 

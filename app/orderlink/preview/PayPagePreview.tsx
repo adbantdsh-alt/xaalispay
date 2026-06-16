@@ -9,6 +9,7 @@ import { getBuyerTimeline } from "@/lib/order-timeline";
 import { generatePin } from "@/lib/utils";
 import { buildPinShareMessage, buildWhatsAppUrl } from "@/lib/share";
 import type { MobileMoneyMethod } from "@/lib/payment-methods";
+import { calculateBuyerProtectionFee } from "@/lib/fees";
 import {
   PayOrderSummary,
   PayProtectionBlock,
@@ -138,6 +139,7 @@ export default function PayPagePreview() {
           productName={DEMO.productName}
           productPrice={DEMO.productPrice}
           deliveryCost={DEMO.deliveryCost}
+          buyerProtectionFee={calculateBuyerProtectionFee(DEMO.productPrice + DEMO.deliveryCost)}
           seller={DEMO.seller}
         />
         <PayProtectionBlock protectionMinutes={30} />

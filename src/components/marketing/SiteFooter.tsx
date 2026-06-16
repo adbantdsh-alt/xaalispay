@@ -6,7 +6,7 @@ const COLS = [
     title: "Produit",
     links: [
       { label: "Comment ça marche", href: "/#comment" },
-      { label: "Tarifs", href: "/#faq" },
+      { label: "Tarifs & simulateur", href: "/#tarifs" },
       { label: "Blog", href: "/blog" },
       { label: "Notre histoire", href: "/histoire" },
       { label: "Nous contacter", href: "/contact" },

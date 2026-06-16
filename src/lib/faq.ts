@@ -3,11 +3,15 @@ export type FaqItem = { q: string; a: string };
 export const LANDING_FAQ: FaqItem[] = [
   {
     q: "Combien coûte XaalisPay ?",
-    a: "L'inscription et la création de boutique sont gratuites. Une petite commission est prélevée uniquement lorsqu'une transaction est validée et libérée — vous ne payez jamais à l'avance.",
+    a: "Inscription et boutique gratuites. Acheteur : 1 % de protection séquestre (max 500 FCFA), affiché au checkout. Vendeur : 2 % prélevés uniquement à la libération. Retrait Wave/Orange : 1,5 % + 75 FCFA, montant net affiché avant confirmation. Aucun frais caché.",
+  },
+  {
+    q: "Y a-t-il des frais cachés pour l'acheteur ?",
+    a: "Non. Le total à payer (commande + protection séquestre) est affiché avant Wave ou Orange Money. Le vendeur ne voit jamais vos coordonnées de paiement.",
   },
   {
     q: "Que se passe-t-il si le vendeur n'envoie jamais le colis ?",
-    a: "L'argent n'est jamais versé au vendeur tant que vous n'avez pas validé la réception. En l'absence de livraison dans les délais, vous êtes intégralement remboursé.",
+    a: "L'argent n'est jamais versé au vendeur tant que vous n'avez pas validé la réception. En l'absence de livraison dans les délais, vous êtes intégralement remboursé, frais de protection inclus.",
   },
   {
     q: "Mes données bancaires sont-elles partagées avec le vendeur ?",
@@ -15,7 +19,7 @@ export const LANDING_FAQ: FaqItem[] = [
   },
   {
     q: "Quand le vendeur reçoit-il son argent ?",
-    a: "Dès que le livreur valide le code PIN à la réception, puis à l'issue du Séquestre Flash de 30 minutes sans litige, les fonds sont libérés instantanément.",
+    a: "Dès que le livreur valide le code PIN à la réception, puis à l'issue du Séquestre Flash de 30 minutes sans litige. La commission de 2 % est déduite à ce moment.",
   },
   {
     q: "Dois-je créer un compte ou télécharger une application ?",

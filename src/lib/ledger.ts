@@ -10,6 +10,7 @@ import type {
   WebhookEvent,
 } from "./types";
 import { getOrderTotal } from "./utils";
+import { calculateSellerCommission } from "./fees";
 
 type SellerBalanceKey =
   | "escrowBalance"
@@ -65,6 +66,28 @@ function appendLedgerEntry(
   return entry;
 }
 
+function createOrderEntryWithAmount(
+  db: Database,
+  order: Order,
+  amount: number,
+  type: LedgerEntryType,
+  pocket: LedgerPocket,
+  direction: "credit" | "debit",
+  reference: string,
+  description?: string
+) {
+  return appendLedgerEntry(db, {
+    sellerId: order.sellerId,
+    orderId: order.id,
+    type,
+    pocket,
+    direction,
+    amount,
+    reference,
+    description,
+  });
+}
+
 function createOrderEntry(
   db: Database,
   order: Order,
@@ -107,23 +130,31 @@ export function creditEscrowForPaidOrder(db: Database, order: Order) {
 }
 
 export function releaseEscrowForOrder(db: Database, order: Order) {
-  createOrderEntry(
+  const total = getOrderTotal(order);
+  const commission =
+    order.sellerCommission ?? calculateSellerCommission(total);
+  order.sellerCommission = commission;
+  const netToSeller = total - commission;
+
+  createOrderEntryWithAmount(
     db,
     order,
+    total,
     "escrow_release",
     "escrow",
     "debit",
     `order:${order.id}:escrow_release:debit`,
     "Sortie du séquestre après protection"
   );
-  createOrderEntry(
+  createOrderEntryWithAmount(
     db,
     order,
+    netToSeller,
     "escrow_release",
     "available",
     "credit",
     `order:${order.id}:escrow_release:credit`,
-    "Solde vendeur disponible après protection"
+    `Solde vendeur (commission ${commission} F déduite)`
   );
 }
 

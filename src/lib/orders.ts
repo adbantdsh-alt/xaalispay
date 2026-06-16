@@ -13,6 +13,7 @@ import {
   getOrderTotal,
   isValidUsername,
 } from "./utils";
+import { calculateBuyerProtectionFee } from "./fees";
 import type { WalletSequesteredItem } from "./wallet-breakdown";
 import { computeWalletBreakdown } from "./wallet-breakdown";
 import {
@@ -284,6 +285,9 @@ export async function processPayment(
     order.paymentMethod = paymentMethod;
     order.paymentProviderStatus = "success";
     order.paidAt = now;
+    if (!order.buyerProtectionFee) {
+      order.buyerProtectionFee = calculateBuyerProtectionFee(getOrderTotal(order));
+    }
     order.deliveryDeadlineAt = computeDeliveryDeadlineAt(
       order.deliveryHours,
       new Date(now)
@@ -356,6 +360,7 @@ export async function markPaymentInitiated(
     order.paymentProviderId = data.providerId;
     order.paymentProviderStatus = data.providerStatus || "initiated";
     order.paymentProviderMessage = data.providerMessage;
+    order.buyerProtectionFee = calculateBuyerProtectionFee(getOrderTotal(order));
     order.updatedAt = now;
     result = order;
   });

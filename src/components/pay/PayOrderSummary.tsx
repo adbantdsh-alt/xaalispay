@@ -2,6 +2,7 @@
 "use client";
 
 import { formatCurrency } from "@/lib/utils";
+import { FEE_POLICY } from "@/lib/fees";
 import { IconCheck, IconPackage } from "@/components/ui/AppIcon";
 import s from "./PayOrderSummary.module.css";
 
@@ -10,15 +11,18 @@ export function PayOrderSummary({
   productImage,
   productPrice,
   deliveryCost,
+  buyerProtectionFee,
   seller,
 }: {
   productName: string;
   productImage?: string;
   productPrice: number;
   deliveryCost: number;
+  buyerProtectionFee: number;
   seller: { displayName: string; username: string; phone?: string };
 }) {
-  const total = productPrice + deliveryCost;
+  const subtotal = productPrice + deliveryCost;
+  const checkoutTotal = subtotal + buyerProtectionFee;
   const initial = seller.displayName.charAt(0).toUpperCase();
   const phoneDigits = seller.phone?.replace(/\D/g, "");
 
@@ -48,9 +52,16 @@ export function PayOrderSummary({
               {deliveryCost > 0 ? formatCurrency(deliveryCost) : "Gratuite"}
             </span>
           </div>
+          <div className={s.priceRow}>
+            <span className={s.priceLabel}>{FEE_POLICY.buyer.label}</span>
+            <span className={s.priceValue}>{formatCurrency(buyerProtectionFee)}</span>
+          </div>
+          <p className={s.feeHint}>
+            {FEE_POLICY.buyer.shortLabel} — affiché avant paiement, sans frais cachés.
+          </p>
           <div className={`${s.priceRow} ${s.totalRow}`}>
-            <span className={s.totalLabel}>Total</span>
-            <span className={s.totalValue}>{formatCurrency(total)}</span>
+            <span className={s.totalLabel}>Total à payer</span>
+            <span className={s.totalValue}>{formatCurrency(checkoutTotal)}</span>
           </div>
         </div>
 

@@ -1,6 +1,7 @@
 import type { MobileMoneyMethod } from "./payment-methods";
 import { buildPaymentLinkUrl } from "./site-url";
 import type { Order, Payout } from "./types";
+import { getCheckoutChargeAmount } from "./fees";
 import { getOrderTotal } from "./utils";
 
 export interface BictorysChargeResult {
@@ -153,7 +154,7 @@ export async function createBictorysMobileMoneyCharge({
   method: MobileMoneyMethod;
 }): Promise<BictorysChargeResult> {
   const reference = order.paymentReference || order.slug;
-  const amount = getOrderTotal(order);
+  const amount = getCheckoutChargeAmount(order);
   const customerName = order.clientName || order.clientFirstName || "Client XaalisPay";
   const phone = normalizeSenegalPhone(order.clientPhone);
 
@@ -280,7 +281,7 @@ export async function createBictorysPayout(payout: Payout): Promise<BictorysPayo
   const paymentType = mapPaymentMethodToPaymentType(payout.method);
   const secretCode = process.env.BICTORYS_PAYOUT_SECRET_CODE?.trim();
   const payload = {
-    amount: payout.amount,
+    amount: payout.netAmount ?? payout.amount,
     currency: "XOF",
     country: "SN",
     transactionType: "transfer",

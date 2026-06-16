@@ -87,6 +87,10 @@ export interface Order {
   disputeOpenedAt?: string;
   releasedAt?: string;
   refundedAt?: string;
+  /** Frais protection séquestre côté acheteur (1 %, plafond 500 F). */
+  buyerProtectionFee?: number;
+  /** Commission vendeur prélevée à la libération (2 %). */
+  sellerCommission?: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -97,7 +101,8 @@ export type LedgerEntryType =
   | "dispute_hold"
   | "refund_debit"
   | "payout_debit"
-  | "payout_reversal";
+  | "payout_reversal"
+  | "seller_commission";
 
 export type LedgerPocket = "escrow" | "available" | "blocked" | "paid_out";
 
@@ -156,6 +161,10 @@ export interface Payout {
   id: string;
   sellerId: string;
   amount: number;
+  /** Montant envoyé sur Wave/Orange après frais de retrait. */
+  netAmount?: number;
+  /** Frais de retrait XaalisPay (1,5 % + 75 F). */
+  fee?: number;
   method: "wave" | "orange";
   phone: string;
   status: "pending" | "processing" | "success" | "failed";

@@ -70,6 +70,10 @@ export function LandingSellers() {
           <Reveal className="lp-section-head">
             <p className="lp-kicker">Pour les vendeurs</p>
             <h2 className="lp-h2 serif lp-h2-light">Vendez sereinement. Encaissez sans friction.</h2>
+            <p className="lp-section-lead">
+              Inscription gratuite. Seulement <strong>2 %</strong> par vente validée — retrait à{" "}
+              <strong>1,5 % + 75 F</strong>, montants affichés à l&apos;avance.
+            </p>
           </Reveal>
 
           <div className="lp-bullets">

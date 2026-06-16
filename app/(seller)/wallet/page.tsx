@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { computeWalletBreakdown } from "@/lib/wallet-breakdown";
+import { calculatePayoutFee, getPayoutNetAmount, FEE_POLICY } from "@/lib/fees";
 import { formatCurrency } from "@/lib/utils";
 import { PayMethodButtons } from "@/components/pay/PayMethodButtons";
 import type { Order } from "@/lib/types";
@@ -16,6 +17,15 @@ export default function WalletPage() {
   const [withdrawing, setWithdrawing] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+
+  const parsedAmount = Number(amount) || 0;
+  const withdrawPreview = useMemo(() => {
+    if (parsedAmount <= 0) return null;
+    return {
+      fee: calculatePayoutFee(parsedAmount),
+      net: getPayoutNetAmount(parsedAmount),
+    };
+  }, [parsedAmount]);
 
   const handleWithdraw = async (method: string) => {
     setError("");
@@ -92,7 +102,8 @@ export default function WalletPage() {
       <section className="wallet-withdraw-card">
         <h2 className="wallet-section-title">Retirer vers mobile money</h2>
         <p className="wallet-section-desc text-muted">
-          Transférez votre solde vers Wave ou Orange Money.
+          Frais transparents : {FEE_POLICY.payout.shortLabel}. Le montant net est affiché avant
+          confirmation.
         </p>
 
         <label className="field-block">
@@ -121,6 +132,23 @@ export default function WalletPage() {
             />
           </div>
         </label>
+
+        {withdrawPreview && parsedAmount > 0 && (
+          <div className="wallet-fee-preview">
+            <div className="wallet-fee-row">
+              <span>Montant retiré du solde</span>
+              <strong>{formatCurrency(parsedAmount)}</strong>
+            </div>
+            <div className="wallet-fee-row">
+              <span>{FEE_POLICY.payout.label} ({FEE_POLICY.payout.shortLabel})</span>
+              <strong>− {formatCurrency(withdrawPreview.fee)}</strong>
+            </div>
+            <div className="wallet-fee-row wallet-fee-row-net">
+              <span>Vous recevez sur Wave/Orange</span>
+              <strong>{formatCurrency(withdrawPreview.net)}</strong>
+            </div>
+          </div>
+        )}
 
         <div className="wallet-withdraw-methods">
           <PayMethodButtons

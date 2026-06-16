@@ -101,6 +101,13 @@
   color: #0f1f66;
 }
 
+.feeHint {
+  margin: 0;
+  font-size: 0.625rem;
+  line-height: 1.4;
+  color: #8b9bb4;
+}
+
 .vendor {
   margin-top: 2px;
   padding-top: 10px;
