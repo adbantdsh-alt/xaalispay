@@ -53,21 +53,31 @@ export async function POST(
   let bictorysError: string | null = null;
 
   if (action === "refund") {
-    const transactionId = order.paymentProviderId || order.paymentReference;
+    // Chercher l'ID transaction Bictorys dans l'ordre de priorité :
+    // 1. paymentProviderId sur la commande (stocké à l'initiation ou via webhook)
+    // 2. providerId du paymentAttempt réussi (mis à jour par le webhook)
+    // 3. paymentReference (notre référence marchande — dernier recours)
+    const successAttempt = db.paymentAttempts.find(
+      (a) => a.orderId === order.id && (a.status === "success" || a.providerId)
+    );
+    const transactionId =
+      order.paymentProviderId ||
+      successAttempt?.providerId ||
+      order.paymentReference ||
+      null;
 
     if (!transactionId) {
       if (!force) {
         return NextResponse.json(
           {
             error:
-              "Impossible de trouver l'identifiant de transaction Bictorys pour ce paiement. " +
-              "Utilisez force=true pour marquer remboursé localement sans appel Bictorys.",
+              "Aucun identifiant de transaction Bictorys trouvé pour ce paiement. " +
+              "Cliquez à nouveau pour confirmer le remboursement local (vérifiez d'abord le dashboard Bictorys).",
             canForce: true,
           },
           { status: 422 }
         );
       }
-      // force=true → on continue sans appel Bictorys
     } else {
       try {
         await refundBictorysTransaction(transactionId);
@@ -76,14 +86,13 @@ export async function POST(
         if (!force) {
           return NextResponse.json(
             {
-              error: `Remboursement Bictorys échoué : ${msg}. Vérifiez le tableau de bord Bictorys. Utilisez force=true si le remboursement a été effectué manuellement.`,
+              error: `Remboursement Bictorys échoué : ${msg}. Vérifiez le dashboard Bictorys puis confirmez ci-dessous.`,
               canForce: true,
               bictorysError: msg,
             },
             { status: 502 }
           );
         }
-        // force=true → on enregistre l'erreur mais on continue localement
         bictorysError = msg;
       }
     }

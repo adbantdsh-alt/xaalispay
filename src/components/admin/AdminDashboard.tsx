@@ -201,7 +201,12 @@ export function AdminDashboard() {
       if (data.canForce) {
         // Proposer l'option de forcer si Bictorys est indisponible
         const confirmForce = window.confirm(
-          `${data.error}\n\nVoulez-vous quand même marquer la commande comme remboursée localement ?\n(À utiliser seulement si le remboursement a été confirmé côté Bictorys)`
+          `${data.error}\n\n` +
+          `⚠️ AVANT DE CONFIRMER :\n` +
+          `1. Connectez-vous au dashboard Bictorys\n` +
+          `2. Vérifiez que la transaction est bien remboursée\n` +
+          `3. Si oui, cliquez OK pour mettre à jour XaalisPay\n\n` +
+          `Confirmer la mise à jour locale ?`
         );
         if (confirmForce) {
           await resolveDispute(disputeId, action, true);
