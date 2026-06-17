@@ -58,6 +58,8 @@ export default function PayPage() {
   const [paid, setPaid] = useState(false);
   const [protectionMinutes, setProtectionMinutes] = useState(30);
   const [error, setError] = useState("");
+  const [paymentPending, setPaymentPending] = useState("");
+  const [paymentQrCode, setPaymentQrCode] = useState<string | null>(null);
 
   const pollSlug = trackingSlug || slug;
   const paymentReturn = searchParams.get("payment");
@@ -100,29 +102,59 @@ export default function PayPage() {
       return;
     }
     setError("");
+    setPaymentPending("");
+    setPaymentQrCode(null);
     setPaying(true);
-    const res = await fetch(`/api/pay/${slug}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        action: "pay",
-        paymentMethod: method,
-        clientFirstName: clientFirstName.trim(),
-        clientLastName: clientLastName.trim(),
-        clientPhone: clientPhone.trim(),
-        clientAddress: clientAddress.trim(),
-      }),
-    });
-    const data = await res.json();
+
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), 35_000);
+
+    let res: Response;
+    let data: {
+      error?: string;
+      paymentUrl?: string;
+      qrCode?: string;
+      message?: string;
+      orderSlug?: string;
+    };
+
+    try {
+      res = await fetch(`/api/pay/${slug}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "pay",
+          paymentMethod: method,
+          clientFirstName: clientFirstName.trim(),
+          clientLastName: clientLastName.trim(),
+          clientPhone: clientPhone.trim(),
+          clientAddress: clientAddress.trim(),
+        }),
+        signal: controller.signal,
+      });
+      data = await res.json();
+    } catch {
+      setPaying(false);
+      window.clearTimeout(timeout);
+      setError(
+        "Délai dépassé (35 s). Vérifiez votre connexion ou réessayez. Si le problème continue, contactez le support."
+      );
+      return;
+    }
+
+    window.clearTimeout(timeout);
     setPaying(false);
+
     if (!res.ok) {
       setError(data.error || "Paiement impossible");
       return;
     }
+
     if (data.paymentUrl) {
       window.location.href = data.paymentUrl;
       return;
     }
+
     setPaid(false);
     if (data.orderSlug) {
       setTrackingSlug(data.orderSlug);
@@ -134,7 +166,22 @@ export default function PayPage() {
         setOrder(trackData.order);
       }
     }
-    if (data.message) setError(data.message);
+
+    if (data.qrCode) {
+      const src = data.qrCode.startsWith("data:")
+        ? data.qrCode
+        : `data:image/png;base64,${data.qrCode}`;
+      setPaymentQrCode(src);
+    }
+
+    if (data.message) {
+      setPaymentPending(data.message);
+      return;
+    }
+
+    setPaymentPending(
+      "Demande envoyée. Confirmez le paiement sur votre téléphone — cette page se met à jour automatiquement."
+    );
   };
 
   if (loading) {
@@ -289,6 +336,21 @@ export default function PayPage() {
         </PayCheckoutSection>
 
         <PayMethodButtons onPay={handlePay} paying={paying} />
+
+        {paymentPending && (
+          <div className="alert-info" style={{ marginTop: "1rem" }}>
+            <p style={{ margin: 0, fontWeight: 600 }}>Validez sur votre téléphone</p>
+            <p style={{ margin: "0.5rem 0 0" }}>{paymentPending}</p>
+            {paymentQrCode && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={paymentQrCode}
+                alt="QR code Wave"
+                style={{ display: "block", margin: "1rem auto", maxWidth: 220 }}
+              />
+            )}
+          </div>
+        )}
 
         {error && <p className="alert-danger">{error}</p>}
       </div>
