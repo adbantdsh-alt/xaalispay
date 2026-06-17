@@ -10,7 +10,7 @@ import type {
   WebhookEvent,
 } from "./types";
 import { getOrderTotal } from "./utils";
-import { calculateSellerCommission } from "./fees";
+import { calculateBuyerProtectionFee, calculateSellerCommission } from "./fees";
 
 type SellerBalanceKey =
   | "escrowBalance"
@@ -224,6 +224,67 @@ export function reverseFailedPayout(db: Database, payout: Payout) {
     amount: payout.amount,
     reference: `payout:${payout.id}:available_reversal`,
     description: "Annulation retrait vendeur échoué",
+  });
+}
+
+/** Une seule écriture Supabase : commande + tentative de paiement (perf checkout). */
+export async function savePaymentChargeResult(
+  slug: string,
+  order: Order,
+  data: {
+    method: string;
+    providerId?: string;
+    providerStatus?: string;
+    providerMessage?: string;
+    paymentUrl?: string;
+    qrCode?: string;
+  }
+): Promise<void> {
+  const now = new Date().toISOString();
+
+  await updateDb((db) => {
+    const target = db.orders.find((o) => o.slug === slug);
+    if (target && target.status === "pending_payment") {
+      target.paymentMethod = data.method;
+      target.paymentProvider = "bictorys";
+      target.paymentProviderId = data.providerId;
+      target.paymentProviderStatus = data.providerStatus || "initiated";
+      target.paymentProviderMessage = data.providerMessage;
+      target.buyerProtectionFee = calculateBuyerProtectionFee(getOrderTotal(target));
+      target.updatedAt = now;
+    }
+
+    const paymentRef = order.paymentReference || order.slug;
+    const existing = db.paymentAttempts.find(
+      (item) => item.orderId === order.id && item.paymentReference === paymentRef
+    );
+
+    if (existing) {
+      existing.providerId = data.providerId || existing.providerId;
+      existing.paymentUrl = data.paymentUrl || existing.paymentUrl;
+      existing.qrCode = data.qrCode || existing.qrCode;
+      existing.status = normalizeAttemptStatus(data.providerStatus);
+      existing.message = data.providerMessage || existing.message;
+      existing.updatedAt = now;
+      return;
+    }
+
+    db.paymentAttempts.push({
+      id: crypto.randomUUID(),
+      orderId: order.id,
+      orderSlug: order.slug,
+      sellerId: order.sellerId,
+      paymentReference: paymentRef,
+      paymentMethod: data.method,
+      provider: "bictorys",
+      providerId: data.providerId,
+      paymentUrl: data.paymentUrl,
+      qrCode: data.qrCode,
+      status: normalizeAttemptStatus(data.providerStatus),
+      message: data.providerMessage,
+      createdAt: now,
+      updatedAt: now,
+    });
   });
 }
 

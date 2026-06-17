@@ -5,7 +5,6 @@ import {
   getProductById,
   getProductByPaymentSlug,
   getProfileById,
-  markPaymentInitiated,
   openDispute,
   processOrderMaintenance,
   tryConfirmPaymentFromBictorys,
@@ -16,7 +15,7 @@ import { isMobileMoneyMethod } from "@/lib/payment-methods";
 import { getCheckoutBreakdown, calculateSellerCommission, FEE_POLICY } from "@/lib/fees";
 import { getOrderTotal } from "@/lib/utils";
 import { updateDb } from "@/lib/db";
-import { getReusablePaymentAttempt, recordPaymentAttempt } from "@/lib/ledger";
+import { getReusablePaymentAttempt, savePaymentChargeResult } from "@/lib/ledger";
 import { resolveProductImageUrl } from "@/lib/product-images";
 import type { Order, Product } from "@/lib/types";
 
@@ -244,13 +243,7 @@ export async function POST(
         otp: typeof otp === "string" ? otp : undefined,
       });
 
-      await markPaymentInitiated(payableOrder.slug, {
-        method: paymentMethod,
-        providerId: charge.id,
-        providerStatus: charge.status,
-        providerMessage: charge.message,
-      });
-      await recordPaymentAttempt(payableOrder, {
+      await savePaymentChargeResult(payableOrder.slug, payableOrder, {
         method: paymentMethod,
         providerId: charge.id,
         providerStatus: charge.status,

@@ -377,14 +377,15 @@ export async function updateDb(mutator: (db: Database) => void): Promise<Databas
   }
 
   if (isRemoteStoreEnabled() && isRelationalDualWriteEnabled()) {
-    try {
-      const sync = await syncDatabaseToRelational(memoryDb);
-      if (!sync.ok) {
-        console.error("[relational] dual-write errors:", sync.errors.join("; "));
-      }
-    } catch (err) {
-      console.error("[relational] dual-write failed", err);
-    }
+    void syncDatabaseToRelational(memoryDb)
+      .then((sync) => {
+        if (!sync.ok) {
+          console.error("[relational] dual-write errors:", sync.errors.join("; "));
+        }
+      })
+      .catch((err) => {
+        console.error("[relational] dual-write failed", err);
+      });
   }
 
   return memoryDb;

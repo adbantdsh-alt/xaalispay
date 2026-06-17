@@ -151,20 +151,36 @@ export async function createPayoutRequest({
   if (created) {
     try {
       const provider = await createBictorysPayout(created);
-      const updated = await updatePayoutFromProvider({
-        reference: created.id,
-        providerId: provider.id,
-        status: provider.status,
-        message: provider.message,
-      });
-      if (updated) created = updated;
+      try {
+        const updated = await updatePayoutFromProvider({
+          reference: created.id,
+          providerId: provider.id,
+          status: provider.status,
+          message: provider.message,
+        });
+        if (updated) created = updated;
+      } catch (syncErr) {
+        console.error("[payout] Bictorys OK mais sync locale échouée:", syncErr);
+        // L'argent peut être parti côté Bictorys — ne pas afficher « échec » à l'utilisateur.
+        return {
+          ok: true,
+          payout: created,
+          message: `Retrait envoyé à Bictorys. Mise à jour du statut en cours (${netAmount.toLocaleString("fr-FR")} FCFA).`,
+          fee,
+          netAmount,
+        };
+      }
     } catch (err) {
       const message = err instanceof Error ? err.message : "Retrait Bictorys impossible";
-      await updatePayoutFromProvider({
-        reference: created.id,
-        status: "failed",
-        message,
-      });
+      try {
+        await updatePayoutFromProvider({
+          reference: created.id,
+          status: "failed",
+          message,
+        });
+      } catch (syncErr) {
+        console.error("[payout] marquage échec impossible:", syncErr);
+      }
       return { ok: false, payout: created, message };
     }
   }

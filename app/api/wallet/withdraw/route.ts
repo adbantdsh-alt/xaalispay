@@ -56,7 +56,10 @@ export async function POST(request: Request) {
       netAmount: result.netAmount,
       apiConnected: result.payout?.providerId ? true : result.payout?.status !== "failed",
     });
-  } catch {
-    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
+  } catch (err) {
+    const message =
+      err instanceof Error ? err.message : "Erreur serveur";
+    console.error("[wallet/withdraw]", message, err);
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
