@@ -4806,7 +4806,58 @@ input, button, textarea, select { font: inherit; color: var(--text); }
   color: var(--brand-muted);
 }
 .lp-hero-search-label svg { color: var(--brand-teal); flex-shrink: 0; }
-/* VendorSearch â€” habillage navy/teal pour le marketing */
+
+/* Landing : recherche XaalisTag (section dédiée) */
+.lp-xaalis-search {
+  padding: 0 0 clamp(2.5rem, 5vw, 3.5rem);
+  margin-top: -0.5rem;
+}
+.lp-xaalis-search-card {
+  padding: clamp(1.25rem, 3vw, 1.75rem);
+  border-radius: 20px;
+  border: 1px solid rgba(15, 213, 199, 0.35);
+  background: linear-gradient(165deg, rgba(15, 213, 199, 0.1), #fff 55%);
+  box-shadow: 0 12px 40px rgba(15, 31, 102, 0.08);
+}
+.lp-xaalis-search-head {
+  margin-bottom: 1.25rem;
+}
+.lp-xaalis-search-head .lp-h2 {
+  margin: 0.35rem 0 0;
+  font-size: clamp(1.5rem, 3.5vw, 2rem);
+}
+.lp-xaalis-search-desc {
+  margin: 0.65rem 0 0;
+  max-width: 42rem;
+  font-size: 0.95rem;
+  line-height: 1.55;
+  color: var(--brand-muted);
+}
+.lp-xaalis-search-field {
+  max-width: 40rem;
+}
+.lp-xaalis-search-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: 0.65rem;
+  font-size: 0.82rem;
+  color: var(--brand-muted);
+}
+.lp-xaalis-search-hint svg { color: var(--brand-teal); flex-shrink: 0; }
+.lp-xaalis-search-hint strong { color: var(--brand-navy); font-weight: 700; }
+
+@media (min-width: 880px) {
+  .lp-xaalis-search-card {
+    display: grid;
+    grid-template-columns: 1fr 1.05fr;
+    gap: 2rem;
+    align-items: center;
+  }
+  .lp-xaalis-search-head { margin-bottom: 0; }
+  .lp-xaalis-search-field { max-width: none; }
+}
+
 .marketing-layout .vendor-search-row {
   border-radius: 14px;
   border-color: var(--brand-border);

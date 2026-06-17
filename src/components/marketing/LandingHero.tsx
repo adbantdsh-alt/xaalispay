@@ -3,10 +3,9 @@
 import Link from "next/link";
 import { useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
-import { AlertTriangle, ArrowRight, BadgeCheck, Smartphone, Users, AtSign } from "lucide-react";
+import { AlertTriangle, ArrowRight, BadgeCheck, Smartphone, Users } from "lucide-react";
 import { DisputeDialog } from "@/components/marketing/DisputeDialog";
 import { LandingPaymentMockup } from "@/components/marketing/LandingPaymentMockup";
-import { VendorSearch } from "@/components/marketing/VendorSearch";
 
 const TITLE_WORDS = ["Payez", "les", "yeux", "fermés."];
 const EASE = [0.22, 1, 0.36, 1] as const;
@@ -60,23 +59,10 @@ export function LandingHero() {
           </motion.p>
 
           <motion.div
-            className="lp-hero-search"
-            initial={reduce ? false : { opacity: 0, y: 14 }}
-            animate={reduce ? {} : { opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, ease: EASE, delay: 0.6 }}
-          >
-            <span className="lp-hero-search-label">
-              <AtSign size={15} strokeWidth={1.75} />
-              Vous avez un XaalisTag ? Trouvez le vendeur et payez en sécurité
-            </span>
-            <VendorSearch large />
-          </motion.div>
-
-          <motion.div
             className="lp-cta-row"
             initial={reduce ? false : { opacity: 0, y: 14 }}
             animate={reduce ? {} : { opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, ease: EASE, delay: 0.7 }}
+            transition={{ duration: 0.6, ease: EASE, delay: 0.6 }}
           >
             <Link href="/auth?mode=signup" className="lp-btn lp-btn-primary">
               Créer un compte
@@ -96,7 +82,7 @@ export function LandingHero() {
             className="lp-trust"
             initial={reduce ? false : { opacity: 0 }}
             animate={reduce ? {} : { opacity: 1 }}
-            transition={{ duration: 0.6, ease: EASE, delay: 0.82 }}
+            transition={{ duration: 0.6, ease: EASE, delay: 0.72 }}
           >
             <span className="lp-trust-item">
               <BadgeCheck size={16} strokeWidth={1.5} />

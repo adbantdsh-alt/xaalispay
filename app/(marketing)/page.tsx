@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { HomeJsonLd } from "@/components/seo/HomeJsonLd";
 import { buildPageMetadata } from "@/lib/seo";
 import { LandingHero } from "@/components/marketing/LandingHero";
+import { LandingXaalisTagSearch } from "@/components/marketing/LandingXaalisTagSearch";
 import { LandingHowItWorks } from "@/components/marketing/LandingHowItWorks";
 import { LandingFAQ } from "@/components/marketing/LandingFAQ";
 import { LandingFinalCTA } from "@/components/marketing/LandingFinalCTA";
@@ -18,6 +19,7 @@ export default function LandingPage() {
     <>
       <HomeJsonLd />
       <LandingHero />
+      <LandingXaalisTagSearch />
       <LandingHowItWorks />
       <LandingFAQ />
       <LandingFinalCTA />
