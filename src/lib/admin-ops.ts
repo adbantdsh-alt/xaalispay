@@ -319,3 +319,83 @@ export async function adminReconcileOrder(orderId: string, adminEmail?: string) 
     };
   }
 }
+
+export interface PlatformResetSummary {
+  orders: number;
+  products: number;
+  payouts: number;
+  paymentAttempts: number;
+  webhookEvents: number;
+  ledgerEntries: number;
+  profilesReset: number;
+}
+
+/**
+ * Remise à zéro pour lancement — conserve comptes (auth + profils) et efface
+ * commandes, produits, soldes, retraits, webhooks et historique.
+ */
+export async function resetPlatformData(adminEmail?: string): Promise<PlatformResetSummary> {
+  const summary: PlatformResetSummary = {
+    orders: 0,
+    products: 0,
+    payouts: 0,
+    paymentAttempts: 0,
+    webhookEvents: 0,
+    ledgerEntries: 0,
+    profilesReset: 0,
+  };
+
+  await updateDb((db) => {
+    summary.orders = db.orders.length;
+    summary.products = db.products.length;
+    summary.payouts = db.payouts.length;
+    summary.paymentAttempts = db.paymentAttempts.length;
+    summary.webhookEvents = db.webhookEvents.length;
+    summary.ledgerEntries = db.ledgerEntries.length;
+
+    db.orders = [];
+    db.products = [];
+    db.ledgerEntries = [];
+    db.sellerBalances = [];
+    db.paymentAttempts = [];
+    db.webhookEvents = [];
+    db.payouts = [];
+    db.adminAuditLog = [];
+
+    for (const profile of db.profiles) {
+      profile.phone = undefined;
+      profile.payoutMethod = undefined;
+      profile.payoutPhone = undefined;
+      profile.autoPayoutEnabled = false;
+      profile.autoPayoutMode = undefined;
+      profile.autoPayoutMinAmount = 5000;
+      profile.autoPayoutFixedAmount = 10000;
+      profile.autoPayoutMinCompletedOrders = 3;
+      summary.profilesReset++;
+    }
+  });
+
+  const { purgeRelationalTransactionalData, syncDatabaseToRelational } = await import(
+    "./relational-store"
+  );
+  const purge = await purgeRelationalTransactionalData();
+  if (!purge.ok) {
+    console.error("[reset] purge relationnelle:", purge.errors.join("; "));
+  }
+
+  const db = await getDb();
+  const sync = await syncDatabaseToRelational(db);
+  if (!sync.ok) {
+    console.error("[reset] sync relationnelle:", sync.errors.join("; "));
+  }
+
+  await logAdminAction({
+    action: "platform_reset",
+    targetType: "system",
+    targetId: "launch",
+    detail: `${summary.orders} commandes, ${summary.payouts} retraits, ${summary.products} produits effacés`,
+    adminEmail,
+  });
+
+  return summary;
+}

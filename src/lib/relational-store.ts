@@ -633,3 +633,34 @@ export async function migrateAppStateToRelational(db: Database): Promise<Relatio
 
 /** Alias Phase 5B — sync auto après chaque écriture. */
 export const syncDatabaseToRelational = migrateAppStateToRelational;
+
+const TRANSACTIONAL_TABLES: Array<{ table: string; idColumn: string }> = [
+  { table: "xp_ledger_entries", idColumn: "id" },
+  { table: "xp_seller_balances", idColumn: "seller_id" },
+  { table: "xp_payment_attempts", idColumn: "id" },
+  { table: "xp_webhook_events", idColumn: "id" },
+  { table: "xp_payouts", idColumn: "id" },
+  { table: "xp_orders", idColumn: "id" },
+  { table: "xp_products", idColumn: "id" },
+];
+
+/** Vide les tables transactionnelles (garde profils + auth). */
+export async function purgeRelationalTransactionalData(): Promise<{
+  ok: boolean;
+  errors: string[];
+}> {
+  const admin = createAdminClient();
+  const errors: string[] = [];
+  if (!admin) {
+    return { ok: false, errors: ["Client Supabase admin indisponible"] };
+  }
+
+  for (const { table, idColumn } of TRANSACTIONAL_TABLES) {
+    const { error } = await admin.from(table).delete().neq(idColumn, "");
+    if (error) {
+      errors.push(`${table}: ${error.message}`);
+    }
+  }
+
+  return { ok: errors.length === 0, errors };
+}

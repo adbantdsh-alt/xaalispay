@@ -6001,6 +6001,17 @@ input, button, textarea, select { font: inherit; color: var(--text); }
   margin-top: 0.75rem;
 }
 
+.admin-reset-btn {
+  margin-top: 0.5rem;
+  border-color: #fecaca;
+  color: #b91c1c;
+  background: #fef2f2;
+}
+
+.admin-reset-btn:hover:not(:disabled) {
+  background: #fee2e2;
+}
+
 .admin-migrate-msg {
   margin: 0.5rem 0 0;
   font-size: 0.8125rem;

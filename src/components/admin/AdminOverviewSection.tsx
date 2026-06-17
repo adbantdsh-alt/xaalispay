@@ -17,6 +17,8 @@ export function AdminOverviewSection({
   const { stats, relational } = overview;
   const [migrating, setMigrating] = useState(false);
   const [migrateMsg, setMigrateMsg] = useState("");
+  const [resetting, setResetting] = useState(false);
+  const [resetMsg, setResetMsg] = useState("");
 
   const runMigration = async () => {
     if (
@@ -45,6 +47,43 @@ export function AdminOverviewSection({
       setMigrateMsg("Erreur réseau");
     } finally {
       setMigrating(false);
+    }
+  };
+
+  const runPlatformReset = async () => {
+    const typed = window.prompt(
+      "REMISE À ZÉRO TOTALE\n\nEfface : commandes, produits, soldes, retraits, webhooks, litiges.\nConserve : votre compte de connexion.\n\nTapez exactement : XAALISPAY-RESET"
+    );
+    if (typed !== "XAALISPAY-RESET") {
+      if (typed !== null) setResetMsg("Annulé — phrase incorrecte.");
+      return;
+    }
+    setResetting(true);
+    setResetMsg("");
+    try {
+      const res = await fetch("/api/admin/ops/reset-platform", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ confirm: "XAALISPAY-RESET" }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setResetMsg(data.error || "Reset impossible");
+        return;
+      }
+      const s = data.summary as {
+        orders: number;
+        payouts: number;
+        products: number;
+      };
+      setResetMsg(
+        `✓ Plateforme nettoyée : ${s.orders} commande(s), ${s.payouts} retrait(s), ${s.products} produit(s) supprimés.`
+      );
+      onRefresh();
+    } catch {
+      setResetMsg("Erreur réseau");
+    } finally {
+      setResetting(false);
     }
   };
 
@@ -287,6 +326,17 @@ export function AdminOverviewSection({
             </button>
           )}
           {migrateMsg && <p className="admin-migrate-msg">{migrateMsg}</p>}
+          {relational.schemaReady && (
+            <button
+              type="button"
+              className="admin-action-btn admin-reset-btn"
+              disabled={resetting}
+              onClick={runPlatformReset}
+            >
+              {resetting ? "Nettoyage…" : "Remise à zéro (lancement pilote)"}
+            </button>
+          )}
+          {resetMsg && <p className="admin-migrate-msg">{resetMsg}</p>}
         </article>
       )}
     </section>
