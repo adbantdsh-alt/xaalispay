@@ -327,14 +327,21 @@ export interface PlatformResetSummary {
   paymentAttempts: number;
   webhookEvents: number;
   ledgerEntries: number;
-  profilesReset: number;
+  profiles: number;
+  authUsers: number;
+  supabaseAuthDeleted: number;
+  wipeAccounts: boolean;
 }
 
 /**
- * Remise à zéro pour lancement — conserve comptes (auth + profils) et efface
- * commandes, produits, soldes, retraits, webhooks et historique.
+ * Remise à zéro plateforme.
+ * wipeAccounts=true → efface aussi tous les comptes (app_state + Supabase Auth).
  */
-export async function resetPlatformData(adminEmail?: string): Promise<PlatformResetSummary> {
+export async function resetPlatformData(
+  adminEmail?: string,
+  options?: { wipeAccounts?: boolean }
+): Promise<PlatformResetSummary> {
+  const wipeAccounts = options?.wipeAccounts === true;
   const summary: PlatformResetSummary = {
     orders: 0,
     products: 0,
@@ -342,7 +349,10 @@ export async function resetPlatformData(adminEmail?: string): Promise<PlatformRe
     paymentAttempts: 0,
     webhookEvents: 0,
     ledgerEntries: 0,
-    profilesReset: 0,
+    profiles: 0,
+    authUsers: 0,
+    supabaseAuthDeleted: 0,
+    wipeAccounts,
   };
 
   await updateDb((db) => {
@@ -352,6 +362,8 @@ export async function resetPlatformData(adminEmail?: string): Promise<PlatformRe
     summary.paymentAttempts = db.paymentAttempts.length;
     summary.webhookEvents = db.webhookEvents.length;
     summary.ledgerEntries = db.ledgerEntries.length;
+    summary.profiles = db.profiles.length;
+    summary.authUsers = db.authUsers.length;
 
     db.orders = [];
     db.products = [];
@@ -362,25 +374,46 @@ export async function resetPlatformData(adminEmail?: string): Promise<PlatformRe
     db.payouts = [];
     db.adminAuditLog = [];
 
-    for (const profile of db.profiles) {
-      profile.phone = undefined;
-      profile.payoutMethod = undefined;
-      profile.payoutPhone = undefined;
-      profile.autoPayoutEnabled = false;
-      profile.autoPayoutMode = undefined;
-      profile.autoPayoutMinAmount = 5000;
-      profile.autoPayoutFixedAmount = 10000;
-      profile.autoPayoutMinCompletedOrders = 3;
-      summary.profilesReset++;
+    if (wipeAccounts) {
+      db.profiles = [];
+      db.authUsers = [];
+    } else {
+      for (const profile of db.profiles) {
+        profile.phone = undefined;
+        profile.payoutMethod = undefined;
+        profile.payoutPhone = undefined;
+        profile.autoPayoutEnabled = false;
+        profile.autoPayoutMode = undefined;
+        profile.autoPayoutMinAmount = 5000;
+        profile.autoPayoutFixedAmount = 10000;
+        profile.autoPayoutMinCompletedOrders = 3;
+      }
     }
   });
 
-  const { purgeRelationalTransactionalData, syncDatabaseToRelational } = await import(
-    "./relational-store"
-  );
+  const {
+    purgeRelationalTransactionalData,
+    purgeRelationalAccounts,
+    syncDatabaseToRelational,
+  } = await import("./relational-store");
+
   const purge = await purgeRelationalTransactionalData();
   if (!purge.ok) {
-    console.error("[reset] purge relationnelle:", purge.errors.join("; "));
+    console.error("[reset] purge transactionnelle:", purge.errors.join("; "));
+  }
+
+  if (wipeAccounts) {
+    const accounts = await purgeRelationalAccounts();
+    if (!accounts.ok) {
+      console.error("[reset] purge comptes:", accounts.errors.join("; "));
+    }
+
+    const { deleteAllSupabaseAuthUsers } = await import("./supabase/admin");
+    const authWipe = await deleteAllSupabaseAuthUsers();
+    summary.supabaseAuthDeleted = authWipe.deleted;
+    if (authWipe.errors.length) {
+      console.error("[reset] supabase auth:", authWipe.errors.join("; "));
+    }
   }
 
   const db = await getDb();
@@ -389,13 +422,15 @@ export async function resetPlatformData(adminEmail?: string): Promise<PlatformRe
     console.error("[reset] sync relationnelle:", sync.errors.join("; "));
   }
 
-  await logAdminAction({
-    action: "platform_reset",
-    targetType: "system",
-    targetId: "launch",
-    detail: `${summary.orders} commandes, ${summary.payouts} retraits, ${summary.products} produits effacés`,
-    adminEmail,
-  });
+  if (!wipeAccounts) {
+    await logAdminAction({
+      action: "platform_reset",
+      targetType: "system",
+      targetId: "launch",
+      detail: `${summary.orders} commandes, ${summary.payouts} retraits, ${summary.products} produits effacés`,
+      adminEmail,
+    });
+  }
 
   return summary;
 }

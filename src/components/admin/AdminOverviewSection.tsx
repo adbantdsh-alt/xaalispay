@@ -52,9 +52,9 @@ export function AdminOverviewSection({
 
   const runPlatformReset = async () => {
     const typed = window.prompt(
-      "REMISE À ZÉRO TOTALE\n\nEfface : commandes, produits, soldes, retraits, webhooks, litiges.\nConserve : votre compte de connexion.\n\nTapez exactement : XAALISPAY-RESET"
+      "WIPE COMPLET — PARTIR DE ZÉRO\n\nEfface TOUT :\n• Tous les comptes (y compris le vôtre)\n• Commandes, produits, soldes, retraits\n• Utilisateurs Supabase Auth\n\nVous devrez recréer un compte sur /auth.\n\nTapez exactement : XAALISPAY-WIPE-ALL"
     );
-    if (typed !== "XAALISPAY-RESET") {
+    if (typed !== "XAALISPAY-WIPE-ALL") {
       if (typed !== null) setResetMsg("Annulé — phrase incorrecte.");
       return;
     }
@@ -64,21 +64,28 @@ export function AdminOverviewSection({
       const res = await fetch("/api/admin/ops/reset-platform", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ confirm: "XAALISPAY-RESET" }),
+        body: JSON.stringify({ confirm: "XAALISPAY-WIPE-ALL" }),
       });
       const data = await res.json();
       if (!res.ok) {
-        setResetMsg(data.error || "Reset impossible");
+        setResetMsg(data.error || "Wipe impossible");
         return;
       }
       const s = data.summary as {
         orders: number;
         payouts: number;
         products: number;
+        profiles: number;
+        authUsers: number;
+        supabaseAuthDeleted: number;
       };
       setResetMsg(
-        `✓ Plateforme nettoyée : ${s.orders} commande(s), ${s.payouts} retrait(s), ${s.products} produit(s) supprimés.`
+        `✓ Wipe complet : ${s.profiles} profil(s), ${s.authUsers} compte(s) local, ${s.supabaseAuthDeleted} Supabase Auth, ${s.orders} commande(s) supprimés.`
       );
+      if (data.loggedOut) {
+        window.location.href = "/auth?wiped=1";
+        return;
+      }
       onRefresh();
     } catch {
       setResetMsg("Erreur réseau");
@@ -333,7 +340,7 @@ export function AdminOverviewSection({
               disabled={resetting}
               onClick={runPlatformReset}
             >
-              {resetting ? "Nettoyage…" : "Remise à zéro (lancement pilote)"}
+              {resetting ? "Wipe en cours…" : "Wipe complet — partir de zéro"}
             </button>
           )}
           {resetMsg && <p className="admin-migrate-msg">{resetMsg}</p>}

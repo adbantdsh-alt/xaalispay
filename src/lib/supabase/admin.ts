@@ -83,3 +83,36 @@ export async function repairSuperAdminSupabaseAccount(
 
   return userId;
 }
+
+/** Supprime tous les utilisateurs Supabase Auth (remise à zéro complète). */
+export async function deleteAllSupabaseAuthUsers(): Promise<{
+  deleted: number;
+  errors: string[];
+}> {
+  const admin = createAdminClient();
+  if (!admin) {
+    return { deleted: 0, errors: ["Client Supabase admin indisponible"] };
+  }
+
+  const errors: string[] = [];
+  let deleted = 0;
+
+  for (let page = 1; page <= 50; page++) {
+    const { data, error } = await admin.auth.admin.listUsers({ page, perPage: 200 });
+    if (error) {
+      errors.push(error.message);
+      break;
+    }
+    if (!data.users.length) break;
+
+    for (const user of data.users) {
+      const { error: delErr } = await admin.auth.admin.deleteUser(user.id);
+      if (delErr) errors.push(`${user.email || user.id}: ${delErr.message}`);
+      else deleted++;
+    }
+
+    if (data.users.length < 200) break;
+  }
+
+  return { deleted, errors };
+}

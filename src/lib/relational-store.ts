@@ -664,3 +664,23 @@ export async function purgeRelationalTransactionalData(): Promise<{
 
   return { ok: errors.length === 0, errors };
 }
+
+/** Supprime tous les profils et comptes auth relationnels. */
+export async function purgeRelationalAccounts(): Promise<{
+  ok: boolean;
+  errors: string[];
+}> {
+  const admin = createAdminClient();
+  const errors: string[] = [];
+  if (!admin) {
+    return { ok: false, errors: ["Client Supabase admin indisponible"] };
+  }
+
+  for (const table of ["xp_profiles", "xp_auth_users"] as const) {
+    const idColumn = table === "xp_profiles" ? "id" : "id";
+    const { error } = await admin.from(table).delete().neq(idColumn, "");
+    if (error) errors.push(`${table}: ${error.message}`);
+  }
+
+  return { ok: errors.length === 0, errors };
+}
