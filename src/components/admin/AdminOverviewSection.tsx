@@ -50,11 +50,26 @@ export function AdminOverviewSection({
 
   return (
     <section className="admin-section">
-      <AdminLaunchChecklist />
+      <details className="admin-tech-details">
+        <summary className="admin-tech-summary">Paramètres techniques & lancement pilote</summary>
+        <AdminLaunchChecklist />
+      </details>
 
       <div className="admin-kpi-grid admin-kpi-grid--compact">
+        <button type="button" className="admin-kpi admin-kpi--action" onClick={() => onNavigate("orders")}>
+          <p className="admin-kpi-label">Paiements en attente</p>
+          <p className={`admin-kpi-value${(overview.bictorys?.pendingPayments || 0) > 0 ? " admin-kpi-value--alert" : ""}`}>
+            {overview.bictorys?.pendingPayments || 0}
+          </p>
+          <p className="admin-kpi-sub">Commandes →</p>
+        </button>
+        <button type="button" className="admin-kpi admin-kpi--action" onClick={() => onNavigate("vendors")}>
+          <p className="admin-kpi-label">Vendeurs</p>
+          <p className="admin-kpi-value">{stats.sellerCount}</p>
+          <p className="admin-kpi-sub">Gérer →</p>
+        </button>
         <button type="button" className="admin-kpi admin-kpi--action" onClick={() => onNavigate("pilote")}>
-          <p className="admin-kpi-label">Pilote vendeurs</p>
+          <p className="admin-kpi-label">Pilote</p>
           <p className="admin-kpi-value">{stats.sellerCount}</p>
           <p className="admin-kpi-sub">Entonnoir →</p>
         </button>

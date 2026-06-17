@@ -4,7 +4,6 @@ export interface VendorSearchResult {
   username: string;
   displayName: string;
   businessName: string;
-  /** Présent si le vendeur est trouvé via un produit */
   matchHint?: string;
 }
 
@@ -74,4 +73,25 @@ export async function searchMarketplace(query: string, limit = 8) {
   const products = productHits.slice(0, Math.ceil(limit / 2));
 
   return { vendors, products };
+}
+
+const SEARCH_CACHE_MS = 30_000;
+const searchCache = new Map<
+  string,
+  { at: number; vendors: VendorSearchResult[]; products: ProductSearchResult[] }
+>();
+
+export async function searchMarketplaceCached(query: string, limit = 8) {
+  const key = `${query.trim().toLowerCase()}|${limit}`;
+  const hit = searchCache.get(key);
+  if (hit && Date.now() - hit.at < SEARCH_CACHE_MS) {
+    return { vendors: hit.vendors, products: hit.products };
+  }
+  const result = await searchMarketplace(query, limit);
+  searchCache.set(key, { at: Date.now(), ...result });
+  if (searchCache.size > 200) {
+    const oldest = [...searchCache.entries()].sort((a, b) => a[1].at - b[1].at)[0];
+    if (oldest) searchCache.delete(oldest[0]);
+  }
+  return result;
 }

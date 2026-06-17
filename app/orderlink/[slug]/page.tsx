@@ -85,7 +85,7 @@ export default function PayPage() {
   useEffect(() => {
     fetchOrder();
     if (isProductLink && !trackingSlug) return;
-    const interval = setInterval(fetchOrder, 4000);
+    const interval = setInterval(fetchOrder, 8000);
     return () => clearInterval(interval);
   }, [fetchOrder, isProductLink, trackingSlug]);
 

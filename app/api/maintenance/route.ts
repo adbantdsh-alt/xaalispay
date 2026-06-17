@@ -4,11 +4,13 @@ import { processOrderMaintenance } from "@/lib/orders";
 import { processAutomaticPayouts } from "@/lib/payouts";
 import { getDb } from "@/lib/db";
 import { syncDatabaseToRelational } from "@/lib/relational-store";
+import { reconcilePendingOrders } from "@/lib/admin-ops";
 import { isRelationalDualWriteEnabled } from "@/lib/runtime-env";
 
 async function runMaintenance() {
   await processOrderMaintenance();
   const payouts = await processAutomaticPayouts();
+  const reconcile = await reconcilePendingOrders();
 
   let relational: { ok: boolean; errors?: string[] } | null = null;
   if (isRelationalDualWriteEnabled()) {
@@ -17,7 +19,7 @@ async function runMaintenance() {
     relational = { ok: sync.ok, errors: sync.errors.length ? sync.errors : undefined };
   }
 
-  return NextResponse.json({ success: true, payouts, relational });
+  return NextResponse.json({ success: true, payouts, reconcile, relational });
 }
 
 export async function GET(request: Request) {

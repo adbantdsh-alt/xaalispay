@@ -36,6 +36,7 @@ const defaultDb: Database = {
   paymentAttempts: [],
   webhookEvents: [],
   payouts: [],
+  adminAuditLog: [],
 };
 
 function ensureDataDir() {
@@ -184,6 +185,7 @@ function normalizeDb(db: Database): Database {
   if (!db.paymentAttempts) db.paymentAttempts = [];
   if (!db.webhookEvents) db.webhookEvents = [];
   if (!db.payouts) db.payouts = [];
+  if (!db.adminAuditLog) db.adminAuditLog = [];
   for (const p of db.products) {
     if (p.active === undefined) p.active = true;
     if (p.deliveryCost === undefined) p.deliveryCost = 0;

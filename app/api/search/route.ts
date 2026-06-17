@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { searchMarketplace } from "@/lib/search";
+import { searchMarketplaceCached } from "@/lib/search";
 
 export async function GET(request: NextRequest) {
   const q = request.nextUrl.searchParams.get("q") || "";
-  const results = await searchMarketplace(q);
+  const results = await searchMarketplaceCached(q);
   return NextResponse.json(results);
 }

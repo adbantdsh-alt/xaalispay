@@ -1,6 +1,54 @@
 import type { OrderStatus } from "@/lib/types";
 
-export type AdminTab = "overview" | "pilote" | "disputes" | "payouts";
+export type AdminTab = "overview" | "orders" | "vendors" | "pilote" | "disputes" | "payouts";
+
+export interface AdminAlert {
+  id: string;
+  severity: "critical" | "warning" | "info";
+  title: string;
+  detail: string;
+  count?: number;
+  action?: AdminTab;
+}
+
+export interface AdminSearchHit {
+  type: "order" | "vendor" | "payout";
+  id: string;
+  label: string;
+  sublabel: string;
+  status?: string;
+  amount?: number;
+}
+
+export interface AdminOrderRow {
+  id: string;
+  slug: string;
+  sellerUsername: string;
+  sellerName: string;
+  productName: string;
+  clientName: string;
+  clientPhone: string;
+  status: string;
+  total: number;
+  paymentMethod?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AdminVendorRow {
+  id: string;
+  username: string;
+  displayName: string;
+  businessName: string;
+  phone: string | null;
+  emailVerified: boolean;
+  available: number;
+  escrow: number;
+  orderCount: number;
+  productCount: number;
+  disputeCount: number;
+  createdAt: string;
+}
 
 export type PilotFunnelStage =
   | "registered"
@@ -69,6 +117,7 @@ export interface OverviewData {
     relationalRead?: boolean;
     emailConfigured?: boolean;
   };
+  alerts?: AdminAlert[];
   prodConfig?: {
     production: boolean;
     ready: boolean;
@@ -156,8 +205,8 @@ export function formatAdminDate(iso?: string) {
 }
 
 export function adminStatusClass(status: string) {
-  if (status === "failed" || status === "dispute" || status === "refunded") return "bad";
+  if (status === "failed" || status === "dispute" || status === "refunded" || status === "cancelled") return "bad";
   if (status === "success" || status === "released") return "good";
-  if (status === "pending" || status === "processing" || status === "paid") return "warn";
+  if (status === "pending" || status === "processing" || status === "paid" || status === "pending_payment") return "warn";
   return "neutral";
 }

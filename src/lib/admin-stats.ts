@@ -9,6 +9,7 @@ import {
   isTransactionalEmailEnabled,
 } from "./runtime-env";
 import type { DisputeMedia, Order, Payout, Profile } from "./types";
+import { countStalePendingOrders, getAdminAlerts } from "./admin-ops";
 import { getOrderTotal } from "./utils";
 
 function isSeller(profile: Profile) {
@@ -38,6 +39,20 @@ export async function getAdminOverview() {
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   const webhooksFailed24h = recentWebhooks.filter((event) => event.status === "failed").length;
   const pendingPayments = orders.filter((order) => order.status === "pending_payment").length;
+  const stalePendingCount = countStalePendingOrders(orders);
+  const failedPayouts = db.payouts.filter((payout) => payout.status === "failed").length;
+  const openDisputes = orders.filter((order) => order.status === "dispute").length;
+  const prodConfig = getProdConfigSummary();
+
+  const alerts = getAdminAlerts({
+    pendingPayments,
+    failedPayouts,
+    openDisputes,
+    storage: getDbStorageMode(),
+    prodReady: prodConfig.ready,
+    missingCount: prodConfig.missingCount,
+    stalePendingCount,
+  });
 
   return {
     stats: {
@@ -46,11 +61,11 @@ export async function getAdminOverview() {
       orderCount: orders.length,
       paidTodayCount: paidToday.length,
       gmvToday: paidToday.reduce((sum, order) => sum + getOrderTotal(order), 0),
-      openDisputes: orders.filter((order) => order.status === "dispute").length,
+      openDisputes,
       pendingPayouts: db.payouts.filter(
         (payout) => payout.status === "pending" || payout.status === "processing"
       ).length,
-      failedPayouts: db.payouts.filter((payout) => payout.status === "failed").length,
+      failedPayouts,
       totalAvailable: db.sellerBalances.reduce(
         (sum, balance) => sum + balance.availableBalance,
         0
@@ -93,7 +108,8 @@ export async function getAdminOverview() {
       relationalRead: isRelationalReadEnabled(),
       emailConfigured: isTransactionalEmailEnabled(),
     },
-    prodConfig: getProdConfigSummary(),
+    alerts,
+    prodConfig,
     relational,
     bictorys: {
       webhooks24h: recentWebhooks.length,
@@ -122,6 +138,7 @@ export async function getAdminVendors() {
         username: profile.username,
         displayName: profile.displayName,
         businessName: profile.businessName,
+        phone: profile.phone || profile.payoutPhone || null,
         emailVerified: !!profile.emailVerifiedAt,
         available: balance?.availableBalance ?? 0,
         escrow: balance?.escrowBalance ?? 0,

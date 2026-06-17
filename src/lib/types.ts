@@ -195,6 +195,17 @@ export interface Database {
   paymentAttempts: PaymentAttempt[];
   webhookEvents: WebhookEvent[];
   payouts: Payout[];
+  adminAuditLog?: AdminAuditEntry[];
+}
+
+export interface AdminAuditEntry {
+  id: string;
+  action: string;
+  targetType: "order" | "payout" | "dispute" | "vendor" | "system";
+  targetId: string;
+  detail?: string;
+  adminEmail?: string;
+  createdAt: string;
 }
 
 export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {

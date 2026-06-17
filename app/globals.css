@@ -6370,6 +6370,144 @@ input, button, textarea, select { font: inherit; color: var(--text); }
   text-decoration: none;
 }
 
+.seller-support-card-btn {
+  width: 100%;
+  text-align: center;
+  text-decoration: none;
+}
+
+/* ── Phase ABC : admin ops + performance ── */
+.admin-topbar {
+  margin-bottom: 0.75rem;
+}
+.admin-search {
+  position: relative;
+  max-width: 28rem;
+}
+.admin-search-input {
+  width: 100%;
+  min-height: 42px;
+  padding: 0 1rem;
+  border-radius: 12px;
+  border: 1px solid rgba(15, 31, 102, 0.15);
+  font-size: 0.9rem;
+}
+.admin-search-dropdown {
+  position: absolute;
+  z-index: 30;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  margin: 0;
+  padding: 0.35rem 0;
+  list-style: none;
+  background: #fff;
+  border: 1px solid rgba(15, 31, 102, 0.12);
+  border-radius: 12px;
+  box-shadow: 0 12px 32px rgba(15, 31, 102, 0.12);
+  max-height: 280px;
+  overflow: auto;
+}
+.admin-search-item {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: 100%;
+  padding: 0.55rem 0.85rem;
+  border: none;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+.admin-search-item:hover { background: rgba(15, 31, 102, 0.04); }
+.admin-search-item-type {
+  font-size: 0.625rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: rgba(15, 31, 102, 0.45);
+}
+.admin-search-item-label { font-size: 0.875rem; font-weight: 600; }
+.admin-search-item-sub { font-size: 0.75rem; color: rgba(15, 31, 102, 0.55); }
+
+.admin-alerts {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+.admin-alert {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+  border: 1px solid transparent;
+}
+.admin-alert--critical { background: #fef2f2; border-color: #fecaca; }
+.admin-alert--warning { background: #fffbeb; border-color: #fde68a; }
+.admin-alert--info { background: #eff6ff; border-color: #bfdbfe; }
+.admin-alert-title { margin: 0; font-size: 0.875rem; font-weight: 700; }
+.admin-alert-detail { margin: 0.2rem 0 0; font-size: 0.8125rem; color: rgba(15, 31, 102, 0.65); }
+.admin-alert-action, .admin-alert-actions .admin-action-btn {
+  flex-shrink: 0;
+}
+.admin-alert-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.admin-tech-details {
+  margin-bottom: 1rem;
+  border: 1px solid rgba(15, 31, 102, 0.1);
+  border-radius: 12px;
+  padding: 0.5rem 0.85rem;
+  background: rgba(15, 31, 102, 0.02);
+}
+.admin-tech-summary {
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 0.875rem;
+}
+
+.admin-section-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+}
+.admin-filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 0.75rem;
+}
+.admin-filter-chip {
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  border: 1px solid rgba(15, 31, 102, 0.12);
+  background: #fff;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.admin-filter-chip.is-active {
+  background: #1a4fd6;
+  color: #fff;
+  border-color: #1a4fd6;
+}
+.admin-row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+.admin-action-btn--muted {
+  background: transparent;
+  border-color: rgba(15, 31, 102, 0.2);
+}
+
 .settings-link-item-support .settings-link-label {
   color: #15803d;
 }

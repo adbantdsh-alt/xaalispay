@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/session";
 import {
   getWalletData,
-  processOrderMaintenance,
   validateDelivery,
   getProductsBySeller,
 } from "@/lib/orders";
@@ -17,7 +16,6 @@ export async function GET() {
     return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
   }
 
-  await processOrderMaintenance();
   const access = await getSellerAccess(user.id, user.email);
   if (!access.profile) {
     return NextResponse.json({ error: "Profil vendeur introuvable" }, { status: 404 });

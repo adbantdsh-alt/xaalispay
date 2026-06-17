@@ -91,7 +91,7 @@ export function SellerDataProvider({ children }: { children: React.ReactNode }) 
       if (document.visibilityState === "visible") {
         refresh({ silent: true });
       }
-    }, 45_000);
+    }, 90_000);
 
     return () => window.clearInterval(interval);
   }, [refresh]);

@@ -45,7 +45,7 @@ export function SellerOnboarding({
     };
     sync();
     window.addEventListener("focus", sync);
-    const id = setInterval(sync, 2000);
+    const id = setInterval(sync, 5000);
     return () => {
       window.removeEventListener("focus", sync);
       clearInterval(id);
