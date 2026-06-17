@@ -181,6 +181,13 @@ function findPaymentUrl(value: unknown): string | undefined {
   return undefined;
 }
 
+function getPayoutTransactionType(): string {
+  return (
+    process.env.BICTORYS_PAYOUT_TRANSACTION_TYPE?.trim() ||
+    "transfer"
+  );
+}
+
 export async function createBictorysMobileMoneyCharge({
   order,
   method,
@@ -238,26 +245,34 @@ export async function createBictorysMobileMoneyCharge({
     payload.otp = otp.trim();
   }
 
-  const res = await fetchBictorysWithRetry(
-    `${getBaseUrl()}/pay/v1/charges?payment_type=${mapPaymentMethodToPaymentType(method)}`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Api-Key": getPublicKey(),
-        "Request-Id": crypto.randomUUID(),
-      },
-      body: JSON.stringify(payload),
-    }
-  );
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 25_000);
 
-  const rawText = await res.text();
-  let raw: unknown = {};
+  let res: Response;
   try {
-    raw = rawText ? JSON.parse(rawText) : {};
-  } catch {
-    raw = { message: rawText };
+    res = await fetchBictorysWithRetry(
+      `${getBaseUrl()}/pay/v1/charges?payment_type=${mapPaymentMethodToPaymentType(method)}`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Api-Key": getPublicKey(),
+          "Request-Id": crypto.randomUUID(),
+        },
+        body: JSON.stringify(payload),
+        signal: controller.signal,
+      },
+      1
+    );
+  } catch (err) {
+    if (err instanceof Error && err.name === "AbortError") {
+      throw new Error("Bictorys met trop de temps à répondre (25 s). Réessayez.");
+    }
+    throw err;
+  } finally {
+    clearTimeout(timeout);
   }
+  const raw = await readBictorysResponse(res);
   if (!res.ok) {
     console.error("Bictorys charge failed", {
       status: res.status,
@@ -331,7 +346,7 @@ export async function createBictorysPayout(payout: Payout): Promise<BictorysPayo
     amount: payout.netAmount ?? payout.amount,
     currency: "XOF",
     country: "SN",
-    transactionType: "payment",
+    transactionType: getPayoutTransactionType(),
     paymentReason: "Retrait vendeur XaalisPay",
     merchantReference: payout.id,
     customerObject: {
@@ -361,8 +376,14 @@ export async function createBictorysPayout(payout: Payout): Promise<BictorysPayo
         },
         body: JSON.stringify(payload),
         signal: controller.signal,
-      }
+      },
+      1
     );
+  } catch (err) {
+    if (err instanceof Error && err.name === "AbortError") {
+      throw new Error("Bictorys met trop de temps à répondre (30 s). Vérifiez votre Wave/Orange.");
+    }
+    throw err;
   } finally {
     clearTimeout(timeout);
   }
@@ -486,20 +507,29 @@ export function getBictorysAmount(payload: unknown): number | undefined {
 export async function checkBictorysTransactionStatus(
   transactionId: string
 ): Promise<string | undefined> {
-  const res = await fetchBictorysWithRetry(
-    `${getBaseUrl()}/pay/v1/transactions/${transactionId}/status`,
-    {
-      headers: { "X-Api-Key": getPublicKey(), accept: "application/json" },
-    },
-    2
-  );
-  if (!res.ok) return undefined;
-  const raw = await readBictorysResponse(res);
-  const data = extractChargePayload(raw);
-  const status = data.status ?? (raw as Record<string, unknown>).status;
-  return typeof status === "string" || typeof status === "number"
-    ? normalizeBictorysStatus(status)
-    : undefined;
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 12_000);
+  try {
+    const res = await fetchBictorysWithRetry(
+      `${getBaseUrl()}/pay/v1/transactions/${transactionId}/status`,
+      {
+        headers: { "X-Api-Key": getPublicKey(), accept: "application/json" },
+        signal: controller.signal,
+      },
+      1
+    );
+    if (!res.ok) return undefined;
+    const raw = await readBictorysResponse(res);
+    const data = extractChargePayload(raw);
+    const status = data.status ?? (raw as Record<string, unknown>).status;
+    return typeof status === "string" || typeof status === "number"
+      ? normalizeBictorysStatus(status)
+      : undefined;
+  } catch {
+    return undefined;
+  } finally {
+    clearTimeout(timeout);
+  }
 }
 
 export function isBictorysStatusPaid(status?: string): boolean {

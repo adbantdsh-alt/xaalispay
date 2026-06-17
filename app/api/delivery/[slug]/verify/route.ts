@@ -20,7 +20,7 @@ export async function POST(
 ) {
   const { slug } = await params;
 
-  await processOrderMaintenance();
+  await processOrderMaintenance({ slug });
   const order = await getOrderBySlug(slug);
 
   if (!order) {

@@ -107,10 +107,10 @@ export async function GET(
   { params }: { params: Promise<{ slug: string }> }
 ) {
   const { slug } = await params;
-  await processOrderMaintenance();
   const order = await getOrderBySlug(slug);
 
   if (order) {
+    await processOrderMaintenance({ slug });
     if (order.status === "pending_payment") {
       await tryConfirmPaymentFromBictorys(order.slug);
       const refreshed = await getOrderBySlug(slug);

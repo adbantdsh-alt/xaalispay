@@ -8,7 +8,7 @@ export async function GET(
   { params }: { params: Promise<{ slug: string }> }
 ) {
   const { slug } = await params;
-  await processOrderMaintenance();
+  await processOrderMaintenance({ slug });
   const order = await getOrderBySlug(slug);
 
   if (!order) {

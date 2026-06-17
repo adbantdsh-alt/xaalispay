@@ -18,7 +18,7 @@ export async function POST(
       return NextResponse.json({ error: result.error }, { status: 400 });
     }
 
-    await processOrderMaintenance();
+    await processOrderMaintenance({ slug });
 
     return NextResponse.json({
       success: true,

@@ -573,13 +573,23 @@ async function refundOrderViaBictorysIfPaid(db: Database, order: Order): Promise
   }
 }
 
-export async function processOrderMaintenance(): Promise<boolean> {
+export type MaintenanceScope = { slug?: string; sellerId?: string };
+
+function orderMatchesMaintenanceScope(order: Order, scope?: MaintenanceScope): boolean {
+  if (!scope) return true;
+  if (scope.slug && order.slug !== scope.slug) return false;
+  if (scope.sellerId && order.sellerId !== scope.sellerId) return false;
+  return true;
+}
+
+export async function processOrderMaintenance(scope?: MaintenanceScope): Promise<boolean> {
   const db = await getDb();
   let changed = false;
   const now = Date.now();
   const nowIso = new Date().toISOString();
 
   for (const order of db.orders) {
+    if (!orderMatchesMaintenanceScope(order, scope)) continue;
     if (
       order.status === "paid" &&
       order.deliveryDeadlineAt &&
@@ -594,6 +604,7 @@ export async function processOrderMaintenance(): Promise<boolean> {
     }
   }
   for (const order of db.orders) {
+    if (!orderMatchesMaintenanceScope(order, scope)) continue;
     if (
       order.status === "protection" &&
       order.protectionEndsAt &&
@@ -616,7 +627,7 @@ export async function getWalletData(
   options?: { skipMaintenance?: boolean; orders?: Order[] }
 ) {
   if (!options?.skipMaintenance) {
-    await processOrderMaintenance();
+    await processOrderMaintenance({ sellerId });
   }
   const db = await getDb();
   const orders = options?.orders ?? (await getOrdersBySeller(sellerId));
