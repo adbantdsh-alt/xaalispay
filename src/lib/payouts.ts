@@ -1,3 +1,4 @@
+import { after } from "next/server";
 import { getDb, updateDb } from "./db";
 import { createBictorysPayout } from "./bictorys";
 import { calculatePayoutFee, getPayoutNetAmount } from "./fees";
@@ -6,6 +7,19 @@ import { getWalletData } from "./orders";
 import type { Payout, Profile } from "./types";
 
 const DEFAULT_DAILY_LIMIT = 100_000;
+
+function payoutMethodLabel(method: Payout["method"]): string {
+  return method === "wave" ? "Wave" : "Orange Money";
+}
+
+function payoutSuccessMessage(netAmount: number, method: Payout["method"], automatic: boolean): string {
+  const label = payoutMethodLabel(method);
+  const amount = `${netAmount.toLocaleString("fr-FR")} FCFA`;
+  if (automatic) {
+    return `Retrait automatique lancé — ${amount} vers votre ${label}.`;
+  }
+  return `Retrait lancé — ${amount} arrivent sur votre ${label} sous quelques instants.`;
+}
 
 function countCompletedOrders(profile: Profile, db: Awaited<ReturnType<typeof getDb>>) {
   return db.orders.filter(
@@ -101,6 +115,36 @@ export async function updatePayoutFromProvider({
   return updated;
 }
 
+/** Appel Bictorys en arrière-plan — ne bloque pas l'utilisateur. */
+export async function executePayoutProvider(payoutId: string): Promise<void> {
+  const db = await getDb();
+  const payout = db.payouts.find((item) => item.id === payoutId);
+  if (!payout || payout.providerId) return;
+  if (payout.status === "failed" || payout.status === "success") return;
+
+  try {
+    const provider = await createBictorysPayout(payout);
+    await updatePayoutFromProvider({
+      reference: payout.id,
+      providerId: provider.id,
+      status: provider.status,
+      message: provider.message,
+    });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Retrait impossible";
+    console.error("[payout] provider failed:", payoutId, message);
+    try {
+      await updatePayoutFromProvider({
+        reference: payout.id,
+        status: "failed",
+        message,
+      });
+    } catch (syncErr) {
+      console.error("[payout] marquage échec impossible:", syncErr);
+    }
+  }
+}
+
 export async function createPayoutRequest({
   sellerId,
   amount,
@@ -138,7 +182,7 @@ export async function createPayoutRequest({
       netAmount,
       method,
       phone,
-      status: "pending",
+      status: "processing",
       provider: "bictorys",
       createdAt: now,
       updatedAt: now,
@@ -149,48 +193,18 @@ export async function createPayoutRequest({
   });
 
   if (created) {
-    try {
-      const provider = await createBictorysPayout(created);
-      try {
-        const updated = await updatePayoutFromProvider({
-          reference: created.id,
-          providerId: provider.id,
-          status: provider.status,
-          message: provider.message,
-        });
-        if (updated) created = updated;
-      } catch (syncErr) {
-        console.error("[payout] Bictorys OK mais sync locale échouée:", syncErr);
-        // L'argent peut être parti côté Bictorys — ne pas afficher « échec » à l'utilisateur.
-        return {
-          ok: true,
-          payout: created,
-          message: `Retrait envoyé à Bictorys. Mise à jour du statut en cours (${netAmount.toLocaleString("fr-FR")} FCFA).`,
-          fee,
-          netAmount,
-        };
-      }
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "Retrait Bictorys impossible";
-      try {
-        await updatePayoutFromProvider({
-          reference: created.id,
-          status: "failed",
-          message,
-        });
-      } catch (syncErr) {
-        console.error("[payout] marquage échec impossible:", syncErr);
-      }
-      return { ok: false, payout: created, message };
-    }
+    const payoutId = created.id;
+    after(async () => {
+      await executePayoutProvider(payoutId);
+    });
   }
 
   return {
     ok: true,
     payout: created,
-    message: automatic
-      ? "Retrait automatique enregistré."
-      : `Retrait enregistré. ${netAmount.toLocaleString("fr-FR")} FCFA seront envoyés sur votre ${method === "wave" ? "Wave" : "Orange Money"}.`,
+    message: created
+      ? payoutSuccessMessage(netAmount, method, automatic)
+      : "Retrait enregistré.",
     fee,
     netAmount,
   };

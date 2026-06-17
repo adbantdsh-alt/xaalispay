@@ -65,7 +65,7 @@ export default function WalletPage() {
     setAmount("");
     setPayoutRefreshKey((k) => k + 1);
     setTxnRefreshKey((k) => k + 1);
-    await refresh({ silent: true });
+    void refresh({ silent: true });
   };
 
   if (loading && !data) return <DashboardSkeleton />;

@@ -92,10 +92,13 @@ export async function POST(
         const msg = err instanceof Error ? err.message : "Erreur Bictorys inconnue";
         console.error("[resolve] Bictorys refund FAILED:", msg, "| transactionId:", transactionId);
         if (!force) {
+          const encodingIssue = /ByteString|greater than 255/i.test(msg);
           return NextResponse.json(
             {
-              error: `Remboursement Bictorys échoué : ${msg}`,
-              canForce: true,
+              error: encodingIssue
+                ? `Remboursement automatique bloqué (clé API mal formatée dans Vercel). ${msg}`
+                : `Remboursement automatique échoué : ${msg}`,
+              canForce: !encodingIssue,
               bictorysError: msg,
               diagnostic: { transactionId },
             },

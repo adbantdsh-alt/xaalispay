@@ -33,9 +33,19 @@ function getBaseUrl(): string {
 function firstEnvValue(names: string[]): string | undefined {
   for (const name of names) {
     const value = process.env[name]?.trim();
-    if (value) return value;
+    if (value) return sanitizeHeaderValue(value);
   }
   return undefined;
+}
+
+/** fetch() n'accepte que Latin-1 dans les headers — corrige copier-coller (•, BOM…). */
+function sanitizeHeaderValue(value: string): string {
+  return value
+    .trim()
+    .replace(/^[\s\u2022\u00b7\u2023\u25CF\u25E6\uFEFF]+/u, "")
+    .split("")
+    .filter((char) => char.charCodeAt(0) <= 255)
+    .join("");
 }
 
 const BICTORYS_PUBLIC_KEY_NAMES = [
@@ -365,11 +375,11 @@ export async function createBictorysPayout(payout: Payout): Promise<BictorysPayo
       country: "SN",
       locale: "fr-FR",
     },
-    ...(secretCode ? { merchant: { secretCode } } : {}),
+    ...(secretCode ? { merchant: { secretCode: sanitizeHeaderValue(secretCode) } } : {}),
   };
 
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 30_000);
+  const timeout = setTimeout(() => controller.abort(), 20_000);
 
   let res: Response;
   try {
@@ -381,7 +391,7 @@ export async function createBictorysPayout(payout: Payout): Promise<BictorysPayo
           "Content-Type": "application/json",
           accept: "application/json",
           "X-API-Key": getPayoutKey(),
-          "idempotency-key": payout.id,
+          "idempotency-key": sanitizeHeaderValue(payout.id),
         },
         body: JSON.stringify(payload),
         signal: controller.signal,
@@ -425,19 +435,24 @@ export async function createBictorysPayout(payout: Payout): Promise<BictorysPayo
 }
 
 export async function refundBictorysTransaction(transactionId: string): Promise<BictorysPayoutResult> {
+  const cleanId = sanitizeHeaderValue(transactionId);
+  if (!cleanId) {
+    throw new Error("ID transaction invalide pour le remboursement");
+  }
+
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 30_000);
   let res: Response;
   try {
     res = await fetchBictorysWithRetry(
-      `${getBaseUrl()}/pay/v1/transactions/${transactionId}/refund`,
+      `${getBaseUrl()}/pay/v1/transactions/${cleanId}/refund`,
       {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
           accept: "application/json",
           "X-Api-Key": getRefundKey(),
-          "idempotency-key": transactionId,
+          "idempotency-key": cleanId,
         },
         signal: controller.signal,
       },

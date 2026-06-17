@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { getWalletData } from "@/lib/orders";
 import { isMobileMoneyMethod } from "@/lib/payment-methods";
 import { toBictorysPayoutPhone } from "@/lib/bictorys";
 import { getSessionUser } from "@/lib/session";
@@ -29,14 +28,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Numéro de téléphone requis" }, { status: 400 });
     }
 
-    const wallet = await getWalletData(user.id);
-    if (parsedAmount > wallet.available) {
-      return NextResponse.json(
-        { error: "Solde insuffisant" },
-        { status: 400 }
-      );
-    }
-
     const result = await createPayoutRequest({
       sellerId: user.id,
       amount: parsedAmount,
@@ -49,12 +40,11 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json({
-      status: result.payout?.status || "pending",
+      status: result.payout?.status || "processing",
       message: result.message,
       reference: result.payout?.id,
       fee: result.fee,
       netAmount: result.netAmount,
-      apiConnected: result.payout?.providerId ? true : result.payout?.status !== "failed",
     });
   } catch (err) {
     const message =
