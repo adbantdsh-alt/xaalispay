@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import {
   createOrderFromProduct,
   getOrderBySlug,
@@ -243,16 +243,7 @@ export async function POST(
         otp: typeof otp === "string" ? otp : undefined,
       });
 
-      await savePaymentChargeResult(payableOrder.slug, payableOrder, {
-        method: paymentMethod,
-        providerId: charge.id,
-        providerStatus: charge.status,
-        providerMessage: charge.message,
-        paymentUrl: charge.paymentUrl,
-        qrCode: charge.qrCode,
-      });
-
-      return NextResponse.json({
+      const responseBody = {
         pending: true,
         status: "pending_payment",
         orderSlug: payableOrder.slug,
@@ -261,7 +252,25 @@ export async function POST(
         message:
           charge.message ||
           "Confirmez le paiement sur votre téléphone. Le code livraison s'affichera après confirmation.",
+      };
+
+      // Répondre tout de suite (redirect Wave) — sauvegarde tentative en arrière-plan
+      after(async () => {
+        try {
+          await savePaymentChargeResult(payableOrder.slug, payableOrder, {
+            method: paymentMethod,
+            providerId: charge.id,
+            providerStatus: charge.status,
+            providerMessage: charge.message,
+            paymentUrl: charge.paymentUrl,
+            qrCode: charge.qrCode,
+          });
+        } catch (err) {
+          console.error("[pay] savePaymentChargeResult async:", err);
+        }
       });
+
+      return NextResponse.json(responseBody);
     }
 
     if (action === "dispute") {
