@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { setSessionCookie } from "@/lib/auth-local";
 import { isSuperAdminEmail } from "@/lib/auth-policy";
 import { ensureSuperAdminProfile } from "@/lib/profile-access";
 import { confirmSupabaseUser, repairSuperAdminSupabaseAccount } from "@/lib/supabase/admin";
@@ -27,6 +28,7 @@ export async function POST(request: Request) {
           password,
         });
         if (login.data.user) {
+          await setSessionCookie(login.data.user.id, login.data.user.email || "");
           return NextResponse.json({
             user: { id: login.data.user.id, email: login.data.user.email },
             isSuperAdmin: true,
@@ -69,6 +71,8 @@ export async function POST(request: Request) {
         );
       }
     }
+
+    await setSessionCookie(data.user.id, data.user.email || "");
 
     return NextResponse.json({
       user: { id: data.user.id, email: data.user.email },

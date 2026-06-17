@@ -3,6 +3,8 @@ import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
 
 const COOKIE_NAME = "xaalis_session";
+/** 30 jours — session vendeur stable (évite déconnexions Supabase ~1 h). */
+export const SESSION_MAX_AGE_SEC = 60 * 60 * 24 * 30;
 
 function getSecret() {
   return new TextEncoder().encode(
@@ -21,7 +23,7 @@ export async function verifyPassword(password: string, passwordHash: string) {
 export async function createSessionToken(userId: string, email: string) {
   return new SignJWT({ sub: userId, email })
     .setProtectedHeader({ alg: "HS256" })
-    .setExpirationTime("7d")
+    .setExpirationTime(`${SESSION_MAX_AGE_SEC}s`)
     .sign(getSecret());
 }
 
@@ -46,7 +48,7 @@ export async function setSessionCookie(userId: string, email: string) {
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
     path: "/",
-    maxAge: 60 * 60 * 24 * 7,
+    maxAge: SESSION_MAX_AGE_SEC,
   });
 }
 

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { setSessionCookie } from "@/lib/auth-local";
 import { createClient } from "@/lib/supabase/server";
 import { markProfileEmailVerified } from "@/lib/profile-access";
 import { getSiteUrl } from "@/lib/site-url";
@@ -14,6 +15,7 @@ export async function GET(request: Request) {
     const { data, error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error && data.user) {
       await markProfileEmailVerified(data.user.id);
+      await setSessionCookie(data.user.id, data.user.email || "");
       const safeNext = next.startsWith("/") ? next : "/dashboard";
       return NextResponse.redirect(`${siteUrl}${safeNext}?verified=1`);
     }

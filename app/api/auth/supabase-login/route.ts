@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { setSessionCookie } from "@/lib/auth-local";
 import { isSuperAdminEmail, SUPER_ADMIN_EMAIL } from "@/lib/auth-policy";
 import { ensureSuperAdminProfile } from "@/lib/profile-access";
 import {
@@ -75,6 +76,7 @@ export async function POST(request: Request) {
     if (data.user.email && isSuperAdminEmail(data.user.email)) {
       await ensureSupabaseLoginAllowed(data.user.email);
       const profile = await ensureSuperAdminProfile(data.user.id, data.user.email);
+      await setSessionCookie(data.user.id, data.user.email);
       return NextResponse.json({
         user: { id: data.user.id, email: data.user.email },
         isSuperAdmin: true,
@@ -83,6 +85,8 @@ export async function POST(request: Request) {
           : undefined,
       });
     }
+
+    await setSessionCookie(data.user.id, data.user.email || "");
 
     return NextResponse.json({
       user: { id: data.user.id, email: data.user.email },
