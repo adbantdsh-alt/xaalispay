@@ -23,7 +23,11 @@ export interface BictorysPayoutResult {
 }
 
 function getBaseUrl(): string {
-  return (process.env.BICTORYS_BASE_URL || "https://api.bictorys.com").replace(/\/$/, "");
+  return (
+    process.env.BICTORYS_API_URL ||
+    process.env.BICTORYS_BASE_URL ||
+    "https://api.bictorys.com"
+  ).replace(/\/$/, "");
 }
 
 function firstEnvValue(names: string[]): string | undefined {
@@ -181,6 +185,25 @@ function findPaymentUrl(value: unknown): string | undefined {
   return undefined;
 }
 
+/** Doc Bictorys : Wave → `link` (deep link), fallback `redirectUrl`. */
+function resolveChargePaymentUrl(
+  data: Record<string, unknown>,
+  raw: unknown,
+  method: MobileMoneyMethod
+): string | undefined {
+  const link =
+    typeof data.link === "string" && /^https?:\/\//.test(data.link) ? data.link : undefined;
+  const redirectUrl =
+    typeof data.redirectUrl === "string" && /^https?:\/\//.test(data.redirectUrl)
+      ? data.redirectUrl
+      : undefined;
+
+  if (method === "wave") {
+    return link || redirectUrl || findPaymentUrl(data) || findPaymentUrl(raw);
+  }
+  return redirectUrl || link || findPaymentUrl(data) || findPaymentUrl(raw);
+}
+
 function getPayoutTransactionType(): string {
   return (
     process.env.BICTORYS_PAYOUT_TRANSACTION_TYPE?.trim() ||
@@ -199,46 +222,31 @@ export async function createBictorysMobileMoneyCharge({
 }): Promise<BictorysChargeResult> {
   const reference = order.paymentReference || order.slug;
   const amount = getCheckoutChargeAmount(order);
+  if (amount < 100) {
+    throw new Error("Montant minimum Bictorys : 100 FCFA");
+  }
+
   const customerName = order.clientName || order.clientFirstName || "Client XaalisPay";
   const phone = toBictorysInternationalPhone(order.clientPhone, "SN");
   const successUrl = `${buildPaymentLinkUrl(order.slug)}?payment=success`;
   const errorUrl = `${buildPaymentLinkUrl(order.slug)}?payment=failed`;
 
+  // Payload minimal — doc officielle Bictorys §3 (Direct API)
   const payload: Record<string, unknown> = {
     amount,
-    merchantReference: reference,
-    paymentReference: reference,
     currency: "XOF",
     country: "SN",
-    customerObject: {
-      name: customerName,
-      email: "client@xaalispay.com",
-      phone,
-      country: "SN",
-    },
-    allowUpdateCustomer: false,
+    paymentReference: reference,
     successRedirectUrl: successUrl,
     ErrorRedirectUrl: errorUrl,
     errorRedirectUrl: errorUrl,
-    callbackUrl: buildPaymentLinkUrl(order.slug),
-    orderDetails: [
-      {
-        name: order.productName,
-        price: order.productPrice,
-        quantity: 1,
-        taxRate: 0,
-      },
-      ...(order.deliveryCost
-        ? [
-            {
-              name: "Livraison",
-              price: order.deliveryCost,
-              quantity: 1,
-              taxRate: 0,
-            },
-          ]
-        : []),
-    ],
+    customerObject: {
+      name: customerName,
+      phone,
+      email: "client@xaalispay.com",
+      country: "SN",
+      locale: "fr-FR",
+    },
   };
 
   if (otp?.trim()) {
@@ -292,20 +300,21 @@ export async function createBictorysMobileMoneyCharge({
   const data = extractChargePayload(raw);
   return {
     id:
-      data.id !== undefined
-        ? String(data.id)
-        : data.transactionId !== undefined
-          ? String(data.transactionId)
+      data.transactionId !== undefined
+        ? String(data.transactionId)
+        : data.id !== undefined
+          ? String(data.id)
           : undefined,
     reference:
-      typeof data.reference === "string"
-        ? data.reference
-        : typeof data.merchantReference === "string"
-          ? data.merchantReference
-          : reference,
+      typeof data.paymentReference === "string"
+        ? data.paymentReference
+        : typeof data.reference === "string"
+          ? data.reference
+          : typeof data.merchantReference === "string"
+            ? data.merchantReference
+            : reference,
     status: typeof data.status === "string" ? data.status : undefined,
-    paymentUrl:
-      findPaymentUrl(data) || findPaymentUrl(raw),
+    paymentUrl: resolveChargePaymentUrl(data, raw, method),
     qrCode: typeof data.qrCode === "string" ? data.qrCode : undefined,
     message:
       typeof data.message === "string"
@@ -416,14 +425,32 @@ export async function createBictorysPayout(payout: Payout): Promise<BictorysPayo
 }
 
 export async function refundBictorysTransaction(transactionId: string): Promise<BictorysPayoutResult> {
-  const res = await fetch(`${getBaseUrl()}/pay/v1/transactions/${transactionId}/refund`, {
-    method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-      "X-Api-Key": getRefundKey(),
-      "idempotency-key": transactionId,
-    },
-  });
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 30_000);
+  let res: Response;
+  try {
+    res = await fetchBictorysWithRetry(
+      `${getBaseUrl()}/pay/v1/transactions/${transactionId}/refund`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          accept: "application/json",
+          "X-Api-Key": getRefundKey(),
+          "idempotency-key": transactionId,
+        },
+        signal: controller.signal,
+      },
+      1
+    );
+  } catch (err) {
+    if (err instanceof Error && err.name === "AbortError") {
+      throw new Error("Remboursement Bictorys : délai dépassé (30 s)");
+    }
+    throw err;
+  } finally {
+    clearTimeout(timeout);
+  }
   const raw = await readBictorysResponse(res);
   if (!res.ok) {
     throw new Error(extractBictorysMessage(raw, `Refund Bictorys refusé (HTTP ${res.status})`));

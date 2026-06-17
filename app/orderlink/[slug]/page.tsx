@@ -150,6 +150,33 @@ export default function PayPage() {
       return;
     }
 
+    const isMobileDevice = /Android|iPhone|iPad|iPod|Mobile|webOS|BlackBerry|IEMobile|Opera Mini/i.test(
+      navigator.userAgent
+    );
+
+    // Doc Bictorys : Wave desktop → QR code + polling, mobile → redirect vers link
+    if (method === "wave" && data.qrCode && !isMobileDevice) {
+      setPaid(false);
+      if (data.orderSlug) {
+        setTrackingSlug(data.orderSlug);
+        setIsProductLink(false);
+        router.replace(`/orderlink/${data.orderSlug}`);
+        const trackRes = await fetch(`/api/pay/${data.orderSlug}`);
+        if (trackRes.ok) {
+          const trackData = await trackRes.json();
+          setOrder(trackData.order);
+        }
+      }
+      const src = data.qrCode.startsWith("data:")
+        ? data.qrCode
+        : `data:image/png;base64,${data.qrCode}`;
+      setPaymentQrCode(src);
+      setPaymentPending(
+        "Scannez ce QR code avec l'application Wave. Cette page se met à jour automatiquement."
+      );
+      return;
+    }
+
     if (data.paymentUrl) {
       window.location.href = data.paymentUrl;
       return;
