@@ -4,7 +4,7 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 0.625rem;
-  margin-bottom: 0.75rem;
+  margin-bottom: 1.25rem;
 }
 
 .payBtn {
@@ -125,10 +125,11 @@
 }
 
 .trustNote {
+  grid-column: 1 / -1;
   display: flex;
   gap: 0.625rem;
   align-items: flex-start;
-  margin: 0 0 1.25rem;
+  margin: 0;
   padding: 0.75rem 0.875rem;
   border-radius: 12px;
   background: linear-gradient(135deg, rgba(0, 212, 255, 0.08) 0%, rgba(26, 79, 214, 0.06) 100%);
@@ -158,5 +159,9 @@
 @media (max-width: 340px) {
   .stack {
     grid-template-columns: 1fr;
+  }
+
+  .trustNote {
+    grid-column: 1;
   }
 }

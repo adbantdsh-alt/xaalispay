@@ -70,10 +70,10 @@ export function PayMethodButtons({
           <IconShield size={16} />
         </span>
         <span>
-          <strong>Votre argent reste chez XaalisPay.</strong> Après réception, nous le
-          conservons encore <strong>{protectionMinutes} minutes</strong> avant de le verser au
-          vendeur. Vous vérifiez d&apos;abord, vous payez ensuite — c&apos;est notre garantie
-          anti-arnaque.
+          Votre argent reste chez XaalisPay encore{" "}
+          <strong>{protectionMinutes} minutes</strong>, même après la livraison.
+          C&apos;est notre garantie anti-arnaque.{" "}
+          <strong>Payez en toute confiance.</strong>
         </span>
       </p>
     </div>
