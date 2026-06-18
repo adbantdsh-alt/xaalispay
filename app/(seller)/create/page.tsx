@@ -20,6 +20,7 @@ import {
 import { buildShopUrl, buildProductPaymentUrl, formatPublicUrl } from "@/lib/site-url";
 import { PaymentLinkForm } from "@/components/seller/PaymentLinkForm";
 import { PaymentLinkSuccessPanel } from "@/components/seller/PaymentLinkSuccessPanel";
+import { SellerBrandingEditor } from "@/components/seller/SellerBrandingEditor";
 import { CopyButton } from "@/components/ui/CopyButton";
 import { useSellerData } from "@/components/seller/SellerDataProvider";
 
@@ -391,6 +392,15 @@ function CreatePageContent() {
               )}
             </div>
           </header>
+
+          {profile && (
+            <SellerBrandingEditor
+              profile={profile}
+              onUpdated={async () => {
+                await refreshSeller({ silent: true });
+              }}
+            />
+          )}
 
           <ShopHomeToolbar
             shopUrl={shopUrl}

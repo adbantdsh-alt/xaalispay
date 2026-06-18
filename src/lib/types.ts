@@ -23,6 +23,8 @@ export interface Profile {
   autoPayoutMinAmount?: number;
   autoPayoutFixedAmount?: number;
   autoPayoutMinCompletedOrders?: number;
+  avatarUrl?: string;
+  coverUrl?: string;
   createdAt: string;
 }
 

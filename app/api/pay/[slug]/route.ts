@@ -17,6 +17,7 @@ import { getOrderTotal } from "@/lib/utils";
 import { updateDb } from "@/lib/db";
 import { getReusablePaymentAttempt, savePaymentChargeResult } from "@/lib/ledger";
 import { resolveProductImageUrl } from "@/lib/product-images";
+import { toSellerBrandView } from "@/lib/profile-images";
 import type { Order, Product } from "@/lib/types";
 
 function buildFeesPayload(
@@ -36,11 +37,23 @@ function buildFeesPayload(
 
 async function buildSellerPayload(sellerId: string) {
   const seller = await getProfileById(sellerId);
+  if (!seller) {
+    return {
+      displayName: "Vendeur",
+      username: "",
+      phone: undefined,
+      avatarUrl: undefined,
+      coverUrl: undefined,
+    };
+  }
+  const brand = toSellerBrandView(seller);
   return {
-    displayName: seller?.displayName || "Vendeur",
-    username: seller?.username || "",
-    businessName: seller?.businessName,
-    phone: seller?.phone,
+    displayName: brand.displayName,
+    username: brand.username,
+    businessName: seller.businessName,
+    phone: seller.phone,
+    avatarUrl: brand.avatarUrl,
+    coverUrl: brand.coverUrl,
   };
 }
 

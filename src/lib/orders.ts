@@ -166,6 +166,23 @@ export async function updateProfileDetails(
   return { profile: (await getProfileById(userId))! };
 }
 
+export async function updateProfileBranding(
+  userId: string,
+  data: { avatarUrl?: string | null; coverUrl?: string | null }
+): Promise<{ profile: Profile } | { error: string }> {
+  const profile = await getProfileById(userId);
+  if (!profile) return { error: "Profil introuvable" };
+
+  await updateDb((db) => {
+    const p = db.profiles.find((x) => x.id === userId);
+    if (!p) return;
+    if (data.avatarUrl !== undefined) p.avatarUrl = data.avatarUrl?.trim() || "";
+    if (data.coverUrl !== undefined) p.coverUrl = data.coverUrl?.trim() || "";
+  });
+
+  return { profile: (await getProfileById(userId))! };
+}
+
 export async function deleteProduct(
   productId: string,
   sellerId: string

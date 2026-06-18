@@ -59,6 +59,8 @@ function mapProfile(p: Profile) {
     auto_payout_min_amount: p.autoPayoutMinAmount ?? null,
     auto_payout_fixed_amount: p.autoPayoutFixedAmount ?? null,
     auto_payout_min_completed_orders: p.autoPayoutMinCompletedOrders ?? null,
+    avatar_url: p.avatarUrl ?? "",
+    cover_url: p.coverUrl ?? "",
     created_at: p.createdAt,
   };
 }
@@ -80,6 +82,8 @@ function unmapProfile(row: Record<string, unknown>): Profile {
     autoPayoutMinAmount: row.auto_payout_min_amount as number | undefined,
     autoPayoutFixedAmount: row.auto_payout_fixed_amount as number | undefined,
     autoPayoutMinCompletedOrders: row.auto_payout_min_completed_orders as number | undefined,
+    avatarUrl: row.avatar_url ? String(row.avatar_url) : undefined,
+    coverUrl: row.cover_url ? String(row.cover_url) : undefined,
     createdAt: String(row.created_at),
   };
 }

@@ -7,6 +7,7 @@ import { buildSupportWhatsAppUrl, buildSellerPilotSupportMessage } from "@/lib/s
 import { DashboardSkeleton } from "@/components/ui/Skeleton";
 import { SettingsPhoneEditor } from "@/components/seller/SettingsPhoneEditor";
 import { SettingsProfileEditor } from "@/components/seller/SettingsProfileEditor";
+import { SellerBrandingEditor } from "@/components/seller/SellerBrandingEditor";
 import { SettingsNotificationPrefs } from "@/components/seller/SettingsNotificationPrefs";
 import { useSellerData } from "@/components/seller/SellerDataProvider";
 
@@ -139,6 +140,13 @@ export default function SettingsPage() {
           Voir ma page publique
         </Link>
       </section>
+
+      <SellerBrandingEditor
+        profile={profile}
+        onUpdated={async () => {
+          await refresh({ silent: true });
+        }}
+      />
 
       {showAdmin && (
         <section className="settings-section">

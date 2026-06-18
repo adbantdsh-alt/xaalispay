@@ -20,7 +20,7 @@ export function PayOrderSummary({
   productPrice: number;
   deliveryCost: number;
   buyerProtectionFee: number;
-  seller: { displayName: string; username: string; phone?: string };
+  seller: { displayName: string; username: string; phone?: string; avatarUrl?: string; coverUrl?: string };
 }) {
   const subtotal = productPrice + deliveryCost;
   const checkoutTotal = subtotal + buyerProtectionFee;
@@ -74,7 +74,12 @@ export function PayOrderSummary({
 
         <div className={s.vendor}>
           <div className={s.vendorTop}>
-            <span className={s.vendorAvatar}>{initial}</span>
+            {seller.avatarUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={seller.avatarUrl} alt="" className={s.vendorAvatarImg} />
+            ) : (
+              <span className={s.vendorAvatar}>{initial}</span>
+            )}
             <div className={s.vendorTexts}>
               <p className={s.vendorName}>{seller.displayName}</p>
               <p className={s.vendorTag}>@{seller.username}</p>

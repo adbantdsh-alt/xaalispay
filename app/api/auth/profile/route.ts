@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { isSuperAdminEmail, superAdminProfileDefaults } from "@/lib/auth-policy";
-import { createProfile, getProfileById, isUsernameTaken, updateProfileDetails, updateProfilePhone, updateProfileUsername } from "@/lib/orders";
+import { createProfile, getProfileById, isUsernameTaken, updateProfileBranding, updateProfileDetails, updateProfilePhone, updateProfileUsername } from "@/lib/orders";
 import { ensureSuperAdminProfile } from "@/lib/profile-access";
 import { getSessionUser } from "@/lib/session";
 import { isValidUsername } from "@/lib/utils";
@@ -78,18 +78,22 @@ export async function PATCH(request: Request) {
 
   try {
     const body = await request.json();
-    const { username, phone, displayName, businessName } = body as {
+    const { username, phone, displayName, businessName, avatarUrl, coverUrl } = body as {
       username?: string;
       phone?: string;
       displayName?: string;
       businessName?: string;
+      avatarUrl?: string | null;
+      coverUrl?: string | null;
     };
 
     if (
       username === undefined &&
       phone === undefined &&
       displayName === undefined &&
-      businessName === undefined
+      businessName === undefined &&
+      avatarUrl === undefined &&
+      coverUrl === undefined
     ) {
       return NextResponse.json({ error: "Aucune modification demandée" }, { status: 400 });
     }
@@ -120,6 +124,14 @@ export async function PATCH(request: Request) {
 
     if (displayName !== undefined || businessName !== undefined) {
       const result = await updateProfileDetails(user.id, { displayName, businessName });
+      if ("error" in result) {
+        return NextResponse.json({ error: result.error }, { status: 400 });
+      }
+      profile = result.profile;
+    }
+
+    if (avatarUrl !== undefined || coverUrl !== undefined) {
+      const result = await updateProfileBranding(user.id, { avatarUrl, coverUrl });
       if ("error" in result) {
         return NextResponse.json({ error: result.error }, { status: 400 });
       }

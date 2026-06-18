@@ -201,6 +201,8 @@ function normalizeDb(db: Database): Database {
     if (p.autoPayoutMinAmount === undefined) p.autoPayoutMinAmount = 5000;
     if (p.autoPayoutFixedAmount === undefined) p.autoPayoutFixedAmount = 10000;
     if (p.autoPayoutMinCompletedOrders === undefined) p.autoPayoutMinCompletedOrders = 3;
+    if (p.avatarUrl === undefined) p.avatarUrl = "";
+    if (p.coverUrl === undefined) p.coverUrl = "";
   }
   for (const o of db.orders) {
     if (o.deliveryCost === undefined) o.deliveryCost = 0;

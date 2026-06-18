@@ -9,6 +9,7 @@ import { BrandMark } from "@/components/ui/BrandMark";
 import { IconLock, IconCheck, IconAlert, IconUndo } from "@/components/ui/AppIcon";
 import { PaySkeleton } from "@/components/ui/Skeleton";
 import { DeliveryValidation } from "@/components/delivery/DeliveryValidation";
+import { SellerBrandHeader } from "@/components/shop/SellerBrandHeader";
 import { PayOrderSummary, PayProtectionBlock, PayClientFields, PayMethodButtons, PayCheckoutSection } from "@/components/pay/PayPageSections";
 import { calculateBuyerProtectionFee } from "@/lib/fees";
 import { formatDeliveryWindow } from "@/lib/delivery-window";
@@ -35,7 +36,7 @@ interface PayOrder {
   clientNote?: string;
   paymentProviderStatus?: string;
   paymentProviderMessage?: string;
-  seller: { displayName: string; username: string; phone?: string };
+  seller: { displayName: string; username: string; phone?: string; avatarUrl?: string; coverUrl?: string };
   fees?: {
     subtotal: number;
     buyerProtectionFee: number;
@@ -318,6 +319,15 @@ export default function PayPage() {
           Sécurisé
         </span>
       </header>
+
+      <SellerBrandHeader
+        displayName={order.seller.displayName}
+        username={order.seller.username}
+        avatarUrl={order.seller.avatarUrl}
+        coverUrl={order.seller.coverUrl}
+        compact
+        showShopLink
+      />
 
       <div className="pay-sheet pay-sheet-flat animate-fade-up">
         <div className="pay-sheet-handle" />

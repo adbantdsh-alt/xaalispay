@@ -4,8 +4,10 @@ import { redirect } from "next/navigation";
 import { getProfileByUsername, getProductsBySeller } from "@/lib/orders";
 import { resolveProductImageUrl } from "@/lib/product-images";
 import { SellerShopClient } from "@/components/shop/SellerShopClient";
+import { SellerBrandHeader } from "@/components/shop/SellerBrandHeader";
 import { BrandMark } from "@/components/ui/BrandMark";
 import { buildPageMetadata } from "@/lib/seo";
+import { toSellerBrandView } from "@/lib/profile-images";
 
 const RESERVED_REDIRECTS: Record<string, string> = {
   admin: "/admin",
@@ -83,22 +85,16 @@ export default async function SellerPublicPage({
   }
 
   const products = await getProductsBySeller(profile.id, true);
-  const initial = profile.displayName.charAt(0).toUpperCase();
+  const brand = toSellerBrandView(profile);
 
   return (
-    <div className="page-shell" style={{ padding: "0 1.25rem 2rem" }}>
-      <header className="pay-brand-bar" style={{ padding: "1rem 0" }}>
+    <div className="page-shell shop-public-page">
+      <header className="pay-brand-bar shop-public-topbar">
         <BrandMark size="sm" />
         <span className="pay-secure-pill">Boutique</span>
       </header>
 
-      <div className="pay-vendor-row animate-fade-up">
-        <div className="pay-vendor-avatar">{initial}</div>
-        <div>
-          <p className="pay-vendor-name">{profile.displayName}</p>
-          <p className="pay-vendor-meta">@{profile.username} · Vendeur vérifié</p>
-        </div>
-      </div>
+      <SellerBrandHeader {...brand} />
 
       <SellerShopClient
         products={products.map((p) => ({
