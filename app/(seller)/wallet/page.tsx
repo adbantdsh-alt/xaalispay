@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { computeWalletBreakdown } from "@/lib/wallet-breakdown";
 import { calculatePayoutFee, getPayoutNetAmount, FEE_POLICY } from "@/lib/fees";
@@ -21,7 +21,48 @@ export default function WalletPage() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [payoutRefreshKey, setPayoutRefreshKey] = useState(0);
-  const [txnRefreshKey, setTxnRefreshKey] = useState(0);
+  const [historyLoading, setHistoryLoading] = useState(true);
+  const [history, setHistory] = useState<{
+    transactions: Array<{
+      id: string;
+      label: string;
+      detail?: string;
+      signedAmount: number;
+      direction: "credit" | "debit";
+      createdAt: string;
+    }>;
+    payouts: Array<{
+      id: string;
+      amount: number;
+      netAmount?: number;
+      fee?: number;
+      method: "wave" | "orange";
+      phone: string;
+      status: "pending" | "processing" | "success" | "failed";
+      failureReason?: string;
+      createdAt: string;
+    }>;
+  } | null>(null);
+
+  const loadHistory = useCallback(async () => {
+    setHistoryLoading(true);
+    try {
+      const res = await fetch("/api/wallet/history");
+      if (res.ok) {
+        const data = await res.json();
+        setHistory({
+          transactions: data.transactions || [],
+          payouts: data.payouts || [],
+        });
+      }
+    } finally {
+      setHistoryLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadHistory();
+  }, [loadHistory, payoutRefreshKey]);
 
   useEffect(() => {
     if (data?.profile?.phone && !phoneTouched && !phone) {
@@ -64,7 +105,6 @@ export default function WalletPage() {
     setSuccess(result.message);
     setAmount("");
     setPayoutRefreshKey((k) => k + 1);
-    setTxnRefreshKey((k) => k + 1);
     void refresh({ silent: true });
   };
 
@@ -188,9 +228,17 @@ export default function WalletPage() {
         )}
       </section>
 
-      <WalletTransactionHistory refreshKey={txnRefreshKey} />
+      <WalletTransactionHistory
+        transactions={history?.transactions}
+        externalLoading={historyLoading}
+        refreshKey={payoutRefreshKey}
+      />
 
-      <WalletPayoutHistory refreshKey={payoutRefreshKey} />
+      <WalletPayoutHistory
+        payouts={history?.payouts}
+        externalLoading={historyLoading}
+        refreshKey={payoutRefreshKey}
+      />
     </div>
   );
 }

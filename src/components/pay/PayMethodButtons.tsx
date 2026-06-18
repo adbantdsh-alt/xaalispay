@@ -3,6 +3,7 @@
 
 import { useEffect, useState } from "react";
 import type { MobileMoneyMethod } from "@/lib/payment-methods";
+import { IconShield } from "@/components/ui/AppIcon";
 import { WaveFavicon, OrangeFavicon } from "./PaymentBrandLogos";
 import s from "./PayMethodButtons.module.css";
 
@@ -15,10 +16,12 @@ export function PayMethodButtons({
   onPay,
   paying = false,
   disabled = false,
+  protectionMinutes = 30,
 }: {
   onPay?: (method: MobileMoneyMethod) => void;
   paying?: boolean;
   disabled?: boolean;
+  protectionMinutes?: number;
 }) {
   const [activeMethod, setActiveMethod] = useState<MobileMoneyMethod | null>(null);
 
@@ -62,6 +65,17 @@ export function PayMethodButtons({
           </button>
         );
       })}
+      <p className={s.trustNote} role="note">
+        <span className={s.trustIcon} aria-hidden="true">
+          <IconShield size={16} />
+        </span>
+        <span>
+          <strong>Votre argent reste chez XaalisPay.</strong> Après réception, nous le
+          conservons encore <strong>{protectionMinutes} minutes</strong> avant de le verser au
+          vendeur. Vous vérifiez d&apos;abord, vous payez ensuite — c&apos;est notre garantie
+          anti-arnaque.
+        </span>
+      </p>
     </div>
   );
 }

@@ -108,47 +108,57 @@ export function DeliveryValidation({
       .catch(() => undefined);
   }, [pendingPayment, orderSlug]);
 
-  /* Polling rapide (2 s) en mode pending, normal (5 s) sinon */
+  const codeExpiresAt = session?.deliveryCodeExpiresAt;
+
+  /* Polling adaptatif — pas de maintenance serveur à chaque tick */
   useEffect(() => {
     loadSession();
-    const id = setInterval(loadSession, pendingPayment ? 2000 : 5000);
-    return () => clearInterval(id);
-  }, [loadSession, pendingPayment]);
+    let delay = 8000;
+    if (pendingPayment) delay = 3000;
+    else if (session?.status === "paid") delay = 8000;
+    else if (session?.status === "protection") delay = 30000;
+    else if (session?.status === "released") return;
 
-  /* Compteur secondes pendant l'attente */
-  useEffect(() => {
-    if (!pendingPayment) { setPendingElapsed(0); return; }
-    const id = setInterval(() => {
-      setPendingElapsed(
-        pendingStartRef.current
-          ? Math.floor((Date.now() - pendingStartRef.current) / 1000)
-          : 0
-      );
-    }, 1000);
+    const id = setInterval(loadSession, delay);
     return () => clearInterval(id);
-  }, [pendingPayment]);
+  }, [loadSession, pendingPayment, session?.status]);
 
-  /* ─── Compte à rebours code ─── */
-  const codeExpiresAt = session?.deliveryCodeExpiresAt;
+  /* Compteurs client (code, protection, attente paiement) — un seul intervalle */
   useEffect(() => {
-    if (!codeExpiresAt) return;
-    const tick = () =>
-      setCodeRemainingMs(Math.max(0, new Date(codeExpiresAt).getTime() - Date.now()));
+    const tick = () => {
+      if (pendingPayment && pendingStartRef.current) {
+        setPendingElapsed(
+          Math.floor((Date.now() - pendingStartRef.current) / 1000)
+        );
+      }
+      if (codeExpiresAt) {
+        setCodeRemainingMs(
+          Math.max(0, new Date(codeExpiresAt).getTime() - Date.now())
+        );
+      }
+      const endsAt = session?.protectionEndsAt;
+      if (endsAt && session?.status === "protection") {
+        const ms = Math.max(0, new Date(endsAt).getTime() - Date.now());
+        setProtectionRemainingMs(ms);
+      }
+    };
     tick();
     const id = setInterval(tick, 1000);
     return () => clearInterval(id);
-  }, [codeExpiresAt]);
+  }, [codeExpiresAt, session?.protectionEndsAt, session?.status, pendingPayment]);
 
-  /* ─── Compte à rebours protection ─── */
+  /* Rafraîchir une fois à la fin de la protection (libération côté serveur) */
+  const protectionEndedRef = useRef(false);
   useEffect(() => {
-    const endsAt = session?.protectionEndsAt;
-    if (!endsAt || session?.status !== "protection") return;
-    const tick = () =>
-      setProtectionRemainingMs(Math.max(0, new Date(endsAt).getTime() - Date.now()));
-    tick();
-    const id = setInterval(tick, 1000);
-    return () => clearInterval(id);
-  }, [session?.protectionEndsAt, session?.status]);
+    if (session?.status !== "protection") {
+      protectionEndedRef.current = false;
+      return;
+    }
+    if (protectionRemainingMs <= 0 && !protectionEndedRef.current) {
+      protectionEndedRef.current = true;
+      void loadSession();
+    }
+  }, [protectionRemainingMs, session?.status, loadSession]);
 
   const codeExpired = codeRemainingMs <= 0 && !!codeExpiresAt;
   const isProtection = session?.status === "protection";

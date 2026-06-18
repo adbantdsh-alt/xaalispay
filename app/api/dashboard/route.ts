@@ -1,14 +1,11 @@
 import { NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/session";
-import {
-  getWalletData,
-  validateDelivery,
-  getProductsBySeller,
-} from "@/lib/orders";
+import { getWalletData, validateDelivery } from "@/lib/orders";
 import { resolveProductImageUrl } from "@/lib/product-images";
 import { getSellerAccess } from "@/lib/profile-access";
 import { getDb } from "@/lib/db";
 import { getProtectionDurationMinutes } from "@/lib/protection";
+import type { Product } from "@/lib/types";
 
 export async function GET() {
   const user = await getSessionUser();
@@ -16,16 +13,37 @@ export async function GET() {
     return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
   }
 
-  const access = await getSellerAccess(user.id, user.email);
+  const [access, db] = await Promise.all([
+    getSellerAccess(user.id, user.email),
+    getDb(),
+  ]);
+
   if (!access.profile) {
     return NextResponse.json({ error: "Profil vendeur introuvable" }, { status: 404 });
   }
 
-  const wallet = await getWalletData(user.id, { skipMaintenance: true });
-  const products = await getProductsBySeller(user.id);
-  const db = await getDb();
+  const sellerId = user.id;
+  const orders = db.orders
+    .filter((o) => o.sellerId === sellerId)
+    .sort(
+      (a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+  const products = db.products
+    .filter((p) => p.sellerId === sellerId)
+    .sort(
+      (a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    ) as Product[];
+
+  const wallet = await getWalletData(sellerId, {
+    skipMaintenance: true,
+    orders,
+    db,
+  });
+
   const hasSuccessfulPayout = db.payouts.some(
-    (payout) => payout.sellerId === user.id && payout.status === "success"
+    (payout) => payout.sellerId === sellerId && payout.status === "success"
   );
   const imageByProductId = new Map(
     products.map((p) => [p.id, resolveProductImageUrl(p.image)])
@@ -43,6 +61,7 @@ export async function GET() {
       ...order,
       productImage: imageByProductId.get(order.productId) || "",
     })),
+    productCount: products.length,
     protectionMinutes: getProtectionDurationMinutes(),
     canCreateProducts: access.canCreateProducts,
     emailVerified: access.emailVerified,

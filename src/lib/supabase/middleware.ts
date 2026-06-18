@@ -37,14 +37,10 @@ export async function updateSession(request: NextRequest) {
     });
 
     const {
-      data: { session },
-    } = await supabase.auth.getSession();
-
-    const {
       data: { user },
     } = await supabase.auth.getUser();
-    userId = user?.id || session?.user?.id || null;
-    userEmail = user?.email || session?.user?.email || null;
+    userId = user?.id || null;
+    userEmail = user?.email || null;
 
     if (userId && userEmail && !request.cookies.get(COOKIE_NAME)?.value) {
       const token = await createSessionToken(userId, userEmail);

@@ -1,11 +1,27 @@
 import type { Metadata } from "next";
+import dynamic from "next/dynamic";
 import { HomeJsonLd } from "@/components/seo/HomeJsonLd";
 import { buildPageMetadata } from "@/lib/seo";
 import { LandingHero } from "@/components/marketing/LandingHero";
 import { LandingXaalisTagSearch } from "@/components/marketing/LandingXaalisTagSearch";
-import { LandingHowItWorks } from "@/components/marketing/LandingHowItWorks";
-import { LandingFAQ } from "@/components/marketing/LandingFAQ";
-import { LandingFinalCTA } from "@/components/marketing/LandingFinalCTA";
+
+const LandingHowItWorks = dynamic(() =>
+  import("@/components/marketing/LandingHowItWorks").then((m) => ({
+    default: m.LandingHowItWorks,
+  }))
+);
+
+const LandingFAQ = dynamic(() =>
+  import("@/components/marketing/LandingFAQ").then((m) => ({
+    default: m.LandingFAQ,
+  }))
+);
+
+const LandingFinalCTA = dynamic(() =>
+  import("@/components/marketing/LandingFinalCTA").then((m) => ({
+    default: m.LandingFinalCTA,
+  }))
+);
 
 export const metadata: Metadata = buildPageMetadata({
   title: "Paiement sécurisé au Sénégal — Payez les yeux fermés",

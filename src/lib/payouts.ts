@@ -166,7 +166,7 @@ export async function createPayoutRequest({
     return { ok: false, message: "Montant trop faible après frais de retrait" };
   }
 
-  const wallet = await getWalletData(sellerId);
+  const wallet = await getWalletData(sellerId, { skipMaintenance: false });
   if (amount > wallet.available) {
     return { ok: false, message: "Solde disponible insuffisant" };
   }
@@ -222,7 +222,7 @@ export async function processAutomaticPayouts() {
   const results: Array<{ sellerId: string; payoutId?: string; skipped?: string }> = [];
 
   for (const profile of candidates) {
-    const wallet = await getWalletData(profile.id);
+    const wallet = await getWalletData(profile.id, { skipMaintenance: false });
     const minOrders = profile.autoPayoutMinCompletedOrders || 3;
     const payoutAmount = getAutomaticPayoutAmount(profile, wallet.available);
 
@@ -279,9 +279,13 @@ export async function retryFailedPayout(
   });
 }
 
-export async function getSellerPayouts(sellerId: string, limit = 30) {
-  const db = await getDb();
-  return [...db.payouts]
+export async function getSellerPayouts(
+  sellerId: string,
+  limit = 30,
+  db?: Awaited<ReturnType<typeof getDb>>
+) {
+  const database = db ?? (await getDb());
+  return [...database.payouts]
     .filter((payout) => payout.sellerId === sellerId)
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
     .slice(0, limit)

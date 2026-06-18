@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import type { Order } from "@/lib/types";
 import { formatCurrency, getOrderTotal } from "@/lib/utils";
@@ -22,23 +22,11 @@ import { useSellerData } from "@/components/seller/SellerDataProvider";
 
 export default function DashboardPage() {
   const { data, loading, refresh } = useSellerData();
-  const [productCount, setProductCount] = useState(0);
   const [error, setError] = useState("");
   const [pinErrorOrderId, setPinErrorOrderId] = useState<string | null>(null);
   const [orderFilter, setOrderFilter] = useState<OrderFilterKey>("all");
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [cancelWarning, setCancelWarning] = useState("");
-
-  useEffect(() => {
-    fetch("/api/products")
-      .then(async (res) => {
-        if (res.ok) {
-          const p = await res.json();
-          setProductCount((p.products || []).length);
-        }
-      })
-      .catch(() => {});
-  }, []);
 
   const validateDelivery = async (orderId: string, pin: string) => {
     setError("");
@@ -110,6 +98,7 @@ export default function DashboardPage() {
 
   const actionOrders = data.orders.filter((o) => o.status === "paid");
   const paidOrders = data.orders.filter((o) => o.status !== "pending_payment");
+  const productCount = data.productCount ?? 0;
   const totalSales = paidOrders.reduce((sum, o) => sum + getOrderTotal(o), 0);
   const filteredOrders = filterOrders(data.orders, orderFilter);
   const hasValidatedDelivery = data.orders.some(

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { formatCurrency, getOrderTotal } from "@/lib/utils";
 import { buildPaymentLinkPath } from "@/lib/site-url";
@@ -22,7 +23,7 @@ export function SellerShopClient({
   const router = useRouter();
 
   return (
-    <section className="seller-home shop-product-list">
+    <section className="shop-product-list">
       {products.length === 0 ? (
         <div className="shop-public-empty">
           <p className="shop-public-empty-title">Boutique vide pour le moment</p>
@@ -34,30 +35,46 @@ export function SellerShopClient({
           </p>
         </div>
       ) : (
-        products.map((product) => (
-          <article key={product.id} className="product-card animate-fade-up">
-            <ProductImage
-              src={product.image}
-              alt={product.name}
-              className="product-card-media"
-              placeholderClassName="product-card-media-placeholder"
-              iconSize={32}
-            />
-            <div className="product-card-body">
-              <p className="product-card-price">
-                {formatCurrency(getOrderTotal({ productPrice: product.price, deliveryCost: product.deliveryCost || 0 }))}
-              </p>
-              <p className="product-card-name">{product.name}</p>
-              <button
-                type="button"
-                onClick={() => router.push(buildPaymentLinkPath(product.paymentSlug))}
-                className="btn-primary product-card-cta"
+        products.map((product) => {
+          const payPath = buildPaymentLinkPath(product.paymentSlug);
+          return (
+            <article key={product.id} className="product-card animate-fade-up">
+              <Link
+                href={payPath}
+                className="product-card-media-link"
+                aria-label={`Voir et payer ${product.name}`}
               >
-                Payer en sécurité
-              </button>
-            </div>
-          </article>
-        ))
+                <div className="product-card-media-wrap">
+                  <ProductImage
+                    src={product.image}
+                    alt={product.name}
+                    className="product-card-media"
+                    placeholderClassName="product-card-media product-card-media-placeholder"
+                    iconSize={28}
+                  />
+                </div>
+              </Link>
+              <div className="product-card-body">
+                <p className="product-card-price">
+                  {formatCurrency(
+                    getOrderTotal({
+                      productPrice: product.price,
+                      deliveryCost: product.deliveryCost || 0,
+                    })
+                  )}
+                </p>
+                <p className="product-card-name">{product.name}</p>
+                <button
+                  type="button"
+                  onClick={() => router.push(payPath)}
+                  className="btn-primary product-card-cta"
+                >
+                  Payer en sécurité
+                </button>
+              </div>
+            </article>
+          );
+        })
       )}
     </section>
   );

@@ -34,12 +34,13 @@ function buildDetail(entry: LedgerEntry, productName?: string): string | undefin
 
 export async function getSellerTransactions(
   sellerId: string,
-  limit = 50
+  limit = 50,
+  db?: Awaited<ReturnType<typeof getDb>>
 ): Promise<SellerTransaction[]> {
-  const db = await getDb();
-  const orderNames = new Map(db.orders.map((o) => [o.id, o.productName]));
+  const database = db ?? (await getDb());
+  const orderNames = new Map(database.orders.map((o) => [o.id, o.productName]));
 
-  return db.ledgerEntries
+  return database.ledgerEntries
     .filter((entry) => entry.sellerId === sellerId)
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
     .slice(0, limit)

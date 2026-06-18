@@ -1,5 +1,3 @@
-/* Bloc PayClientFields — design validé, ne pas modifier. */
-
 .form {
   display: flex;
   flex-direction: column;
@@ -16,14 +14,34 @@
   color: #8b9bb4;
 }
 
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 .row {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 0.625rem;
 }
 
+.addressRow {
+  display: grid;
+  grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+  gap: 0.625rem;
+  position: relative;
+}
+
 .field {
   min-width: 0;
+  position: relative;
 }
 
 .input,
@@ -74,8 +92,111 @@
   min-width: 0;
 }
 
-.textarea {
-  min-height: 72px;
-  resize: vertical;
-  line-height: 1.45;
+.regionTrigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.regionTriggerOpen {
+  border-color: rgba(26, 79, 214, 0.45);
+  box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.15);
+}
+
+.regionValue {
+  color: #0a1628;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.regionPlaceholder {
+  color: #b0bdd0;
+  font-weight: 500;
+}
+
+.chevron {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-right: 2px solid #8b9bb4;
+  border-bottom: 2px solid #8b9bb4;
+  transform: rotate(45deg) translateY(-2px);
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+
+.regionTriggerOpen .chevron {
+  transform: rotate(-135deg) translateY(1px);
+}
+
+.regionPanel {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 0.35rem);
+  left: 0;
+  right: 0;
+  border-radius: 14px;
+  border: 1px solid rgba(15, 31, 102, 0.1);
+  background: #fff;
+  box-shadow: 0 12px 32px rgba(10, 22, 40, 0.12);
+  overflow: hidden;
+}
+
+.regionSearch {
+  width: 100%;
+  padding: 0.625rem 0.75rem;
+  border: none;
+  border-bottom: 1px solid rgba(15, 31, 102, 0.08);
+  font-size: 0.875rem;
+  color: #0a1628;
+  outline: none;
+  background: #f8fafc;
+}
+
+.regionSearch::placeholder {
+  color: #b0bdd0;
+}
+
+.regionList {
+  list-style: none;
+  margin: 0;
+  padding: 0.35rem 0;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.regionOption {
+  display: block;
+  width: 100%;
+  padding: 0.625rem 0.875rem;
+  border: none;
+  background: transparent;
+  text-align: left;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #0a1628;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.regionOption:hover,
+.regionOptionActive {
+  background: rgba(0, 212, 255, 0.1);
+  color: #0f1f66;
+}
+
+.regionEmpty {
+  padding: 0.75rem 0.875rem;
+  font-size: 0.875rem;
+  color: #8b9bb4;
+}
+
+@media (max-width: 380px) {
+  .addressRow {
+    grid-template-columns: 1fr;
+  }
 }

@@ -4,7 +4,7 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 0.625rem;
-  margin-bottom: 1.25rem;
+  margin-bottom: 0.75rem;
 }
 
 .payBtn {
@@ -122,6 +122,37 @@
   padding-top: 1.125rem;
   margin-top: 0.25rem;
   border-top: 1px dashed rgba(15, 31, 102, 0.12);
+}
+
+.trustNote {
+  display: flex;
+  gap: 0.625rem;
+  align-items: flex-start;
+  margin: 0 0 1.25rem;
+  padding: 0.75rem 0.875rem;
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(0, 212, 255, 0.08) 0%, rgba(26, 79, 214, 0.06) 100%);
+  border: 1px solid rgba(26, 79, 214, 0.12);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: #3d4f66;
+}
+
+.trustNote strong {
+  color: #0f1f66;
+  font-weight: 700;
+}
+
+.trustIcon {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: rgba(26, 79, 214, 0.1);
+  color: #1a4fd6;
 }
 
 @media (max-width: 340px) {

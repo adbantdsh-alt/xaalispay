@@ -22,11 +22,22 @@ function fmtDate(iso: string) {
   });
 }
 
-export function WalletTransactionHistory({ refreshKey = 0 }: { refreshKey?: number }) {
+interface WalletTransactionHistoryProps {
+  refreshKey?: number;
+  transactions?: TransactionItem[];
+  externalLoading?: boolean;
+}
+
+export function WalletTransactionHistory({
+  refreshKey = 0,
+  transactions: externalTransactions,
+  externalLoading,
+}: WalletTransactionHistoryProps) {
   const [transactions, setTransactions] = useState<TransactionItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(externalTransactions === undefined);
 
   const load = useCallback(async () => {
+    if (externalTransactions !== undefined) return;
     setLoading(true);
     try {
       const res = await fetch("/api/wallet/transactions");
@@ -37,13 +48,17 @@ export function WalletTransactionHistory({ refreshKey = 0 }: { refreshKey?: numb
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [externalTransactions]);
 
   useEffect(() => {
+    if (externalTransactions !== undefined) return;
     load();
-  }, [load, refreshKey]);
+  }, [load, refreshKey, externalTransactions]);
 
-  if (loading) {
+  const items = externalTransactions ?? transactions;
+  const isLoading = externalLoading ?? loading;
+
+  if (isLoading) {
     return (
       <section className="wallet-txn-history">
         <h2 className="wallet-section-title">Mouvements</h2>
@@ -52,7 +67,7 @@ export function WalletTransactionHistory({ refreshKey = 0 }: { refreshKey?: numb
     );
   }
 
-  if (transactions.length === 0) {
+  if (items.length === 0) {
     return (
       <section className="wallet-txn-history">
         <h2 className="wallet-section-title">Mouvements</h2>
@@ -70,7 +85,7 @@ export function WalletTransactionHistory({ refreshKey = 0 }: { refreshKey?: numb
         Historique de vos paiements, libérations, remboursements et retraits.
       </p>
       <div className="wallet-txn-list">
-        {transactions.map((txn) => (
+        {items.map((txn) => (
           <article key={txn.id} className="wallet-txn-item">
             <div className="wallet-txn-item-main">
               <p className="wallet-txn-item-label">{txn.label}</p>

@@ -624,13 +624,20 @@ export async function processOrderMaintenance(scope?: MaintenanceScope): Promise
 
 export async function getWalletData(
   sellerId: string,
-  options?: { skipMaintenance?: boolean; orders?: Order[] }
+  options?: { skipMaintenance?: boolean; orders?: Order[]; db?: Database }
 ) {
-  if (!options?.skipMaintenance) {
+  if (options?.skipMaintenance === false) {
     await processOrderMaintenance({ sellerId });
   }
-  const db = await getDb();
-  const orders = options?.orders ?? (await getOrdersBySeller(sellerId));
+  const db = options?.db ?? (await getDb());
+  const orders =
+    options?.orders ??
+    db.orders
+      .filter((o) => o.sellerId === sellerId)
+      .sort(
+        (a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      );
   const hasLedger = db.ledgerEntries.some((entry) => entry.sellerId === sellerId);
   const ledgerBalance = db.sellerBalances.find((item) => item.sellerId === sellerId);
 

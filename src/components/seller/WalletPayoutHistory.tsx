@@ -37,11 +37,22 @@ function fmtDate(iso: string) {
   });
 }
 
-export function WalletPayoutHistory({ refreshKey = 0 }: { refreshKey?: number }) {
+interface WalletPayoutHistoryProps {
+  refreshKey?: number;
+  payouts?: PayoutItem[];
+  externalLoading?: boolean;
+}
+
+export function WalletPayoutHistory({
+  refreshKey = 0,
+  payouts: externalPayouts,
+  externalLoading,
+}: WalletPayoutHistoryProps) {
   const [payouts, setPayouts] = useState<PayoutItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(externalPayouts === undefined);
 
   const load = useCallback(async () => {
+    if (externalPayouts !== undefined) return;
     setLoading(true);
     try {
       const res = await fetch("/api/wallet/payouts");
@@ -52,53 +63,53 @@ export function WalletPayoutHistory({ refreshKey = 0 }: { refreshKey?: number })
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [externalPayouts]);
 
   useEffect(() => {
+    if (externalPayouts !== undefined) return;
     load();
-  }, [load, refreshKey]);
+  }, [load, refreshKey, externalPayouts]);
 
-  if (loading) {
+  const items = externalPayouts ?? payouts;
+  const isLoading = externalLoading ?? loading;
+
+  if (isLoading) {
     return (
       <section className="wallet-payout-history">
-        <h2 className="wallet-section-title">Historique des retraits</h2>
-        <p className="text-muted wallet-payout-empty">Chargement…</p>
+        <h2 className="wallet-section-title">Retraits</h2>
+        <p className="text-muted wallet-txn-empty">Chargement…</p>
       </section>
     );
   }
 
-  if (payouts.length === 0) {
+  if (items.length === 0) {
     return (
       <section className="wallet-payout-history">
-        <h2 className="wallet-section-title">Historique des retraits</h2>
-        <p className="text-muted wallet-payout-empty">
-          Aucun retrait pour le moment. Vos retraits Wave et Orange Money apparaîtront ici.
-        </p>
+        <h2 className="wallet-section-title">Retraits</h2>
+        <p className="text-muted wallet-txn-empty">Aucun retrait pour le moment.</p>
       </section>
     );
   }
 
   return (
     <section className="wallet-payout-history">
-      <h2 className="wallet-section-title">Historique des retraits</h2>
+      <h2 className="wallet-section-title">Retraits</h2>
       <div className="wallet-payout-list">
-        {payouts.map((payout) => (
+        {items.map((payout) => (
           <article key={payout.id} className="wallet-payout-item">
             <div className="wallet-payout-item-main">
-              <p className="wallet-payout-item-amount">
-                {formatCurrency(payout.netAmount ?? payout.amount)}
-              </p>
+              <p className="wallet-payout-item-amount">{formatCurrency(payout.amount)}</p>
               <p className="wallet-payout-item-meta text-muted">
-                {METHOD_LABELS[payout.method]} · +221 {payout.phone}
+                {METHOD_LABELS[payout.method]} · {payout.phone}
               </p>
               <p className="wallet-payout-item-date text-muted">{fmtDate(payout.createdAt)}</p>
+              {payout.status === "failed" && payout.failureReason && (
+                <p className="wallet-payout-item-error">{payout.failureReason}</p>
+              )}
             </div>
             <span className={`wallet-payout-status wallet-payout-status--${payout.status}`}>
               {STATUS_LABELS[payout.status]}
             </span>
-            {payout.status === "failed" && payout.failureReason && (
-              <p className="wallet-payout-failure">{payout.failureReason}</p>
-            )}
           </article>
         ))}
       </div>

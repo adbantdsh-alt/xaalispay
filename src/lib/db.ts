@@ -95,6 +95,7 @@ function rebuildSellerBalances(db: Database) {
 }
 
 function backfillLedgerFromOrders(db: Database) {
+  if (db.ledgerEntries.length > 0) return;
   for (const order of db.orders) {
     const amount = getOrderTotal(order);
     if (["paid", "protection", "dispute", "released", "refunded"].includes(order.status)) {

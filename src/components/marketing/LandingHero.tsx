@@ -1,11 +1,19 @@
 "use client";
 
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import { AlertTriangle, ArrowRight, BadgeCheck, Smartphone, Users } from "lucide-react";
-import { DisputeDialog } from "@/components/marketing/DisputeDialog";
 import { LandingPaymentMockup } from "@/components/marketing/LandingPaymentMockup";
+
+const DisputeDialog = dynamic(
+  () =>
+    import("@/components/marketing/DisputeDialog").then((m) => ({
+      default: m.DisputeDialog,
+    })),
+  { ssr: false }
+);
 
 const TITLE_WORDS = ["Payez", "les", "yeux", "fermés."];
 const EASE = [0.22, 1, 0.36, 1] as const;

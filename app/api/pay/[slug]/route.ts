@@ -107,10 +107,14 @@ export async function GET(
   { params }: { params: Promise<{ slug: string }> }
 ) {
   const { slug } = await params;
+  const url = new URL(request.url);
+  const isPoll = url.searchParams.get("poll") === "1";
   const order = await getOrderBySlug(slug);
 
   if (order) {
-    await processOrderMaintenance({ slug });
+    if (!isPoll) {
+      await processOrderMaintenance({ slug });
+    }
     if (order.status === "pending_payment") {
       await tryConfirmPaymentFromBictorys(order.slug);
       const refreshed = await getOrderBySlug(slug);

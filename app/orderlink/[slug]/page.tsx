@@ -12,6 +12,7 @@ import { DeliveryValidation } from "@/components/delivery/DeliveryValidation";
 import { PayOrderSummary, PayProtectionBlock, PayClientFields, PayMethodButtons, PayCheckoutSection } from "@/components/pay/PayPageSections";
 import { calculateBuyerProtectionFee } from "@/lib/fees";
 import { formatDeliveryWindow } from "@/lib/delivery-window";
+import { formatClientDeliveryAddress } from "@/lib/senegal-regions";
 import type { OrderStatus } from "@/lib/types";
 
 interface PayOrder {
@@ -50,6 +51,7 @@ export default function PayPage() {
   const [clientFirstName, setClientFirstName] = useState("");
   const [clientLastName, setClientLastName] = useState("");
   const [clientPhone, setClientPhone] = useState("");
+  const [clientRegion, setClientRegion] = useState("");
   const [clientAddress, setClientAddress] = useState("");
   const [trackingSlug, setTrackingSlug] = useState<string | null>(null);
   const [isProductLink, setIsProductLink] = useState(false);
@@ -64,8 +66,11 @@ export default function PayPage() {
   const pollSlug = trackingSlug || slug;
   const paymentReturn = searchParams.get("payment");
 
-  const fetchOrder = useCallback(async () => {
-    const query = paymentReturn ? `?payment=${encodeURIComponent(paymentReturn)}` : "";
+  const fetchOrder = useCallback(async (options?: { poll?: boolean }) => {
+    const params = new URLSearchParams();
+    if (paymentReturn) params.set("payment", encodeURIComponent(paymentReturn));
+    if (options?.poll) params.set("poll", "1");
+    const query = params.toString() ? `?${params.toString()}` : "";
     const res = await fetch(`/api/pay/${pollSlug}${query}`);
     if (res.ok) {
       const data = await res.json();
@@ -87,18 +92,23 @@ export default function PayPage() {
   useEffect(() => {
     fetchOrder();
     if (isProductLink && !trackingSlug) return;
-    const interval = setInterval(fetchOrder, 8000);
+    const status = order?.status;
+    if (status === "paid" || status === "protection" || status === "released") return;
+    const delay = status === "pending_payment" ? 4000 : 8000;
+    const interval = setInterval(() => fetchOrder({ poll: true }), delay);
     return () => clearInterval(interval);
-  }, [fetchOrder, isProductLink, trackingSlug]);
+  }, [fetchOrder, isProductLink, trackingSlug, order?.status]);
 
   const handlePay = async (method: string) => {
+    const fullAddress = formatClientDeliveryAddress(clientRegion, clientAddress);
     if (
       !clientFirstName.trim() ||
       !clientLastName.trim() ||
       !clientPhone.trim() ||
+      !clientRegion.trim() ||
       !clientAddress.trim()
     ) {
-      setError("Prénom, nom, téléphone et adresse obligatoires");
+      setError("Prénom, nom, téléphone, région et adresse obligatoires");
       return;
     }
     setError("");
@@ -128,7 +138,7 @@ export default function PayPage() {
           clientFirstName: clientFirstName.trim(),
           clientLastName: clientLastName.trim(),
           clientPhone: clientPhone.trim(),
-          clientAddress: clientAddress.trim(),
+          clientAddress: fullAddress,
         }),
         signal: controller.signal,
       });
@@ -291,7 +301,7 @@ export default function PayPage() {
               orderSlug={pollSlug}
               productName={order.productName}
               protectionMinutes={protectionMinutes}
-              onSessionChange={fetchOrder}
+              onSessionChange={() => fetchOrder({ poll: true })}
             />
           </div>
         </div>
@@ -351,18 +361,20 @@ export default function PayPage() {
               firstName: clientFirstName,
               lastName: clientLastName,
               phone: clientPhone,
+              region: clientRegion,
               address: clientAddress,
             }}
             onChange={(v) => {
               setClientFirstName(v.firstName);
               setClientLastName(v.lastName);
               setClientPhone(v.phone);
+              setClientRegion(v.region);
               setClientAddress(v.address);
             }}
           />
         </PayCheckoutSection>
 
-        <PayMethodButtons onPay={handlePay} paying={paying} />
+        <PayMethodButtons onPay={handlePay} paying={paying} protectionMinutes={protectionMinutes} />
 
         {paymentPending && (
           <div className="alert-info" style={{ marginTop: "1rem" }}>

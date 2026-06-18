@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getOrderBySlug, processOrderMaintenance } from "@/lib/orders";
+import { getOrderBySlug } from "@/lib/orders";
 import { toDeliverySession } from "@/lib/delivery-validation";
 import { getProtectionDurationMinutes } from "@/lib/protection";
 
@@ -8,7 +8,6 @@ export async function GET(
   { params }: { params: Promise<{ slug: string }> }
 ) {
   const { slug } = await params;
-  await processOrderMaintenance({ slug });
   const order = await getOrderBySlug(slug);
 
   if (!order) {

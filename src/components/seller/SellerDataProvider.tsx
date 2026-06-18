@@ -6,6 +6,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import type { Order, Profile } from "@/lib/types";
@@ -26,6 +27,7 @@ export interface SellerDashboardPayload {
   profile: Profile;
   wallet: SellerWalletSummary;
   orders: Order[];
+  productCount?: number;
   protectionMinutes: number;
   canCreateProducts?: boolean;
   emailVerified?: boolean;
@@ -62,9 +64,24 @@ async function fetchDashboard(): Promise<SellerDashboardPayload | null> {
   return inflightDashboard;
 }
 
+function needsActivePolling(data: SellerDashboardPayload | null): boolean {
+  if (!data) return true;
+  const hasPendingOrders = data.orders.some(
+    (o) => o.status === "pending_payment" || o.status === "paid"
+  );
+  const hasActiveProtection = data.wallet.sequestered.some(
+    (s) =>
+      s.status === "protection" &&
+      s.protectionEndsAt &&
+      new Date(s.protectionEndsAt).getTime() > Date.now()
+  );
+  return hasPendingOrders || hasActiveProtection;
+}
+
 export function SellerDataProvider({ children }: { children: React.ReactNode }) {
   const [data, setData] = useState<SellerDashboardPayload | null>(null);
   const [loading, setLoading] = useState(true);
+  const lastFocusRefresh = useRef(0);
 
   const refresh = useCallback(async (options?: { silent?: boolean }) => {
     if (!options?.silent) setLoading(true);
@@ -80,6 +97,9 @@ export function SellerDataProvider({ children }: { children: React.ReactNode }) 
 
   useEffect(() => {
     const onFocus = () => {
+      const now = Date.now();
+      if (now - lastFocusRefresh.current < 30_000) return;
+      lastFocusRefresh.current = now;
       refresh({ silent: true });
     };
     window.addEventListener("focus", onFocus);
@@ -87,14 +107,15 @@ export function SellerDataProvider({ children }: { children: React.ReactNode }) 
   }, [refresh]);
 
   useEffect(() => {
+    const pollMs = needsActivePolling(data) ? 60_000 : 300_000;
     const interval = window.setInterval(() => {
       if (document.visibilityState === "visible") {
         refresh({ silent: true });
       }
-    }, 90_000);
+    }, pollMs);
 
     return () => window.clearInterval(interval);
-  }, [refresh]);
+  }, [refresh, data]);
 
   const value = useMemo(
     () => ({ data, loading, refresh }),

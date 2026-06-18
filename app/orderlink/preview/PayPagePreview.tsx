@@ -38,6 +38,7 @@ export default function PayPagePreview() {
     firstName: "",
     lastName: "",
     phone: "",
+    region: "",
     address: "",
   });
 
@@ -46,9 +47,10 @@ export default function PayPagePreview() {
       !clientFields.firstName.trim() ||
       !clientFields.lastName.trim() ||
       !clientFields.phone.trim() ||
+      !clientFields.region.trim() ||
       !clientFields.address.trim()
     ) {
-      setError("Remplissez prénom, nom, téléphone et adresse pour simuler.");
+      setError("Remplissez prénom, nom, téléphone, région et adresse pour simuler.");
       return;
     }
     setError("");
