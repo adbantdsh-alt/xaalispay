@@ -1,98 +1,34 @@
 import { NextResponse } from "next/server";
-import { hashPassword, setSessionCookie } from "@/lib/auth-local";
-import { getDb, updateDb } from "@/lib/db";
-import { createProfile, isUsernameTaken } from "@/lib/orders";
-import { isValidUsername, slugifyUsername } from "@/lib/utils";
+import { REFRESH_COOKIE_MAX_AGE, REFRESH_COOKIE_NAME } from "@/lib/auth-cookies";
+import { getApiBaseUrl } from "@/lib/site-url";
 
+/** Proxy vers Django : seule cette route voit le refresh token en clair, qui
+ * repart immédiatement en cookie httpOnly — jamais dans le corps JSON renvoyé
+ * au client (voir la décision d'architecture hybride dans le plan). */
 export async function POST(request: Request) {
-  try {
-    const body = await request.json();
-    const {
-      email,
-      password,
-      displayName,
-      businessName,
-      username,
-      phone,
-    } = body;
+  const body = await request.text();
 
-    if (!email || !password || !displayName || !businessName || !username) {
-      return NextResponse.json(
-        { error: "Tous les champs obligatoires doivent être remplis" },
-        { status: 400 }
-      );
-    }
+  const djangoRes = await fetch(`${getApiBaseUrl()}/api/auth/signup`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body,
+  });
+  const data = await djangoRes.json().catch(() => ({}));
 
-    if (password.length < 6) {
-      return NextResponse.json(
-        { error: "Le mot de passe doit contenir au moins 6 caractères" },
-        { status: 400 }
-      );
-    }
-
-    const cleanUsername = slugifyUsername(username);
-    if (!isValidUsername(cleanUsername)) {
-      return NextResponse.json(
-        {
-          error:
-            "Identifiant invalide : 3-20 caractères, lettres minuscules, chiffres et _",
-        },
-        { status: 400 }
-      );
-    }
-
-    const db = await getDb();
-    const emailTaken = db.authUsers.some(
-      (u) => u.email.toLowerCase() === email.toLowerCase()
-    );
-    if (emailTaken) {
-      return NextResponse.json(
-        { error: "Cet email est déjà utilisé" },
-        { status: 409 }
-      );
-    }
-
-    if (await isUsernameTaken(cleanUsername)) {
-      return NextResponse.json(
-        { error: "Cet identifiant est déjà pris" },
-        { status: 409 }
-      );
-    }
-
-    const userId = crypto.randomUUID();
-    const passwordHash = await hashPassword(password);
-
-    await updateDb((d) => {
-      d.authUsers.push({
-        id: userId,
-        email: email.toLowerCase(),
-        passwordHash,
-        createdAt: new Date().toISOString(),
-      });
-    });
-
-    await createProfile({
-      id: userId,
-      username: cleanUsername,
-      displayName: displayName.trim(),
-      businessName: businessName.trim(),
-      phone: phone?.trim() || undefined,
-    });
-
-    await setSessionCookie(userId, email.toLowerCase());
-
-    return NextResponse.json({
-      user: { id: userId, email: email.toLowerCase() },
-      profile: { username: cleanUsername },
-    });
-  } catch (err) {
-    console.error("Signup error:", err);
-    return NextResponse.json(
-      {
-        error:
-          err instanceof Error ? err.message : "Erreur lors de la création du compte",
-      },
-      { status: 500 }
-    );
+  if (!djangoRes.ok) {
+    return NextResponse.json(data, { status: djangoRes.status });
   }
+
+  const response = NextResponse.json(
+    { access: data.access, profile: data.profile },
+    { status: 201 }
+  );
+  response.cookies.set(REFRESH_COOKIE_NAME, data.refresh, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+    maxAge: REFRESH_COOKIE_MAX_AGE,
+  });
+  return response;
 }

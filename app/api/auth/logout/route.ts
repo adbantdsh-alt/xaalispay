@@ -1,19 +1,25 @@
+import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
-import { clearSessionCookie } from "@/lib/auth-local";
-import { createClient } from "@/lib/supabase/server";
-import { isSupabaseConfigured } from "@/lib/session";
+import { REFRESH_COOKIE_NAME } from "@/lib/auth-cookies";
+import { getApiBaseUrl } from "@/lib/site-url";
 
 export async function POST() {
-  await clearSessionCookie();
+  const cookieStore = await cookies();
+  const refreshToken = cookieStore.get(REFRESH_COOKIE_NAME)?.value;
 
-  if (isSupabaseConfigured()) {
+  if (refreshToken) {
     try {
-      const supabase = await createClient();
-      await supabase.auth.signOut();
+      await fetch(`${getApiBaseUrl()}/api/auth/logout`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ refresh: refreshToken }),
+      });
     } catch {
-      // ignore
+      // best effort — la suppression du cookie local suffit côté UX
     }
   }
 
-  return NextResponse.json({ success: true });
+  const response = NextResponse.json({ ok: true });
+  response.cookies.delete(REFRESH_COOKIE_NAME);
+  return response;
 }

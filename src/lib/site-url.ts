@@ -1,11 +1,20 @@
 import type { Product } from "./types";
 
 const DEFAULT_SITE_URL = "https://xaalispay.com";
+const DEFAULT_API_BASE_URL = "http://localhost:8000";
 
 export function getSiteUrl(): string {
   const fromEnv = process.env.NEXT_PUBLIC_SITE_URL?.trim();
   if (fromEnv) return fromEnv.replace(/\/$/, "");
   return DEFAULT_SITE_URL;
+}
+
+/** URL du backend Django — utilisable côté serveur (routes proxy) et client
+ * (appels directs navigateur → Django, voir src/lib/api-client.ts). */
+export function getApiBaseUrl(): string {
+  const fromEnv = process.env.NEXT_PUBLIC_API_BASE_URL?.trim();
+  if (fromEnv) return fromEnv.replace(/\/$/, "");
+  return DEFAULT_API_BASE_URL;
 }
 
 export function buildShopPath(username: string): string {

@@ -4,8 +4,7 @@ import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { BrandMark } from "@/components/ui/BrandMark";
-import { createClient, isSupabaseConfigured } from "@/lib/supabase/client";
-import { buildAuthCallbackUrl } from "@/lib/site-url";
+import { useAuth } from "@/lib/auth-client";
 import { isValidUsername, slugifyUsername } from "@/lib/utils";
 
 function PasswordField({
@@ -55,8 +54,8 @@ function PasswordField({
 function AuthForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { login, signup } = useAuth();
   const initialMode = searchParams.get("mode") === "signup" ? "signup" : "login";
-  const useSupabase = isSupabaseConfigured();
 
   const [mode, setMode] = useState<"login" | "signup">(initialMode);
   const [email, setEmail] = useState("");
@@ -66,166 +65,47 @@ function AuthForm() {
   const [username, setUsername] = useState("");
   const [phone, setPhone] = useState("");
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
-  const [pendingEmail, setPendingEmail] = useState("");
-  const [resending, setResending] = useState(false);
 
   useEffect(() => {
     setMode(initialMode);
   }, [initialMode]);
 
-  useEffect(() => {
-    const err = searchParams.get("error");
-    if (err === "confirmation") {
-      setError("Lien de confirmation invalide ou expiré. Renvoyez l'email ci-dessous.");
-      setMode("login");
-    }
-  }, [searchParams]);
-
-  const authRedirect = buildAuthCallbackUrl(
-    searchParams.get("redirect") || "/dashboard"
-  );
-
-  const handleResendConfirmation = async () => {
-    const targetEmail = pendingEmail || email;
-    if (!targetEmail.trim()) {
-      setError("Entrez votre email pour renvoyer la confirmation");
-      return;
-    }
-    setResending(true);
-    setError("");
-    setSuccess("");
-    try {
-      const supabase = createClient();
-      const { error: resendError } = await supabase.auth.resend({
-        type: "signup",
-        email: targetEmail.trim(),
-        options: { emailRedirectTo: authRedirect },
-      });
-      if (resendError) throw resendError;
-      setSuccess(
-        `Email de confirmation renvoyé à ${targetEmail}. Ouvrez votre boîte mail et cliquez sur le lien pour confirmer votre adresse.`
-      );
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Renvoi impossible");
-    } finally {
-      setResending(false);
-    }
-  };
-
-  const handleLocalSignup = async () => {
-    const cleanUsername = slugifyUsername(username);
-    if (!isValidUsername(cleanUsername)) {
-      throw new Error(
-        "Identifiant invalide : 3-20 caractères, lettres minuscules, chiffres et _"
-      );
-    }
-
-    const res = await fetch("/api/auth/signup", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        email,
-        password,
-        displayName,
-        businessName,
-        username: cleanUsername,
-        phone: phone || undefined,
-      }),
-    });
-
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || "Inscription échouée");
-    router.push("/dashboard");
-    router.refresh();
-  };
-
-  const handleLocalLogin = async () => {
-    const res = await fetch("/api/auth/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
-    });
-
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || "Connexion échouée");
-    router.push(searchParams.get("redirect") || "/dashboard");
-    router.refresh();
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-    setSuccess("");
     setLoading(true);
 
     try {
-      if (!useSupabase) {
-        if (mode === "login") {
-          await handleLocalLogin();
-        } else {
-          await handleLocalSignup();
-        }
-        return;
-      }
-
       if (mode === "login") {
-        const res = await fetch("/api/auth/supabase-login", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, password }),
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || "Connexion échouée");
+        const result = await login(email, password);
+        if (!result.ok) {
+          setError(result.error || "Connexion échouée");
+          return;
+        }
         router.push(searchParams.get("redirect") || "/dashboard");
-        router.refresh();
         return;
       }
 
       const cleanUsername = slugifyUsername(username);
       if (!isValidUsername(cleanUsername)) {
-        throw new Error(
-          "Identifiant invalide : 3-20 caractères, lettres minuscules, chiffres et _"
-        );
+        setError("Identifiant invalide : 3-20 caractères, lettres minuscules, chiffres et _");
+        return;
       }
 
-      const signupRes = await fetch("/api/auth/supabase-signup", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+      const result = await signup({
+        email,
+        password,
+        username: cleanUsername,
+        display_name: displayName,
+        business_name: businessName,
+        phone: phone || undefined,
       });
-      const signupData = await signupRes.json();
-      if (!signupRes.ok) throw new Error(signupData.error || "Inscription échouée");
-
-      const profileRes = await fetch("/api/auth/profile", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          userId: signupData.user.id,
-          email: signupData.user.email,
-          username: cleanUsername,
-          displayName,
-          businessName,
-          phone: phone || undefined,
-        }),
-      });
-
-      const profileData = await profileRes.json();
-      if (!profileRes.ok) {
-        throw new Error(profileData.error || "Profil vendeur non créé");
+      if (!result.ok) {
+        setError(result.error || "Inscription échouée");
+        return;
       }
-
-      if (signupData.needsEmailVerification) {
-        setSuccess(
-          "Compte créé et connecté. Confirmez votre email pour publier des produits (lien envoyé par mail)."
-        );
-      }
-
       router.push("/dashboard");
-      router.refresh();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Erreur d'authentification");
     } finally {
       setLoading(false);
     }
@@ -350,18 +230,6 @@ function AuthForm() {
         </div>
 
         {error && <p className="alert-danger">{error}</p>}
-        {success && <p className="toast-success" role="status">{success}</p>}
-
-        {(pendingEmail || (mode === "login" && email)) && useSupabase && (
-          <button
-            type="button"
-            onClick={handleResendConfirmation}
-            disabled={resending}
-            className="btn-secondary"
-          >
-            {resending ? "Envoi…" : "Renvoyer le lien de vérification (pour publier des produits)"}
-          </button>
-        )}
 
         <button type="submit" disabled={loading} className="btn-primary">
           {loading

@@ -1,6 +1,7 @@
 import { Instrument_Serif, Inter_Tight } from "next/font/google";
 import "./globals.css";
 import { rootMetadata } from "@/lib/seo";
+import { AuthProvider } from "@/lib/auth-client";
 
 const instrumentSerif = Instrument_Serif({
   subsets: ["latin"],
@@ -26,7 +27,7 @@ export default function RootLayout({
       <body
         className={`app-bg ${interTight.className} ${instrumentSerif.variable} ${interTight.variable}`}
       >
-        {children}
+        <AuthProvider>{children}</AuthProvider>
       </body>
     </html>
   );

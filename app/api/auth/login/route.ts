@@ -1,48 +1,37 @@
 import { NextResponse } from "next/server";
-import { setSessionCookie, verifyPassword } from "@/lib/auth-local";
-import { getDb } from "@/lib/db";
+import { REFRESH_COOKIE_MAX_AGE, REFRESH_COOKIE_NAME } from "@/lib/auth-cookies";
+import { getApiBaseUrl } from "@/lib/site-url";
 
 export async function POST(request: Request) {
-  try {
-    const { email, password } = await request.json();
+  const body = await request.text();
+  const apiBaseUrl = getApiBaseUrl();
 
-    if (!email || !password) {
-      return NextResponse.json(
-        { error: "Email et mot de passe requis" },
-        { status: 400 }
-      );
-    }
+  const tokenRes = await fetch(`${apiBaseUrl}/api/auth/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body,
+  });
+  const tokenData = await tokenRes.json().catch(() => ({}));
 
-    const db = await getDb();
-    const user = db.authUsers.find(
-      (u) => u.email.toLowerCase() === email.toLowerCase()
-    );
-
-    if (!user) {
-      return NextResponse.json(
-        { error: "Email ou mot de passe incorrect" },
-        { status: 401 }
-      );
-    }
-
-    const valid = await verifyPassword(password, user.passwordHash);
-    if (!valid) {
-      return NextResponse.json(
-        { error: "Email ou mot de passe incorrect" },
-        { status: 401 }
-      );
-    }
-
-    await setSessionCookie(user.id, user.email);
-
-    return NextResponse.json({
-      user: { id: user.id, email: user.email },
-    });
-  } catch (err) {
-    console.error("Login error:", err);
+  if (!tokenRes.ok) {
     return NextResponse.json(
-      { error: "Erreur de connexion" },
-      { status: 500 }
+      { error: "Email ou mot de passe incorrect" },
+      { status: tokenRes.status }
     );
   }
+
+  const meRes = await fetch(`${apiBaseUrl}/api/auth/me`, {
+    headers: { Authorization: `Bearer ${tokenData.access}` },
+  });
+  const profile = meRes.ok ? await meRes.json() : null;
+
+  const response = NextResponse.json({ access: tokenData.access, profile });
+  response.cookies.set(REFRESH_COOKIE_NAME, tokenData.refresh, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+    maxAge: REFRESH_COOKIE_MAX_AGE,
+  });
+  return response;
 }
