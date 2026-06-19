@@ -2,18 +2,10 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { formatCurrency } from "@/lib/utils";
+import { apiFetch } from "@/lib/api-client";
+import { adaptPayout, type AdaptedPayout } from "@/lib/api-adapters";
 
-interface PayoutItem {
-  id: string;
-  amount: number;
-  netAmount?: number;
-  fee?: number;
-  method: "wave" | "orange";
-  phone: string;
-  status: "pending" | "processing" | "success" | "failed";
-  failureReason?: string;
-  createdAt: string;
-}
+type PayoutItem = AdaptedPayout;
 
 const STATUS_LABELS: Record<PayoutItem["status"], string> = {
   pending: "En attente",
@@ -44,10 +36,10 @@ export function WalletPayoutHistory({ refreshKey = 0 }: { refreshKey?: number })
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/wallet/payouts");
+      const res = await apiFetch("/api/payouts/mine");
       if (res.ok) {
         const data = await res.json();
-        setPayouts(data.payouts || []);
+        setPayouts((data || []).map(adaptPayout));
       }
     } finally {
       setLoading(false);

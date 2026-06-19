@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { apiFetch, extractApiError } from "@/lib/api-client";
 
 export function SettingsProfileEditor({
   displayName,
@@ -37,16 +38,15 @@ export function SettingsProfileEditor({
     setSuccess("");
     setSaving(true);
 
-    const res = await fetch("/api/auth/profile", {
+    const res = await apiFetch("/api/auth/me", {
       method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ displayName: name, businessName: shop }),
+      body: JSON.stringify({ display_name: name, business_name: shop }),
     });
     const result = await res.json();
     setSaving(false);
 
     if (!res.ok) {
-      setError(result.error || "Enregistrement impossible");
+      setError(extractApiError(result, "Enregistrement impossible"));
       return;
     }
 

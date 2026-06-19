@@ -2,15 +2,10 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { formatCurrency } from "@/lib/utils";
+import { apiFetch } from "@/lib/api-client";
+import { adaptTransaction, type AdaptedTransaction } from "@/lib/api-adapters";
 
-interface TransactionItem {
-  id: string;
-  label: string;
-  detail?: string;
-  signedAmount: number;
-  direction: "credit" | "debit";
-  createdAt: string;
-}
+type TransactionItem = AdaptedTransaction;
 
 function fmtDate(iso: string) {
   return new Date(iso).toLocaleDateString("fr-FR", {
@@ -29,10 +24,10 @@ export function WalletTransactionHistory({ refreshKey = 0 }: { refreshKey?: numb
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/wallet/transactions");
+      const res = await apiFetch("/api/orders/transactions");
       if (res.ok) {
         const data = await res.json();
-        setTransactions(data.transactions || []);
+        setTransactions((data || []).map(adaptTransaction));
       }
     } finally {
       setLoading(false);

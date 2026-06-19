@@ -18,6 +18,7 @@ import { SellerStatsCard } from "@/components/seller/SellerStatsCard";
 import { computeSellerStats } from "@/lib/seller-stats";
 import { buildShopUrl } from "@/lib/site-url";
 import { useSellerData } from "@/components/seller/SellerDataProvider";
+import { apiFetch } from "@/lib/api-client";
 
 export default function DashboardPage() {
   const { data, loading, refresh } = useSellerData();
@@ -29,11 +30,11 @@ export default function DashboardPage() {
   const [cancelWarning, setCancelWarning] = useState("");
 
   useEffect(() => {
-    fetch("/api/products")
+    apiFetch("/api/catalog/products/")
       .then(async (res) => {
         if (res.ok) {
-          const p = await res.json();
-          setProductCount((p.products || []).length);
+          const products = await res.json();
+          setProductCount((products || []).length);
         }
       })
       .catch(() => {});
@@ -42,10 +43,15 @@ export default function DashboardPage() {
   const validateDelivery = async (orderId: string, pin: string) => {
     setError("");
     setPinErrorOrderId(null);
-    const res = await fetch("/api/dashboard", {
+    const order = data?.orders.find((o) => o.id === orderId);
+    if (!order) {
+      setError("Commande introuvable");
+      setPinErrorOrderId(orderId);
+      return false;
+    }
+    const res = await apiFetch(`/api/orders/${order.slug}/confirm-delivery`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ orderId, pin }),
+      body: JSON.stringify({ pin }),
     });
     const result = await res.json();
     if (!res.ok) {
@@ -60,10 +66,9 @@ export default function DashboardPage() {
   const cancelOrder = async (orderId: string, reason: string) => {
     setError("");
     setCancelWarning("");
-    const res = await fetch("/api/orders/cancel", {
+    const res = await apiFetch(`/api/orders/${orderId}/cancel`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ orderId, reason }),
+      body: JSON.stringify({ reason }),
     });
     const result = await res.json();
     if (!res.ok) {

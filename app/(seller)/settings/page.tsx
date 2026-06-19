@@ -8,6 +8,7 @@ import { SettingsPhoneEditor } from "@/components/seller/SettingsPhoneEditor";
 import { SettingsProfileEditor } from "@/components/seller/SettingsProfileEditor";
 import { SettingsNotificationPrefs } from "@/components/seller/SettingsNotificationPrefs";
 import { useSellerData } from "@/components/seller/SellerDataProvider";
+import { useAuth } from "@/lib/auth-client";
 
 const ACCOUNT_LINKS = [
   { href: "/create?tab=tag", label: "Mon XaalisTag", desc: "Modifier votre identifiant public" },
@@ -44,11 +45,12 @@ function SettingsLink({
 
 export default function SettingsPage() {
   const router = useRouter();
+  const { logout: authLogout } = useAuth();
   const { data, loading, refresh } = useSellerData();
   const profile = data?.profile ?? null;
 
   const logout = async () => {
-    await fetch("/api/auth/logout", { method: "POST" });
+    await authLogout();
     window.location.href = "/auth";
   };
 

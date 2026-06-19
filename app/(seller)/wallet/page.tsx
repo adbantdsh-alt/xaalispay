@@ -11,6 +11,7 @@ import { WalletTransactionHistory } from "@/components/seller/WalletTransactionH
 import type { Order } from "@/lib/types";
 import { DashboardSkeleton } from "@/components/ui/Skeleton";
 import { useSellerData } from "@/components/seller/SellerDataProvider";
+import { apiFetch } from "@/lib/api-client";
 
 export default function WalletPage() {
   const { data, loading, refresh } = useSellerData();
@@ -39,16 +40,21 @@ export default function WalletPage() {
   }, [parsedAmount]);
 
   const handleWithdraw = async (method: string) => {
+    // Orange Money : intégration directe pas encore branchée côté backend
+    // (voir le plan) — seul Wave fonctionne réellement pour l'instant.
+    if (method !== "wave") {
+      setError("Orange Money n'est pas encore disponible pour les retraits directs. Utilisez Wave.");
+      return;
+    }
+
     setError("");
     setSuccess("");
     setWithdrawing(true);
 
-    const res = await fetch("/api/wallet/withdraw", {
+    const res = await apiFetch("/api/payouts/", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         amount: Number(amount),
-        method,
         phone,
       }),
     });
@@ -61,7 +67,11 @@ export default function WalletPage() {
       return;
     }
 
-    setSuccess(result.message);
+    setSuccess(
+      result.warning
+        ? `Retrait enregistré — ${result.warning}`
+        : `Retrait enregistré. ${formatCurrency(result.net_amount ?? result.amount)} envoyés sur Wave.`
+    );
     setAmount("");
     setPayoutRefreshKey((k) => k + 1);
     setTxnRefreshKey((k) => k + 1);

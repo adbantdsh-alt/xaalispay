@@ -15,7 +15,12 @@ export function getApiAccessToken(): string | null {
   return currentAccessToken;
 }
 
-async function refreshAccessToken(): Promise<string | null> {
+/** Exporté pour qu'AuthProvider l'utilise aussi à son montage (tentative de
+ * session silencieuse) — un seul point d'appel à /api/auth/refresh, jamais
+ * deux appels concurrents. Avec ROTATE_REFRESH_TOKENS côté Django, un second
+ * appel concurrent utiliserait un refresh token déjà mis en liste noire par
+ * le premier et échouerait. */
+export async function refreshAccessToken(): Promise<string | null> {
   if (!refreshPromise) {
     refreshPromise = fetch("/api/auth/refresh", { method: "POST" })
       .then(async (res) => {
@@ -60,4 +65,18 @@ export async function apiFetch(path: string, init: RequestInit = {}, _retried = 
   }
 
   return response;
+}
+
+/** DRF renvoie soit {error: "..."} (nos vues maison), soit {champ: ["..."]}
+ * (erreurs de validation de serializer par défaut) — un seul point pour
+ * extraire un message affichable, peu importe la forme. */
+export function extractApiError(data: unknown, fallback: string): string {
+  if (!data || typeof data !== "object") return fallback;
+  const obj = data as Record<string, unknown>;
+  if (typeof obj.error === "string") return obj.error;
+  if (typeof obj.detail === "string") return obj.detail;
+  const firstField = Object.values(obj)[0];
+  if (Array.isArray(firstField) && typeof firstField[0] === "string") return firstField[0];
+  if (typeof firstField === "string") return firstField;
+  return fallback;
 }

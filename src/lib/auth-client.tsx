@@ -2,7 +2,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
 import { getApiBaseUrl } from "./site-url";
-import { setApiAccessToken } from "./api-client";
+import { refreshAccessToken, setApiAccessToken } from "./api-client";
 
 export interface Profile {
   id: number;
@@ -63,22 +63,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setApiAccessToken(token);
   }, []);
 
-  // Au montage : tente un refresh silencieux. Si le cookie httpOnly est
-  // présent et valide, ça restaure la session sans repasser par le formulaire.
+  // Au montage : tente un refresh silencieux via la même fonction partagée
+  // que apiFetch (src/lib/api-client.ts) — jamais deux appels concurrents à
+  // /api/auth/refresh, qui casseraient la rotation de refresh token côté
+  // Django (le second utiliserait un token déjà mis en liste noire).
   useEffect(() => {
     (async () => {
       try {
-        const res = await fetch("/api/auth/refresh", { method: "POST" });
-        if (!res.ok) return;
-        const data = await res.json();
-        applyToken(data.access);
-        const profile = await fetchProfile(data.access);
+        const token = await refreshAccessToken();
+        if (!token) return;
+        setAccessToken(token);
+        const profile = await fetchProfile(token);
         if (profile) setUser(profile);
       } finally {
         setLoading(false);
       }
     })();
-  }, [applyToken]);
+  }, []);
 
   const login = useCallback(
     async (email: string, password: string): Promise<AuthResult> => {

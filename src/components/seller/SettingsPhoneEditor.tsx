@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import {
   formatSenegalPhoneDisplay,
 } from "@/lib/utils";
+import { apiFetch, extractApiError } from "@/lib/api-client";
 
 export function SettingsPhoneEditor({
   phone,
@@ -42,9 +43,8 @@ export function SettingsPhoneEditor({
     setSuccess("");
     setSaving(true);
 
-    const res = await fetch("/api/auth/profile", {
+    const res = await apiFetch("/api/auth/me", {
       method: "PATCH",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ phone: value }),
     });
 
@@ -52,7 +52,7 @@ export function SettingsPhoneEditor({
     setSaving(false);
 
     if (!res.ok) {
-      setError(result.error || "Enregistrement impossible");
+      setError(extractApiError(result, "Enregistrement impossible"));
       return;
     }
 
