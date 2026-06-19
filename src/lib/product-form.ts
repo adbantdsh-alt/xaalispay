@@ -1,10 +1,12 @@
-/** Compression + upload images produit (client). */
+/** Compression + upload images produit (client) — envoyé à Django, qui
+ * relaie vers Cloudinary (voir apps.catalog.views.UploadProductImageView). */
 
-import {
-  MAX_PRODUCT_IMAGE_INPUT_BYTES,
-  MAX_PRODUCT_IMAGE_STORED_BYTES,
-} from "./product-images";
-import { getApiAccessToken } from "./api-client";
+import { apiFetch, extractApiError } from "./api-client";
+
+/** Taille max fichier brut côté client (avant compression). */
+export const MAX_PRODUCT_IMAGE_INPUT_BYTES = 5 * 1024 * 1024; // 5 Mo
+/** Taille max ciblée après compression. */
+export const MAX_PRODUCT_IMAGE_STORED_BYTES = 900_000;
 
 export const MAX_IMAGE_INPUT_MB = MAX_PRODUCT_IMAGE_INPUT_BYTES / (1024 * 1024);
 
@@ -70,15 +72,13 @@ export async function uploadProductImageFile(file: File): Promise<string> {
   const formData = new FormData();
   formData.append("file", compressed, compressed.name);
 
-  const token = getApiAccessToken();
-  const res = await fetch("/api/products/upload-image", {
+  const res = await apiFetch("/api/catalog/products/upload-image", {
     method: "POST",
-    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
     body: formData,
   });
-  const data = (await res.json()) as { url?: string; error?: string };
+  const data = (await res.json()) as { url?: string };
   if (!res.ok || !data.url) {
-    throw new Error(data.error || "Upload échoué");
+    throw new Error(extractApiError(data, "Upload échoué"));
   }
   return data.url;
 }

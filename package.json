@@ -10,7 +10,6 @@
     "preflight": "node scripts/preflight.mjs"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.49.8",
     "framer-motion": "^12.40.0",
     "lucide-react": "^1.18.0",
     "nanoid": "^5.1.11",

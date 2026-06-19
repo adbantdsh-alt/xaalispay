@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { IconPackage } from "@/components/ui/AppIcon";
-import { resolveProductImageUrl } from "@/lib/product-images";
 
 export function ProductImage({
   src,
@@ -17,7 +16,7 @@ export function ProductImage({
   placeholderClassName?: string;
   iconSize?: number;
 }) {
-  const resolved = resolveProductImageUrl(src);
+  const resolved = src?.trim() || "";
   const [failed, setFailed] = useState(false);
 
   if (!resolved || failed) {
