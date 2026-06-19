@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { formatCurrency } from "@/lib/utils";
 import { VendorProductGrid, type VendorProduct } from "@/components/marketing/VendorProductGrid";
+import { apiFetch } from "@/lib/api-client";
 
 interface VendorHit {
   username: string;
@@ -40,10 +41,18 @@ export function VendorSearch({ large = false }: { large?: boolean }) {
 
     setLoading(true);
     try {
-      const res = await fetch(`/api/search?q=${encodeURIComponent(clean)}`);
+      const res = await apiFetch(`/api/catalog/public/search?q=${encodeURIComponent(clean)}`);
       if (res.ok) {
-        const data = await res.json();
-        setVendors(data.vendors || []);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const data = (await res.json()) as { vendors: any[] };
+        setVendors(
+          (data.vendors || []).map((v) => ({
+            username: v.username,
+            displayName: v.display_name,
+            businessName: v.business_name,
+            matchHint: v.match_hint || undefined,
+          }))
+        );
         setOpen(true);
         setActiveIndex(-1);
       }
@@ -61,14 +70,33 @@ export function VendorSearch({ large = false }: { large?: boolean }) {
     setVendorError(null);
 
     try {
-      const res = await fetch(`/api/vendors/${encodeURIComponent(vendor.username)}`);
-      if (res.ok) {
-        const data = await res.json();
-        setProducts(data.products || []);
-      } else {
+      // La liste de produits renvoie toujours 200 (vide si le vendeur
+      // n'existe pas) — il faut vérifier l'existence du profil séparément
+      // pour distinguer "vendeur introuvable" de "vendeur sans produit".
+      const profileRes = await apiFetch(`/api/auth/public/${encodeURIComponent(vendor.username)}`);
+      if (!profileRes.ok) {
         setVendorError("Vendeur introuvable. Vérifiez le XaalisTag.");
         setSelectedVendor(null);
         setQuery(vendor.username);
+        return;
+      }
+
+      const res = await apiFetch(`/api/catalog/public/sellers/${encodeURIComponent(vendor.username)}/products`);
+      if (res.ok) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const data = (await res.json()) as any[];
+        setProducts(
+          data.map((p) => ({
+            id: p.payment_slug,
+            paymentSlug: p.payment_slug,
+            name: p.name,
+            description: p.description || "",
+            price: p.price,
+            deliveryCost: p.delivery_cost || 0,
+            totalLabel: formatCurrency(p.price + (p.delivery_cost || 0)),
+            image: p.image || "",
+          }))
+        );
       }
     } finally {
       setProductsLoading(false);
