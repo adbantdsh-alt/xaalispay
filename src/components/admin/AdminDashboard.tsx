@@ -2,19 +2,62 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { apiFetch, extractApiError } from "@/lib/api-client";
 import { AdminDisputesSection } from "./AdminDisputesSection";
 import { AdminOverviewSection } from "./AdminOverviewSection";
 import { AdminPayoutsSection } from "./AdminPayoutsSection";
 import type { AdminTab, DisputeRow, OverviewData, PayoutRow } from "./admin-types";
 
 const AUTO_REFRESH_MS = 15_000;
-const NO_CACHE = { cache: "no-store" as const };
 
 const TABS: { id: AdminTab; label: string; badgeKey?: "disputes" | "payouts" }[] = [
   { id: "overview", label: "Vue d'ensemble" },
   { id: "disputes", label: "Litiges", badgeKey: "disputes" },
   { id: "payouts", label: "Retraits", badgeKey: "payouts" },
 ];
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function adaptDisputeRow(o: any): DisputeRow {
+  return {
+    id: String(o.id),
+    slug: o.slug,
+    sellerId: "",
+    sellerUsername: o.seller_username,
+    sellerName: o.seller_business_name,
+    sellerPhone: o.seller_phone || null,
+    productName: o.product_name,
+    clientName: o.client_name,
+    clientPhone: o.client_phone,
+    clientAddress: o.client_address || null,
+    status: o.status,
+    total: o.total_amount,
+    buyerProtectionFee: o.buyer_protection_fee || 0,
+    paymentMethod: o.payment_method,
+    paidAt: o.paid_at || undefined,
+    clientDeliveryConfirmedAt: o.delivery_validated_at || undefined,
+    disputeOpenedAt: o.dispute_opened_at || undefined,
+    disputeReason: o.dispute_reason || "",
+    disputeMedia: o.dispute_media || [],
+    disputePhotos: [],
+    createdAt: o.created_at,
+    updatedAt: o.created_at,
+  };
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function adaptPayoutRow(p: any): PayoutRow {
+  return {
+    id: String(p.id),
+    sellerUsername: p.seller_username,
+    sellerName: p.seller_business_name,
+    amount: p.amount,
+    method: p.method,
+    phone: p.phone,
+    status: p.status,
+    failureReason: p.failure_reason || undefined,
+    createdAt: p.created_at,
+  };
+}
 
 export function AdminDashboard() {
   const router = useRouter();
@@ -59,7 +102,7 @@ export function AdminDashboard() {
   );
 
   const fetchOverview = useCallback(async () => {
-    const res = await fetch("/api/admin/overview", NO_CACHE);
+    const res = await apiFetch("/api/admin/overview");
     if (checkAuth(res.status)) return null;
     if (!res.ok) throw new Error("overview");
     const data = (await res.json()) as OverviewData;
@@ -68,15 +111,15 @@ export function AdminDashboard() {
   }, [checkAuth]);
 
   const fetchDisputes = useCallback(async () => {
-    const res = await fetch("/api/admin/disputes", NO_CACHE);
+    const res = await apiFetch("/api/admin/orders?status=dispute");
     if (checkAuth(res.status)) return;
-    if (res.ok) setDisputes((await res.json()).disputes || []);
+    if (res.ok) setDisputes((await res.json()).map(adaptDisputeRow));
   }, [checkAuth]);
 
   const fetchPayouts = useCallback(async () => {
-    const res = await fetch("/api/admin/payouts", NO_CACHE);
+    const res = await apiFetch("/api/admin/payouts");
     if (checkAuth(res.status)) return;
-    if (res.ok) setPayouts((await res.json()).payouts || []);
+    if (res.ok) setPayouts((await res.json()).map(adaptPayoutRow));
   }, [checkAuth]);
 
   const fetchTab = useCallback(
@@ -116,7 +159,7 @@ export function AdminDashboard() {
     (async () => {
       try {
         const data = await fetchOverview();
-        if (data && data.stats.openDisputes > 0) {
+        if (data && data.open_disputes_count > 0) {
           setTab("disputes");
           await fetchDisputes();
         }
@@ -145,15 +188,13 @@ export function AdminDashboard() {
 
   const resolveDispute = async (
     disputeId: string,
-    action: "refund" | "release",
-    force = false
+    action: "refund" | "release"
   ): Promise<boolean> => {
     setResolving(disputeId + action);
     setError("");
-    const res = await fetch(`/api/admin/disputes/${disputeId}/resolve`, {
+    const res = await apiFetch(`/api/orders/${disputeId}/resolve-dispute`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action, force }),
+      body: JSON.stringify({ outcome: action }),
     });
     const data = await res.json();
     setResolving(null);
@@ -164,24 +205,12 @@ export function AdminDashboard() {
         showError("Cette commande a déjà été traitée — la liste a été mise à jour.");
         return false;
       }
-      if (data.canForce) {
-        const confirmForce = window.confirm(
-          `${data.error}\n\n` +
-            `⚠️ AVANT DE CONFIRMER :\n` +
-            `1. Connectez-vous au dashboard Bictorys\n` +
-            `2. Vérifiez que la transaction est bien remboursée\n` +
-            `3. Si oui, cliquez OK pour mettre à jour XaalisPay\n\n` +
-            `Confirmer la mise à jour locale ?`
-        );
-        if (confirmForce) return resolveDispute(disputeId, action, true);
-        return false;
-      }
-      showError(data.error || "Action impossible");
+      showError(extractApiError(data, "Action impossible"));
       return false;
     }
 
     if (data.warning) showError(`⚠️ ${data.warning}`);
-    setDisputes(data.disputes || []);
+    await fetchDisputes();
     setTimeout(() => refresh(true), 2000);
     return true;
   };
@@ -189,11 +218,11 @@ export function AdminDashboard() {
   const retryPayout = async (payoutId: string) => {
     setRetryingId(payoutId);
     setError("");
-    const res = await fetch(`/api/admin/payouts/${payoutId}/retry`, { method: "POST" });
+    const res = await apiFetch(`/api/admin/payouts/${payoutId}/retry`, { method: "POST" });
     const data = await res.json();
     setRetryingId(null);
     if (!res.ok) {
-      showError(data.error || "Relance impossible");
+      showError(extractApiError(data, "Relance impossible"));
       return;
     }
     await fetchPayouts();
@@ -261,13 +290,7 @@ export function AdminDashboard() {
         <p className="admin-tab-loading text-muted">Chargement…</p>
       )}
 
-      {tab === "overview" && overview && (
-        <AdminOverviewSection
-          overview={overview}
-          onNavigate={setTab}
-          onRefresh={() => refresh(true)}
-        />
-      )}
+      {tab === "overview" && overview && <AdminOverviewSection overview={overview} onNavigate={setTab} />}
 
       {tab === "disputes" && !tabLoading && (
         <AdminDisputesSection

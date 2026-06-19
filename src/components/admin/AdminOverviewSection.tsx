@@ -2,273 +2,139 @@
 
 import { useState } from "react";
 import { formatCurrency } from "@/lib/utils";
-import { AdminLaunchChecklist } from "./AdminLaunchChecklist";
+import { apiFetch } from "@/lib/api-client";
 import type { AdminTab, OverviewData } from "./admin-types";
+
+async function downloadCsv(path: string, filename: string) {
+  const res = await apiFetch(path);
+  if (!res.ok) return;
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
 
 export function AdminOverviewSection({
   overview,
   onNavigate,
-  onRefresh,
 }: {
   overview: OverviewData;
   onNavigate: (tab: AdminTab) => void;
-  onRefresh: () => void;
 }) {
-  const { stats, relational } = overview;
-  const [migrating, setMigrating] = useState(false);
-  const [migrateMsg, setMigrateMsg] = useState("");
+  const [exporting, setExporting] = useState<"orders" | "payouts" | null>(null);
 
-  const runMigration = async () => {
-    if (
-      !window.confirm(
-        "Copier app_state vers les tables relationnelles Supabase ?\n\nEn production, la sync auto (dual-write) s'exécute aussi après chaque écriture."
-      )
-    ) {
-      return;
-    }
-    setMigrating(true);
-    setMigrateMsg("");
-    try {
-      const res = await fetch("/api/admin/migrate-relational", { method: "POST" });
-      const data = await res.json();
-      if (!res.ok) {
-        setMigrateMsg(data.error || "Migration échouée");
-        return;
-      }
-      const total = Object.values(data.counts as Record<string, number>).reduce(
-        (sum, n) => sum + n,
-        0
-      );
-      setMigrateMsg(`${total} enregistrement(s) synchronisé(s).`);
-      onRefresh();
-    } catch {
-      setMigrateMsg("Erreur réseau");
-    } finally {
-      setMigrating(false);
-    }
+  const exportCsv = async (kind: "orders" | "payouts") => {
+    setExporting(kind);
+    await downloadCsv(`/api/admin/export/${kind}`, `${kind}.csv`);
+    setExporting(null);
   };
+
+  const pendingPayouts = overview.payouts_by_status.pending + overview.payouts_by_status.processing;
+  const failedPayouts = overview.payouts_by_status.failed;
 
   return (
     <section className="admin-section">
-      <AdminLaunchChecklist />
-
       <div className="admin-kpi-grid admin-kpi-grid--compact">
         <button type="button" className="admin-kpi admin-kpi--action" onClick={() => onNavigate("disputes")}>
           <p className="admin-kpi-label">Litiges ouverts</p>
-          <p className={`admin-kpi-value${stats.openDisputes > 0 ? " admin-kpi-value--alert" : ""}`}>
-            {stats.openDisputes}
+          <p className={`admin-kpi-value${overview.open_disputes_count > 0 ? " admin-kpi-value--alert" : ""}`}>
+            {overview.open_disputes_count}
           </p>
           <p className="admin-kpi-sub">Arbitrer →</p>
         </button>
         <button type="button" className="admin-kpi admin-kpi--action" onClick={() => onNavigate("payouts")}>
           <p className="admin-kpi-label">Retraits</p>
           <p className="admin-kpi-value">
-            {stats.pendingPayouts}
-            {stats.failedPayouts > 0 && (
-              <span className="admin-kpi-failed"> / {stats.failedPayouts} échoué(s)</span>
-            )}
+            {pendingPayouts}
+            {failedPayouts > 0 && <span className="admin-kpi-failed"> / {failedPayouts} échoué(s)</span>}
           </p>
           <p className="admin-kpi-sub">Gérer →</p>
         </button>
         <article className="admin-kpi">
           <p className="admin-kpi-label">GMV aujourd&apos;hui</p>
-          <p className="admin-kpi-value">{formatCurrency(stats.gmvToday)}</p>
-          <p className="admin-kpi-sub">{stats.paidTodayCount} commande(s)</p>
+          <p className="admin-kpi-value">{formatCurrency(overview.gmv_today)}</p>
+          <p className="admin-kpi-sub">{overview.paid_today_count} commande(s)</p>
         </article>
       </div>
 
       <article className="admin-card">
-        <h2 className="admin-card-title">Santé système</h2>
+        <h2 className="admin-card-title">Plateforme</h2>
         <ul className="admin-health-list">
           <li>
-            <span>Déploiement</span>
-            <strong>{overview.health.commit || "local"}</strong>
+            <span>Vendeurs</span>
+            <strong>{overview.sellers_count}</strong>
           </li>
           <li>
-            <span>Supabase</span>
-            <strong>{overview.health.remoteOk ? "OK" : "Erreur"}</strong>
+            <span>Produits</span>
+            <strong>{overview.products_count}</strong>
           </li>
           <li>
-            <span>Retraits Bictorys</span>
-            <strong>{overview.health.payoutConfigured ? "Configuré" : "Manquant"}</strong>
-          </li>
-          <li>
-            <span>API Bictorys</span>
-            <strong
-              className={
-                overview.health.bictorysBaseUrl?.includes("test")
-                  ? "admin-health-bad"
-                  : "admin-health-ok"
-              }
-            >
-              {overview.health.bictorysBaseUrl?.includes("test") ? "TEST" : "PROD"}
-              {" · "}
-              {overview.health.bictorysBaseUrl}
-            </strong>
-          </li>
-          <li>
-            <span>Webhook secret</span>
-            <strong className={overview.health.webhookSecretSet ? "admin-health-ok" : "admin-health-bad"}>
-              {overview.health.webhookSecretSet ? "OK" : "Manquant"}
-            </strong>
-          </li>
-          <li>
-            <span>Dual-write xp_*</span>
-            <strong className={overview.health.relationalDualWrite ? "admin-health-ok" : ""}>
-              {overview.health.relationalDualWrite ? "Actif" : "Désactivé"}
-            </strong>
-          </li>
-          <li>
-            <span>Emails transactionnels</span>
-            <strong className={overview.health.emailConfigured ? "admin-health-ok" : ""}>
-              {overview.health.emailConfigured ? "Resend OK" : "Non configuré"}
-            </strong>
+            <span>Commandes totales</span>
+            <strong>{overview.orders_count}</strong>
           </li>
         </ul>
       </article>
 
-      {overview.bictorys && (
-        <article className="admin-card">
-          <h2 className="admin-card-title">
-            Bictorys — monitoring
-            {overview.bictorys.webhooksFailed24h > 0 && (
-              <span className="admin-health-bad admin-card-title-tag">
-                — {overview.bictorys.webhooksFailed24h} échec(s) 24h
-              </span>
-            )}
-          </h2>
-          <ul className="admin-health-list">
-            <li>
-              <span>Webhooks (24h)</span>
-              <strong>{overview.bictorys.webhooks24h}</strong>
-            </li>
-            <li>
-              <span>Paiements en attente</span>
-              <strong className={overview.bictorys.pendingPayments > 0 ? "admin-health-bad" : ""}>
-                {overview.bictorys.pendingPayments}
-              </strong>
-            </li>
-          </ul>
-          {overview.bictorys.recentWebhooks.length > 0 && (
-            <ul className="admin-webhook-list">
-              {overview.bictorys.recentWebhooks.map((event) => (
-                <li key={event.id}>
-                  <span className={`admin-webhook-status admin-webhook-status--${event.status}`}>
-                    {event.status}
-                  </span>
-                  <span className="admin-webhook-ref">{event.reference}</span>
-                  <span className="admin-webhook-date">
-                    {new Date(event.createdAt).toLocaleString("fr-FR", {
-                      day: "2-digit",
-                      month: "short",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </article>
-      )}
+      <article className="admin-card">
+        <h2 className="admin-card-title">Soldes vendeurs (cumulés)</h2>
+        <ul className="admin-health-list">
+          <li>
+            <span>En séquestre</span>
+            <strong>{formatCurrency(overview.balances.escrow_total)}</strong>
+          </li>
+          <li>
+            <span>Bloqué (litiges)</span>
+            <strong>{formatCurrency(overview.balances.blocked_total)}</strong>
+          </li>
+          <li>
+            <span>Disponible</span>
+            <strong>{formatCurrency(overview.balances.available_total)}</strong>
+          </li>
+          <li>
+            <span>Déjà versé</span>
+            <strong>{formatCurrency(overview.balances.paid_out_total)}</strong>
+          </li>
+        </ul>
+      </article>
+
+      <article className="admin-card">
+        <h2 className="admin-card-title">Revenu XaalisPay</h2>
+        <ul className="admin-health-list">
+          <li>
+            <span>Frais protection acheteur</span>
+            <strong>{formatCurrency(overview.revenue.buyer_protection_fees_total)}</strong>
+          </li>
+          <li>
+            <span>Commissions vendeur</span>
+            <strong>{formatCurrency(overview.revenue.seller_commissions_total)}</strong>
+          </li>
+        </ul>
+      </article>
 
       <article className="admin-card">
         <h2 className="admin-card-title">Exports CSV</h2>
-        <p className="admin-section-hint">
-          Données depuis les tables xp_* si synchronisées, sinon app_state.
-        </p>
         <div className="admin-export-actions">
-          <a className="admin-action-btn" href="/api/admin/export/orders">
-            Télécharger commandes
-          </a>
-          <a className="admin-action-btn" href="/api/admin/export/payouts">
-            Télécharger retraits
-          </a>
+          <button
+            type="button"
+            className="admin-action-btn"
+            disabled={exporting === "orders"}
+            onClick={() => exportCsv("orders")}
+          >
+            {exporting === "orders" ? "…" : "Télécharger commandes"}
+          </button>
+          <button
+            type="button"
+            className="admin-action-btn"
+            disabled={exporting === "payouts"}
+            onClick={() => exportCsv("payouts")}
+          >
+            {exporting === "payouts" ? "…" : "Télécharger retraits"}
+          </button>
         </div>
       </article>
-
-      {overview.prodConfig && (
-        <article className="admin-card">
-          <h2 className="admin-card-title">
-            Checklist production
-            {overview.prodConfig.ready ? (
-              <span className="admin-health-ok admin-card-title-tag">— Prêt</span>
-            ) : (
-              <span className="admin-health-bad admin-card-title-tag">
-                — {overview.prodConfig.missingCount} manquant(s)
-              </span>
-            )}
-          </h2>
-          <ul className="admin-health-list">
-            {overview.prodConfig.checks
-              .filter((check) => check.required || !check.ok)
-              .map((check) => (
-                <li key={check.id}>
-                  <span>{check.label}</span>
-                  <strong className={check.ok ? "admin-health-ok" : "admin-health-bad"}>
-                    {check.ok ? "OK" : "Manquant"}
-                  </strong>
-                </li>
-              ))}
-          </ul>
-        </article>
-      )}
-
-      {relational && (
-        <article className="admin-card">
-          <h2 className="admin-card-title">Base relationnelle</h2>
-          <ul className="admin-health-list">
-            <li>
-              <span>Schéma xp_*</span>
-              <strong className={relational.schemaReady ? "admin-health-ok" : "admin-health-bad"}>
-                {relational.schemaReady ? "Installé" : "Exécuter schema_v1.sql"}
-              </strong>
-            </li>
-            <li>
-              <span>Dual-write auto</span>
-              <strong className={overview.health.relationalDualWrite ? "admin-health-ok" : ""}>
-                {overview.health.relationalDualWrite ? "Actif (prod)" : "Manuel uniquement"}
-              </strong>
-            </li>
-            {overview.health.relationalRead && (
-              <li>
-                <span>Lecture xp_*</span>
-                <strong className="admin-health-ok">XP_RELATIONAL_READ=true</strong>
-              </li>
-            )}
-            {relational.lastMigratedAt && (
-              <li>
-                <span>Dernière sync</span>
-                <strong>
-                  {new Date(relational.lastMigratedAt).toLocaleString("fr-FR", {
-                    day: "2-digit",
-                    month: "short",
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
-                </strong>
-              </li>
-            )}
-            {relational.lastMigratedAt && relational.counts.orders != null && (
-              <li>
-                <span>Commandes miroir</span>
-                <strong>{relational.counts.orders}</strong>
-              </li>
-            )}
-          </ul>
-          {relational.schemaReady && (
-            <button
-              type="button"
-              className="admin-action-btn admin-migrate-btn"
-              disabled={migrating}
-              onClick={runMigration}
-            >
-              {migrating ? "Synchronisation…" : "Synchroniser app_state → tables"}
-            </button>
-          )}
-          {migrateMsg && <p className="admin-migrate-msg">{migrateMsg}</p>}
-        </article>
-      )}
     </section>
   );
 }

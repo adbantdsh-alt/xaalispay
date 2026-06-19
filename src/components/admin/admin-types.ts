@@ -2,64 +2,28 @@ import type { OrderStatus } from "@/lib/types";
 
 export type AdminTab = "overview" | "disputes" | "payouts";
 
+/** Forme directe de la réponse Django GET /api/admin/overview (snake_case,
+ * pas d'adaptateur ici — vue admin propre à ces composants, sans homologue
+ * dans src/lib/types.ts à respecter). */
 export interface OverviewData {
-  stats: {
-    sellerCount: number;
-    productCount: number;
-    orderCount: number;
-    paidTodayCount: number;
-    gmvToday: number;
-    openDisputes: number;
-    pendingPayouts: number;
-    failedPayouts: number;
-    totalAvailable: number;
-    totalEscrow: number;
+  sellers_count: number;
+  products_count: number;
+  orders_count: number;
+  orders_by_status: Record<string, number>;
+  payouts_by_status: Record<string, number>;
+  balances: {
+    escrow_total: number;
+    available_total: number;
+    blocked_total: number;
+    paid_out_total: number;
   };
-  health: {
-    commit: string | null;
-    payoutConfigured: boolean;
-    storage: string;
-    remoteOk?: boolean;
-    bictorysBaseUrl?: string;
-    bictorysPayinKeySet?: boolean;
-    bictorysRefundKeySet?: boolean;
-    bictorysRefundKeyName?: string;
-    webhookSecretSet?: boolean;
-    relationalDualWrite?: boolean;
-    relationalRead?: boolean;
-    emailConfigured?: boolean;
+  open_disputes_count: number;
+  revenue: {
+    buyer_protection_fees_total: number;
+    seller_commissions_total: number;
   };
-  prodConfig?: {
-    production: boolean;
-    ready: boolean;
-    missingCount: number;
-    missingLabels: string[];
-    checks: Array<{
-      id: string;
-      label: string;
-      ok: boolean;
-      required: boolean;
-      hint?: string;
-    }>;
-  };
-  relational?: {
-    enabled: boolean;
-    schemaReady: boolean;
-    lastMigratedAt: string | null;
-    counts: Record<string, number>;
-  };
-  bictorys?: {
-    webhooks24h: number;
-    webhooksFailed24h: number;
-    pendingPayments: number;
-    recentWebhooks: Array<{
-      id: string;
-      eventKey: string;
-      status: string;
-      reference: string;
-      createdAt: string;
-    }>;
-  };
+  paid_today_count: number;
+  gmv_today: number;
 }
 
 export interface PayoutRow {
