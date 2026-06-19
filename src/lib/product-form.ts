@@ -4,6 +4,7 @@ import {
   MAX_PRODUCT_IMAGE_INPUT_BYTES,
   MAX_PRODUCT_IMAGE_STORED_BYTES,
 } from "./product-images";
+import { getApiAccessToken } from "./api-client";
 
 export const MAX_IMAGE_INPUT_MB = MAX_PRODUCT_IMAGE_INPUT_BYTES / (1024 * 1024);
 
@@ -69,8 +70,10 @@ export async function uploadProductImageFile(file: File): Promise<string> {
   const formData = new FormData();
   formData.append("file", compressed, compressed.name);
 
+  const token = getApiAccessToken();
   const res = await fetch("/api/products/upload-image", {
     method: "POST",
+    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
     body: formData,
   });
   const data = (await res.json()) as { url?: string; error?: string };

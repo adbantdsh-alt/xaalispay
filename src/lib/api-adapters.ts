@@ -2,7 +2,7 @@
  * fonctions utilitaires comme computeWalletBreakdown/computeSellerStats)
  * attend le camelCase de src/lib/types.ts. Ces fonctions isolent la
  * conversion en un seul endroit plutôt que de réécrire ces composants. */
-import type { DisputeMedia, Order, Profile } from "./types";
+import type { DisputeMedia, Order, Product, Profile } from "./types";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Json = Record<string, any>;
@@ -176,5 +176,46 @@ export function adaptPayout(p: Json): AdaptedPayout {
     status: PAYOUT_STATUS_MAP[p.status] || "pending",
     failureReason: p.failure_reason || undefined,
     createdAt: p.created_at,
+  };
+}
+
+export function adaptProduct(p: Json): Product {
+  return {
+    id: String(p.id),
+    sellerId: "",
+    paymentSlug: p.payment_slug,
+    name: p.name,
+    description: p.description || "",
+    price: p.price,
+    deliveryCost: p.delivery_cost || 0,
+    deliveryHours: p.delivery_hours,
+    note: p.note || "",
+    image: p.image || "",
+    active: p.active,
+    createdAt: p.created_at,
+    updatedAt: p.updated_at,
+  };
+}
+
+/** Inverse d'adaptProduct : champs camelCase du formulaire -> payload Django.
+ * `image` est volontairement omis si vide pour ne jamais écraser une image
+ * existante par erreur — l'appelant l'ajoute explicitement pour la supprimer. */
+export function toProductPayload(fields: {
+  name: string;
+  description?: string;
+  price: number;
+  deliveryCost?: number;
+  deliveryHours: number;
+  note?: string;
+  image?: string;
+}): Json {
+  return {
+    name: fields.name,
+    description: fields.description || "",
+    price: fields.price,
+    delivery_cost: fields.deliveryCost || 0,
+    delivery_hours: fields.deliveryHours,
+    note: fields.note || "",
+    image: fields.image ?? "",
   };
 }

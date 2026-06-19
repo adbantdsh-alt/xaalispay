@@ -22,6 +22,8 @@ import { PaymentLinkForm } from "@/components/seller/PaymentLinkForm";
 import { PaymentLinkSuccessPanel } from "@/components/seller/PaymentLinkSuccessPanel";
 import { CopyButton } from "@/components/ui/CopyButton";
 import { useSellerData } from "@/components/seller/SellerDataProvider";
+import { apiFetch, extractApiError } from "@/lib/api-client";
+import { adaptProduct, toProductPayload } from "@/lib/api-adapters";
 
 function CreatePageContent() {
   const view = useShopView();
@@ -57,10 +59,10 @@ function CreatePageContent() {
   const [editDeleting, setEditDeleting] = useState(false);
 
   const loadProducts = async () => {
-    const prodRes = await fetch("/api/products");
+    const prodRes = await apiFetch("/api/catalog/products/");
     if (prodRes.ok) {
       const data = await prodRes.json();
-      const list = data.products || [];
+      const list = (data || []).map(adaptProduct);
       setProducts(list);
       const firstActive = list.find((p: Product) => p.active);
       if (!selectedProductId && list.length > 0) {
@@ -93,17 +95,17 @@ function CreatePageContent() {
       return;
     }
 
-    // Toujours charger le produit complet (avec image) depuis l'API
-    // La liste /api/products strip les images pour alléger les réponses
+    // Toujours recharger le produit depuis l'API (la liste pourrait être
+    // périmée si elle a été chargée avant une modification ailleurs).
     let cancelled = false;
     setEditLoading(true);
-    fetch(`/api/products?id=${encodeURIComponent(editProductId)}`)
+    apiFetch(`/api/catalog/products/${encodeURIComponent(editProductId)}/`)
       .then(async (res) => {
         if (cancelled) return;
         if (res.ok) {
-          const data = await res.json();
-          setEditingProduct(data.product);
-          setEditForm(productToFormValues(data.product));
+          const data = adaptProduct(await res.json());
+          setEditingProduct(data);
+          setEditForm(productToFormValues(data));
         } else {
           // Fallback sur la liste si l'API échoue
           const fromList = products.find((p) => p.id === editProductId);
@@ -159,38 +161,35 @@ function CreatePageContent() {
     resetMessages();
     setSaving(true);
 
-    const res = await fetch("/api/products", {
+    const res = await apiFetch("/api/catalog/products/", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        name: productForm.name,
-        description: productForm.description,
-        price: Number(productForm.price),
-        deliveryCost: Number(productForm.deliveryCost) || 0,
-        deliveryHours: Number(productForm.deliveryHours),
-        note: productForm.note,
-        image: productForm.image,
-      }),
+      body: JSON.stringify(
+        toProductPayload({
+          name: productForm.name,
+          description: productForm.description,
+          price: Number(productForm.price),
+          deliveryCost: Number(productForm.deliveryCost) || 0,
+          deliveryHours: Number(productForm.deliveryHours),
+          note: productForm.note,
+          image: productForm.image,
+        })
+      ),
     });
 
-    const data = await res.json();
+    const raw = await res.json();
     setSaving(false);
 
     if (!res.ok) {
-      setError(
-        data.code === "EMAIL_NOT_VERIFIED"
-          ? "Confirmez votre email pour créer des produits (lien dans votre boîte mail)."
-          : data.error || "Erreur"
-      );
+      setError(extractApiError(raw, "Erreur"));
       return;
     }
 
-    const savedImage = data.product?.image || productForm.image;
+    const product = adaptProduct(raw);
     setProductForm(emptyProductForm());
-    setCreatedPayUrl(data.payUrl || buildProductPaymentUrl(data.product));
-    setCreatedProductName(data.product.name);
-    setCreatedProductId(data.product.id || "");
-    setCreatedProductImage(savedImage);
+    setCreatedPayUrl(buildProductPaymentUrl(product));
+    setCreatedProductName(product.name);
+    setCreatedProductId(product.id);
+    setCreatedProductImage(product.image || productForm.image);
     setSuccess("Produit créé — lien de paiement prêt");
     loadProducts();
   };
@@ -204,19 +203,17 @@ function CreatePageContent() {
   };
 
   const toggleActive = async (product: Product) => {
-    await fetch("/api/products", {
+    await apiFetch(`/api/catalog/products/${product.id}/`, {
       method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id: product.id, active: !product.active }),
+      body: JSON.stringify({ active: !product.active }),
     });
     loadProducts();
   };
 
   const activateProductForLink = async (product: Product) => {
-    await fetch("/api/products", {
+    await apiFetch(`/api/catalog/products/${product.id}/`, {
       method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id: product.id, active: true }),
+      body: JSON.stringify({ active: true }),
     });
     setSelectedProductId(product.id);
     loadProducts();
@@ -227,43 +224,50 @@ function CreatePageContent() {
     resetMessages();
     setSaving(true);
 
-    const body: Record<string, unknown> = {};
-
+    // Pas d'équivalent /api/payment-links côté Django : chaque produit a
+    // déjà son lien dès sa création (payment_slug), donc "lien depuis un
+    // produit existant" n'a besoin d'aucun appel — seul "nouveau produit"
+    // en a besoin, et c'est exactement handleCreateProduct.
     if (linkMode === "existing") {
-      if (!selectedProductId) {
+      const product = products.find((p) => p.id === selectedProductId);
+      if (!product) {
         setSaving(false);
         setError("Sélectionnez un produit");
         return;
       }
-      body.productId = selectedProductId;
-    } else {
-      body.product = {
-        name: inlineProduct.name,
-        price: Number(inlineProduct.price),
-        deliveryCost: Number(inlineProduct.deliveryCost) || 0,
-        deliveryHours: Number(inlineProduct.deliveryHours),
-        note: inlineProduct.note,
-        image: inlineProduct.image,
-        description: inlineProduct.description,
-      };
-    }
-
-    const res = await fetch("/api/payment-links", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-
-    const data = await res.json();
-    setSaving(false);
-
-    if (!res.ok) {
-      setError(data.error || "Erreur");
+      setSaving(false);
+      setCreatedPayUrl(buildProductPaymentUrl(product));
+      setCreatedProductName(product.name);
+      setSuccess("Lien prêt à envoyer");
       return;
     }
 
-    setCreatedPayUrl(data.order.payUrl);
-    setCreatedProductName(data.order.productName);
+    const res = await apiFetch("/api/catalog/products/", {
+      method: "POST",
+      body: JSON.stringify(
+        toProductPayload({
+          name: inlineProduct.name,
+          price: Number(inlineProduct.price),
+          deliveryCost: Number(inlineProduct.deliveryCost) || 0,
+          deliveryHours: Number(inlineProduct.deliveryHours),
+          note: inlineProduct.note,
+          image: inlineProduct.image,
+          description: inlineProduct.description,
+        })
+      ),
+    });
+
+    const raw = await res.json();
+    setSaving(false);
+
+    if (!res.ok) {
+      setError(extractApiError(raw, "Erreur"));
+      return;
+    }
+
+    const product = adaptProduct(raw);
+    setCreatedPayUrl(buildProductPaymentUrl(product));
+    setCreatedProductName(product.name);
     setSuccess("Lien prêt à envoyer");
     loadProducts();
   };
@@ -278,16 +282,16 @@ function CreatePageContent() {
     if (redirectAfter) setEditDeleting(true);
     else setDeletingId(product.id);
 
-    const res = await fetch(`/api/products?id=${encodeURIComponent(product.id)}`, {
+    const res = await apiFetch(`/api/catalog/products/${encodeURIComponent(product.id)}/`, {
       method: "DELETE",
     });
-    const data = await res.json();
+    const data = await res.json().catch(() => ({}));
 
     if (redirectAfter) setEditDeleting(false);
     else setDeletingId("");
 
     if (!res.ok) {
-      setError(data.error || "Suppression impossible");
+      setError(extractApiError(data, "Suppression impossible"));
       return;
     }
 
@@ -308,32 +312,33 @@ function CreatePageContent() {
 
     setSaving(true);
 
-    const res = await fetch("/api/products", {
+    const res = await apiFetch(`/api/catalog/products/${editingProduct.id}/`, {
       method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        id: editingProduct.id,
-        name: editForm.name,
-        description: editForm.description,
-        price: Number(editForm.price),
-        deliveryCost: Number(editForm.deliveryCost) || 0,
-        deliveryHours: Number(editForm.deliveryHours),
-        note: editForm.note,
-        image: editForm.image,
-        // Signal explicite de suppression d'image (bouton "Supprimer la photo")
-        clearImage: editForm.image === "" && editingProduct.image !== "",
-      }),
+      // Pas besoin de "clearImage" : PATCH applique exactement ce qui est
+      // envoyé, donc image: "" efface bien l'image — pas de footgun à
+      // contourner comme avec l'ancien backend (blob JSON).
+      body: JSON.stringify(
+        toProductPayload({
+          name: editForm.name,
+          description: editForm.description,
+          price: Number(editForm.price),
+          deliveryCost: Number(editForm.deliveryCost) || 0,
+          deliveryHours: Number(editForm.deliveryHours),
+          note: editForm.note,
+          image: editForm.image,
+        })
+      ),
     });
 
-    const data = await res.json();
+    const raw = await res.json();
     setSaving(false);
 
     if (!res.ok) {
-      setError(data.error || "Modification impossible");
+      setError(extractApiError(raw, "Modification impossible"));
       return;
     }
 
-    const updated = data.product as Product;
+    const updated = adaptProduct(raw);
     setEditingProduct(updated);
     setEditSaved(true);
     setSuccess("Produit mis à jour");
@@ -349,18 +354,17 @@ function CreatePageContent() {
       return;
     }
     setPseudoSaving(true);
-    const res = await fetch("/api/auth/profile", {
+    const res = await apiFetch("/api/auth/me", {
       method: "PATCH",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ username: clean }),
     });
     const data = await res.json();
     setPseudoSaving(false);
     if (!res.ok) {
-      setError(data.error || "Modification impossible");
+      setError(extractApiError(data, "Modification impossible"));
       return;
     }
-    setPseudo(data.profile.username);
+    setPseudo(data.username);
     setSuccess("XaalisTag mis à jour");
     await refreshSeller({ silent: true });
   };

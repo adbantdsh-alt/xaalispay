@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getSessionUser } from "@/lib/session";
+import { getDjangoUserFromRequest } from "@/lib/django-auth";
 import {
   isAllowedImageMime,
   MAX_PRODUCT_IMAGE_INPUT_BYTES,
@@ -9,7 +9,7 @@ import {
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export async function POST(request: Request) {
-  const user = await getSessionUser();
+  const user = await getDjangoUserFromRequest(request);
   if (!user) {
     return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
   }
@@ -69,7 +69,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    const url = await uploadProductImageBuffer(user.id, buffer, file.type);
+    const url = await uploadProductImageBuffer(String(user.id), buffer, file.type);
     return NextResponse.json({ url, storage: "supabase" });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Upload échoué";
