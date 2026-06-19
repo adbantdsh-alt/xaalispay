@@ -219,3 +219,87 @@ export function toProductPayload(fields: {
     image: fields.image ?? "",
   };
 }
+
+export interface AdaptedDeliverySession {
+  slug: string;
+  status: Order["status"];
+  productName: string;
+  pin: string;
+  deliveryCodeIssuedAt?: string;
+  deliveryCodeExpiresAt?: string;
+  protectionEndsAt?: string;
+}
+
+/** Forme acheteur (OrderPublicSerializer) — distincte d'adaptOrder (vue
+ * vendeur, OrderSellerSerializer, qui n'expose jamais "pin"). */
+export function adaptDeliverySession(o: Json): AdaptedDeliverySession {
+  return {
+    slug: o.slug,
+    status: o.status,
+    productName: o.product_name,
+    pin: o.pin || "",
+    deliveryCodeIssuedAt: o.delivery_code_issued_at || undefined,
+    deliveryCodeExpiresAt: o.delivery_code_expires_at || undefined,
+    protectionEndsAt: o.protection_ends_at || undefined,
+  };
+}
+
+export interface AdaptedPayOrder {
+  productName: string;
+  productPrice: number;
+  deliveryCost: number;
+  productImage?: string;
+  productDescription?: string;
+  productNote?: string;
+  deliveryHours?: number;
+  status: string;
+  slug: string;
+  isProductLink?: boolean;
+  pin?: string;
+  protectionEndsAt?: string;
+  protectionMinutes?: number;
+  seller: { displayName: string; username: string; phone?: string };
+  fees?: { subtotal: number; buyerProtectionFee: number; checkoutTotal: number };
+}
+
+/** Avant la création de la commande : la page de paiement n'a qu'un produit
+ * (PublicProductSerializer), pas encore de commande. */
+export function adaptPublicProductToPayOrder(p: Json): AdaptedPayOrder {
+  return {
+    productName: p.name,
+    productPrice: p.price,
+    deliveryCost: p.delivery_cost || 0,
+    productImage: p.image || undefined,
+    productDescription: p.description || undefined,
+    productNote: p.note || undefined,
+    deliveryHours: p.delivery_hours,
+    status: "pending_payment",
+    slug: p.payment_slug,
+    isProductLink: true,
+    seller: { displayName: p.seller_display_name, username: p.seller_username },
+  };
+}
+
+/** Après création de la commande (OrderPublicSerializer) — suivi du statut. */
+export function adaptOrderToPayOrder(o: Json): AdaptedPayOrder {
+  return {
+    productName: o.product_name,
+    productPrice: o.product_price,
+    deliveryCost: o.delivery_cost || 0,
+    productImage: o.product_image || undefined,
+    productDescription: o.product_description || undefined,
+    deliveryHours: o.delivery_hours,
+    status: o.status,
+    slug: o.slug,
+    isProductLink: false,
+    pin: o.pin || undefined,
+    protectionEndsAt: o.protection_ends_at || undefined,
+    protectionMinutes: o.protection_minutes,
+    seller: { displayName: o.seller_business_name || "", username: o.seller_username || "" },
+    fees: {
+      subtotal: o.total_amount,
+      buyerProtectionFee: o.buyer_protection_fee,
+      checkoutTotal: o.checkout_total,
+    },
+  };
+}

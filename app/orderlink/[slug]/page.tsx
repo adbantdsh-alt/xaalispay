@@ -2,94 +2,82 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
-import Link from "next/link";
-import { getBuyerTimeline, getBuyerHumanStatus } from "@/lib/order-timeline";
+import { getBuyerTimeline } from "@/lib/order-timeline";
 import { MoneyTimeline } from "@/components/ui/MoneyTimeline";
 import { BrandMark } from "@/components/ui/BrandMark";
 import { IconLock, IconCheck, IconAlert, IconUndo } from "@/components/ui/AppIcon";
 import { PaySkeleton } from "@/components/ui/Skeleton";
 import { DeliveryValidation } from "@/components/delivery/DeliveryValidation";
-import { PayOrderSummary, PayProtectionBlock, PayClientFields, PayMethodButtons, PayCheckoutSection } from "@/components/pay/PayPageSections";
+import {
+  PayOrderSummary,
+  PayProtectionBlock,
+  PayClientFields,
+  PayMethodButtons,
+  PayCheckoutSection,
+} from "@/components/pay/PayPageSections";
 import { calculateBuyerProtectionFee } from "@/lib/fees";
 import { formatDeliveryWindow } from "@/lib/delivery-window";
 import type { OrderStatus } from "@/lib/types";
-
-interface PayOrder {
-  productName: string;
-  productPrice: number;
-  deliveryCost: number;
-  productImage?: string;
-  productDescription?: string;
-  productNote?: string;
-  deliveryHours?: number;
-  status: string;
-  slug: string;
-  isProductLink?: boolean;
-  pin?: string;
-  protectionEndsAt?: string;
-  clientName?: string;
-  clientFirstName?: string;
-  clientPhone?: string;
-  clientAddress?: string;
-  clientNote?: string;
-  paymentProviderStatus?: string;
-  paymentProviderMessage?: string;
-  seller: { displayName: string; username: string; phone?: string };
-  fees?: {
-    subtotal: number;
-    buyerProtectionFee: number;
-    checkoutTotal: number;
-  };
-}
+import { apiFetch, extractApiError } from "@/lib/api-client";
+import { adaptOrderToPayOrder, adaptPublicProductToPayOrder, type AdaptedPayOrder } from "@/lib/api-adapters";
 
 export default function PayPage() {
   const { slug } = useParams<{ slug: string }>();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [order, setOrder] = useState<PayOrder | null>(null);
+  const [order, setOrder] = useState<AdaptedPayOrder | null>(null);
   const [clientFirstName, setClientFirstName] = useState("");
   const [clientLastName, setClientLastName] = useState("");
   const [clientPhone, setClientPhone] = useState("");
   const [clientAddress, setClientAddress] = useState("");
   const [trackingSlug, setTrackingSlug] = useState<string | null>(null);
-  const [isProductLink, setIsProductLink] = useState(false);
   const [loading, setLoading] = useState(true);
   const [paying, setPaying] = useState(false);
-  const [paid, setPaid] = useState(false);
   const [protectionMinutes, setProtectionMinutes] = useState(30);
   const [error, setError] = useState("");
 
   const pollSlug = trackingSlug || slug;
   const paymentReturn = searchParams.get("payment");
 
+  // Une commande Django (OrderPublicSerializer) et un produit
+  // (PublicProductSerializer) sont deux ressources distinctes — contrairement
+  // à l'ancien backend qui unifiait les deux derrière un seul slug
+  // polymorphe. On essaie d'abord "commande" (cas normal après création),
+  // puis on retombe sur "produit" (premier chargement d'un lien de paiement
+  // partagé par le vendeur, avant toute commande).
   const fetchOrder = useCallback(async () => {
-    const query = paymentReturn ? `?payment=${encodeURIComponent(paymentReturn)}` : "";
-    const res = await fetch(`/api/pay/${pollSlug}${query}`);
-    if (res.ok) {
-      const data = await res.json();
-      setOrder(data.order);
-      setProtectionMinutes(data.protectionMinutes || 30);
-      setIsProductLink(!!data.order.isProductLink);
-      if (!trackingSlug && data.order.isProductLink) {
-        setPaid(false);
+    const orderRes = await apiFetch(`/api/orders/${pollSlug}`);
+    if (orderRes.ok) {
+      const adapted = adaptOrderToPayOrder(await orderRes.json());
+      setOrder(adapted);
+      if (adapted.protectionMinutes) setProtectionMinutes(adapted.protectionMinutes);
+      setLoading(false);
+      return;
+    }
+    if (!trackingSlug) {
+      const productRes = await apiFetch(`/api/catalog/public/${pollSlug}`);
+      if (productRes.ok) {
+        setOrder(adaptPublicProductToPayOrder(await productRes.json()));
         setLoading(false);
         return;
       }
-      if (data.order.status !== "pending_payment") {
-        setPaid(true);
-      }
     }
+    setOrder(null);
     setLoading(false);
-  }, [paymentReturn, pollSlug, trackingSlug]);
+  }, [pollSlug, trackingSlug]);
 
   useEffect(() => {
     fetchOrder();
-    if (isProductLink && !trackingSlug) return;
+    if (order?.isProductLink && !trackingSlug) return;
     const interval = setInterval(fetchOrder, 4000);
     return () => clearInterval(interval);
-  }, [fetchOrder, isProductLink, trackingSlug]);
+  }, [fetchOrder, order?.isProductLink, trackingSlug]);
 
   const handlePay = async (method: string) => {
+    if (method !== "wave") {
+      setError("Orange Money n'est pas encore disponible — utilisez Wave pour le moment.");
+      return;
+    }
     if (
       !clientFirstName.trim() ||
       !clientLastName.trim() ||
@@ -101,40 +89,24 @@ export default function PayPage() {
     }
     setError("");
     setPaying(true);
-    const res = await fetch(`/api/pay/${slug}`, {
+    const res = await apiFetch(`/api/orders/from-product/${slug}`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        action: "pay",
-        paymentMethod: method,
-        clientFirstName: clientFirstName.trim(),
-        clientLastName: clientLastName.trim(),
-        clientPhone: clientPhone.trim(),
-        clientAddress: clientAddress.trim(),
+        client_name: `${clientFirstName.trim()} ${clientLastName.trim()}`.trim(),
+        client_first_name: clientFirstName.trim(),
+        client_phone: clientPhone.trim(),
+        client_address: clientAddress.trim(),
       }),
     });
     const data = await res.json();
     setPaying(false);
     if (!res.ok) {
-      setError(data.error || "Paiement impossible");
+      setError(extractApiError(data, "Paiement impossible"));
       return;
     }
-    if (data.paymentUrl) {
-      window.location.href = data.paymentUrl;
-      return;
-    }
-    setPaid(false);
-    if (data.orderSlug) {
-      setTrackingSlug(data.orderSlug);
-      setIsProductLink(false);
-      router.replace(`/orderlink/${data.orderSlug}`);
-      const trackRes = await fetch(`/api/pay/${data.orderSlug}`);
-      if (trackRes.ok) {
-        const trackData = await trackRes.json();
-        setOrder(trackData.order);
-      }
-    }
-    if (data.message) setError(data.message);
+    setTrackingSlug(data.slug);
+    router.replace(`/orderlink/${data.slug}`);
+    window.location.href = data.wave_launch_url;
   };
 
   if (loading) {
@@ -176,9 +148,10 @@ export default function PayPage() {
   }
 
   // Dès que le client revient du paiement (success) ou que le statut est paid/protection,
-  // afficher directement le code — pas d'écran intermédiaire.
+  // afficher directement le code — pas d'écran intermédiaire. Si le webhook Wave
+  // n'est pas encore arrivé, DeliveryValidation réconcilie lui-même activement
+  // (voir son appel verify-payment interne).
   const showDelivery =
-    paid ||
     (paymentReturn === "success" && !order.isProductLink) ||
     status === "paid" ||
     status === "protection";

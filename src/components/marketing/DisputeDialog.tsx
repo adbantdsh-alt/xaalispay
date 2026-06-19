@@ -1,16 +1,17 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
-import { AlertTriangle, CheckCircle2, ImagePlus, Search, Trash2, X } from "lucide-react";
+import Link from "next/link";
+import { AlertTriangle, CheckCircle2, ImagePlus, Trash2, X } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
+import { apiFetch, extractApiError } from "@/lib/api-client";
 
 interface PublicDisputeOrder {
   productName: string;
   productImage?: string;
   productDescription?: string;
   sellerName: string;
-  clientName?: string;
   amount: number;
   status: string;
 }
@@ -41,80 +42,68 @@ function readMedia(file: File): Promise<EvidenceMedia> {
 export function DisputeDialog({
   open,
   onClose,
+  orderSlug,
   initialPin = "",
   variant = "modal",
 }: {
   open: boolean;
   onClose: () => void;
+  orderSlug?: string;
   initialPin?: string;
   variant?: "modal" | "page";
 }) {
-  const [pin, setPin] = useState("");
+  const [pin, setPin] = useState(initialPin.replace(/\D/g, "").slice(0, 4));
   const [order, setOrder] = useState<PublicDisputeOrder | null>(null);
   const [reason, setReason] = useState("");
   const [media, setMedia] = useState<EvidenceMedia[]>([]);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-  const [loading, setLoading] = useState(false);
-  const autoLookupRef = useRef("");
+  const [loading, setLoading] = useState(!!orderSlug);
+  const [alreadyOpen, setAlreadyOpen] = useState(false);
 
-  const lookupPin = async (targetPin: string) => {
-    setError("");
-    setSuccess("");
-    setLoading(true);
-    try {
-      const res = await fetch("/api/disputes", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "lookup", pin: targetPin }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Commande introuvable");
-      setOrder(data.order);
-    } catch (err) {
-      setOrder(null);
-      setError(err instanceof Error ? err.message : "Commande introuvable");
-    } finally {
-      setLoading(false);
-    }
-  };
-
+  // Retrouve la commande par son slug (capability token de la commande,
+  // jamais par PIN seul — c'est exactement la faille d'énumération trouvée
+  // dans l'audit : PIN seul = 10000 combinaisons à essayer sur toute la base).
   useEffect(() => {
-    if (!open) return;
-    const previous = document.body.style.overflow;
-    if (variant === "modal") document.body.style.overflow = "hidden";
+    if (!open || !orderSlug) return;
+    let cancelled = false;
+    setLoading(true);
+    setError("");
+    apiFetch(`/api/orders/${orderSlug}`)
+      .then(async (res) => {
+        if (cancelled) return;
+        if (!res.ok) {
+          setOrder(null);
+          setError("Commande introuvable. Vérifiez le lien reçu après paiement.");
+          return;
+        }
+        const data = await res.json();
+        setOrder({
+          productName: data.product_name,
+          productImage: data.product_image || undefined,
+          productDescription: data.product_description || undefined,
+          sellerName: data.seller_business_name,
+          amount: data.checkout_total,
+          status: data.status,
+        });
+        if (data.status === "dispute") setAlreadyOpen(true);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
     return () => {
-      document.body.style.overflow = previous;
+      cancelled = true;
     };
-  }, [open, variant]);
+  }, [open, orderSlug]);
 
   useEffect(() => {
     if (open) return;
-    setPin("");
-    setOrder(null);
+    setPin(initialPin.replace(/\D/g, "").slice(0, 4));
     setReason("");
     setMedia([]);
     setError("");
     setSuccess("");
-    setLoading(false);
-  }, [open]);
-
-  useEffect(() => {
-    if (!open) return;
-    const clean = initialPin.replace(/\D/g, "").slice(0, 4);
-    if (!clean) return;
-    setPin(clean);
-    if (clean.length === 4 && autoLookupRef.current !== clean) {
-      autoLookupRef.current = clean;
-      lookupPin(clean);
-    }
-  }, [initialPin, open]);
-
-  const lookup = async (e: FormEvent) => {
-    e.preventDefault();
-    autoLookupRef.current = pin;
-    await lookupPin(pin);
-  };
+  }, [open, initialPin]);
 
   const handleFiles = async (files: FileList | null) => {
     setError("");
@@ -151,7 +140,11 @@ export function DisputeDialog({
     setError("");
     setSuccess("");
 
-    if (!order) return;
+    if (!order || !orderSlug) return;
+    if (pin.length !== 4) {
+      setError("Entrez le code livraison à 4 chiffres reçu après paiement.");
+      return;
+    }
     if (reason.trim().length < 12) {
       setError("Expliquez le problème en quelques mots.");
       return;
@@ -163,16 +156,15 @@ export function DisputeDialog({
 
     setLoading(true);
     try {
-      const res = await fetch("/api/disputes", {
+      const res = await apiFetch(`/api/orders/${orderSlug}/dispute`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "submit", pin, reason, media }),
+        body: JSON.stringify({ pin, reason, media }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Litige impossible");
-      setOrder(data.order);
+      if (!res.ok) throw new Error(extractApiError(data, "Litige impossible"));
+      setAlreadyOpen(!!data.already_open);
       setSuccess(
-        data.alreadyOpen
+        data.already_open
           ? "Ce litige est déjà ouvert. Notre équipe suit le dossier."
           : "Litige ouvert. L'argent reste bloqué le temps de l'examen."
       );
@@ -184,6 +176,50 @@ export function DisputeDialog({
   };
 
   if (!open) return null;
+
+  // Pas de lien de commande : pas de moyen sûr de retrouver une commande
+  // sans slug (le PIN seul n'identifie rien de façon sûre — voir plus haut).
+  // Oriente vers le seul chemin légitime (lien reçu après paiement) ou le
+  // support direct, plutôt que d'exposer une recherche par PIN seul.
+  if (!orderSlug) {
+    const content = (
+      <section
+        className={`lp-dispute-dialog ${variant === "page" ? "lp-dispute-dialog-page" : ""}`}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="dispute-title"
+        onClick={(e) => variant === "modal" && e.stopPropagation()}
+      >
+        {variant === "modal" && (
+          <button type="button" className="lp-dispute-close" onClick={onClose} aria-label="Fermer">
+            <X size={18} strokeWidth={1.5} />
+          </button>
+        )}
+        <span className="lp-dispute-kicker">
+          <AlertTriangle size={16} strokeWidth={1.5} />
+          Séquestre bloqué en cas de problème
+        </span>
+        <h2 id="dispute-title" className="lp-dispute-title serif">
+          Ouvrir un litige
+        </h2>
+        <p className="lp-dispute-copy">
+          Retrouvez le lien de votre commande — envoyé après paiement, ou accessible depuis
+          la page &laquo; Validation livraison &raquo; — pour ouvrir un litige depuis là.
+          Vous pouvez aussi{" "}
+          <Link href="/contact" className="chargeback-link">
+            contacter notre support
+          </Link>{" "}
+          directement.
+        </p>
+      </section>
+    );
+    if (variant === "page") return content;
+    return (
+      <div className="lp-dispute-overlay" role="presentation" onClick={onClose}>
+        {content}
+      </div>
+    );
+  }
 
   const content = (
       <section
@@ -206,30 +242,10 @@ export function DisputeDialog({
         <h2 id="dispute-title" className="lp-dispute-title serif">
           Ouvrir un litige
         </h2>
-        <p className="lp-dispute-copy">
-          Entrez le code livraison à 4 chiffres reçu après paiement. Nous retrouvons la
-          commande, puis vous ajoutez le motif et au moins une preuve.
-        </p>
 
-        <form onSubmit={lookup} className="lp-dispute-pin-form">
-          <input
-            value={pin}
-            onChange={(e) => setPin(e.target.value.replace(/\D/g, "").slice(0, 4))}
-            inputMode="numeric"
-            pattern="[0-9]{4}"
-            className="lp-dispute-pin"
-            placeholder="Code livraison"
-            aria-label="Code livraison"
-          />
-          <button type="submit" className="lp-btn lp-btn-primary" disabled={loading || pin.length !== 4}>
-            {loading && !order ? (
-              <span className="btn-spinner" aria-hidden="true" />
-            ) : (
-              <Search size={17} strokeWidth={1.5} />
-            )}
-            {loading && !order ? "Recherche…" : "Rechercher"}
-          </button>
-        </form>
+        {loading && !order && <p className="lp-dispute-copy">Recherche de la commande…</p>}
+
+        {!loading && !order && error && <p className="lp-dispute-error">{error}</p>}
 
         {order && (
           <form onSubmit={submitDispute} className="lp-dispute-body">
@@ -258,8 +274,27 @@ export function DisputeDialog({
               )}
             </div>
 
-            {!success && (
+            {alreadyOpen && !success && (
+              <p className="lp-dispute-copy">Un litige est déjà ouvert sur cette commande.</p>
+            )}
+
+            {!success && order.status === "protection" && (
               <>
+                <p className="lp-dispute-copy">
+                  Entrez le code livraison à 4 chiffres reçu après paiement, le motif et au
+                  moins une preuve.
+                </p>
+
+                <input
+                  value={pin}
+                  onChange={(e) => setPin(e.target.value.replace(/\D/g, "").slice(0, 4))}
+                  inputMode="numeric"
+                  pattern="[0-9]{4}"
+                  className="lp-dispute-pin"
+                  placeholder="Code livraison"
+                  aria-label="Code livraison"
+                />
+
                 <textarea
                   value={reason}
                   onChange={(e) => setReason(e.target.value)}
@@ -316,10 +351,17 @@ export function DisputeDialog({
                 </button>
               </>
             )}
+
+            {!success && order.status !== "protection" && !alreadyOpen && (
+              <p className="lp-dispute-copy">
+                Le litige n&apos;est possible que pendant la fenêtre de Séquestre Flash, après
+                confirmation de la réception.
+              </p>
+            )}
           </form>
         )}
 
-        {error && <p className="lp-dispute-error">{error}</p>}
+        {error && order && <p className="lp-dispute-error">{error}</p>}
         {success && <p className="lp-dispute-success">{success}</p>}
       </section>
   );

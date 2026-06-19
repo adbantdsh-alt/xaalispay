@@ -13,20 +13,11 @@ import { IconCheck, IconShield } from "@/components/ui/AppIcon";
 import { CopyButton } from "@/components/ui/CopyButton";
 import { buildPinShareMessage, buildWhatsAppUrl } from "@/lib/share";
 import { DELIVERY_CODE_TTL_MINUTES } from "@/lib/delivery-code";
-import type { OrderStatus } from "@/lib/types";
+import { apiFetch } from "@/lib/api-client";
+import { adaptDeliverySession, type AdaptedDeliverySession } from "@/lib/api-adapters";
 import styles from "./DeliveryValidation.module.css";
 
-type DeliverySession = {
-  orderId: string;
-  slug: string;
-  status: OrderStatus;
-  productName: string;
-  pin: string;
-  deliveryCodeIssuedAt?: string;
-  deliveryCodeExpiresAt?: string;
-  protectionEndsAt?: string;
-  clientDeliveryConfirmedAt?: string;
-};
+type DeliverySession = AdaptedDeliverySession;
 
 type Props = {
   orderSlug: string;
@@ -75,10 +66,10 @@ export function DeliveryValidation({
 
   /* ─── Chargement session ─── */
   const loadSession = useCallback(async () => {
-    const res = await fetch(`/api/delivery/${orderSlug}`);
+    const res = await apiFetch(`/api/orders/${orderSlug}`);
     if (!res.ok) return;
-    const data = await res.json();
-    if (data.session?.status === "pending_payment") {
+    const session = adaptDeliverySession(await res.json());
+    if (session.status === "pending_payment") {
       if (!pendingStartRef.current) pendingStartRef.current = Date.now();
       setPendingPayment(true);
       setLoading(false);
@@ -87,21 +78,23 @@ export function DeliveryValidation({
     pendingStartRef.current = null;
     verifyCalledRef.current = false;
     setPendingPayment(false);
-    setSession(data.session);
+    setSession(session);
     setLoading(false);
   }, [orderSlug]);
 
-  /* Appel /verify une seule fois dès pending_payment */
+  /* Appel verify-payment une seule fois dès pending_payment — Wave n'a pas
+   * de webhook garanti, on réconcilie activement plutôt que d'attendre. */
   useEffect(() => {
     if (!pendingPayment || verifyCalledRef.current) return;
     verifyCalledRef.current = true;
-    fetch(`/api/delivery/${orderSlug}/verify`, { method: "POST" })
+    apiFetch(`/api/orders/${orderSlug}/verify-payment`, { method: "POST" })
       .then((r) => r.json())
-      .then((data) => {
-        if (data.session && data.session.status !== "pending_payment") {
+      .then((raw) => {
+        const session = adaptDeliverySession(raw);
+        if (session.status !== "pending_payment") {
           pendingStartRef.current = null;
           setPendingPayment(false);
-          setSession(data.session);
+          setSession(session);
           setLoading(false);
         }
       })
@@ -171,10 +164,10 @@ export function DeliveryValidation({
     setRenewing(true);
     setError("");
     try {
-      const res = await fetch(`/api/delivery/${orderSlug}/renew`, { method: "POST" });
+      const res = await apiFetch(`/api/orders/${orderSlug}/renew-code`, { method: "POST" });
       const data = await res.json();
-      if (res.ok && data.session) {
-        setSession(data.session);
+      if (res.ok) {
+        setSession(adaptDeliverySession(data));
       } else {
         setError(data.error || "Impossible de renouveler le code.");
       }
@@ -222,9 +215,8 @@ export function DeliveryValidation({
     if (!session?.pin || !otpComplete) return;
     setOtpError("");
     setConfirming(true);
-    const res = await fetch(`/api/delivery/${orderSlug}/confirm`, {
+    const res = await apiFetch(`/api/orders/${orderSlug}/confirm-delivery-public`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ pin: enteredPin }),
     });
     const data = await res.json();
@@ -236,7 +228,7 @@ export function DeliveryValidation({
       return;
     }
     closeModal();
-    setSession(data.session);
+    setSession(adaptDeliverySession(data));
     onSessionChange?.();
   };
 
@@ -328,7 +320,7 @@ export function DeliveryValidation({
     );
   }
 
-  if (isProtection || session.clientDeliveryConfirmedAt) {
+  if (isProtection) {
     return (
       <div className={styles.deliverySecure}>
         <div className={styles.captureShield} aria-hidden="true" />
@@ -344,7 +336,10 @@ export function DeliveryValidation({
               <div className={styles.protectionFill} style={{ width: `${protectionProgress}%` }} />
             </div>
             <div style={{ marginTop: "0.75rem" }}>
-              <Link href={`/litige?code=${session.pin}`} className={`btn-ghost ${styles.pendingLink}`}>
+              <Link
+                href={`/litige?slug=${orderSlug}&code=${session.pin}`}
+                className={`btn-ghost ${styles.pendingLink}`}
+              >
                 Ouvrir un litige
               </Link>
             </div>

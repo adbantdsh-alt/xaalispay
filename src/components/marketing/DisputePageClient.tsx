@@ -3,7 +3,13 @@
 import { useRouter } from "next/navigation";
 import { DisputeDialog } from "./DisputeDialog";
 
-export function DisputePageClient({ initialPin }: { initialPin?: string }) {
+export function DisputePageClient({
+  initialPin,
+  orderSlug,
+}: {
+  initialPin?: string;
+  orderSlug?: string;
+}) {
   const router = useRouter();
 
   return (
@@ -11,6 +17,7 @@ export function DisputePageClient({ initialPin }: { initialPin?: string }) {
       open
       onClose={() => router.push("/")}
       initialPin={initialPin}
+      orderSlug={orderSlug}
       variant="page"
     />
   );
