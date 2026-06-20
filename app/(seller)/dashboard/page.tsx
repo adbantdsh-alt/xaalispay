@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import type { Order } from "@/lib/types";
 import { formatCurrency, getOrderTotal } from "@/lib/utils";
 import { filterOrders, type OrderFilterKey } from "@/lib/order-filters";
@@ -16,18 +17,27 @@ import { OrderFilterTabs } from "@/components/seller/OrderFilterTabs";
 import { OrderDetailSheet } from "@/components/seller/OrderDetailSheet";
 import { SellerStatsCard } from "@/components/seller/SellerStatsCard";
 import { computeSellerStats } from "@/lib/seller-stats";
-import { buildShopUrl } from "@/lib/site-url";
+import { buildShopUrl, formatPublicUrl } from "@/lib/site-url";
 import { useSellerData } from "@/components/seller/SellerDataProvider";
 import { apiFetch } from "@/lib/api-client";
 
-export default function DashboardPage() {
+function DashboardContent() {
   const { data, loading, refresh } = useSellerData();
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [productCount, setProductCount] = useState(0);
   const [error, setError] = useState("");
   const [pinErrorOrderId, setPinErrorOrderId] = useState<string | null>(null);
   const [orderFilter, setOrderFilter] = useState<OrderFilterKey>("all");
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [cancelWarning, setCancelWarning] = useState("");
+  const [showWelcome, setShowWelcome] = useState(searchParams.get("welcome") === "1");
+
+  useEffect(() => {
+    if (searchParams.get("welcome") === "1") {
+      router.replace("/dashboard", { scroll: false });
+    }
+  }, [searchParams, router]);
 
   useEffect(() => {
     apiFetch("/api/catalog/products/")
@@ -128,6 +138,19 @@ export default function DashboardPage() {
 
   return (
     <div className="seller-dashboard">
+      {showWelcome && (
+        <p className="alert-info animate-fade-up" style={{ margin: "0 0 0.75rem" }}>
+          Votre boutique est en ligne sur <strong>{formatPublicUrl(shopUrl)}</strong>.{" "}
+          <button
+            type="button"
+            onClick={() => setShowWelcome(false)}
+            className="btn-ghost"
+            style={{ marginLeft: "0.5rem", minHeight: "auto", padding: "0.25rem 0.5rem" }}
+          >
+            OK
+          </button>
+        </p>
+      )}
       <WalletOverview
         breakdown={breakdown}
         shopUrl={shopUrl}
@@ -265,5 +288,13 @@ export default function DashboardPage() {
         />
       )}
     </div>
+  );
+}
+
+export default function DashboardPage() {
+  return (
+    <Suspense fallback={<DashboardSkeleton />}>
+      <DashboardContent />
+    </Suspense>
   );
 }

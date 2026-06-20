@@ -137,6 +137,13 @@ function CreatePageContent() {
 
   const shopUrl = profile ? buildShopUrl(profile.username) : "";
 
+  const cooldownUntil = useMemo(() => {
+    if (!profile?.usernameChangedAt) return null;
+    const next = new Date(profile.usernameChangedAt);
+    next.setDate(next.getDate() + 30);
+    return next > new Date() ? next : null;
+  }, [profile?.usernameChangedAt]);
+
   const filteredProducts = useMemo(() => {
     const q = productSearch.trim().toLowerCase();
     if (!q) return products;
@@ -353,14 +360,20 @@ function CreatePageContent() {
       return;
     }
     setPseudoSaving(true);
-    const res = await apiFetch("/api/auth/me", {
-      method: "PATCH",
+    const res = await apiFetch("/api/auth/username/change", {
+      method: "POST",
       body: JSON.stringify({ username: clean }),
     });
     const data = await res.json();
     setPseudoSaving(false);
     if (!res.ok) {
-      setError(extractApiError(data, "Modification impossible"));
+      if (res.status === 429 && data.next_change_at) {
+        setError(
+          `Prochain changement possible le ${new Date(data.next_change_at).toLocaleDateString("fr-FR")}.`
+        );
+      } else {
+        setError(extractApiError(data, "Modification impossible"));
+      }
       return;
     }
     setPseudo(data.username);
@@ -579,9 +592,17 @@ function CreatePageContent() {
             <p className="shop-card-desc text-muted">
               Votre XaalisTag est votre identifiant public unique, simple et
               facile à retenir. Les clients vous trouvent sur{" "}
-              <strong>xaalispay.com/seller/{profile.username}</strong>
-              {" "}— 1 changement max. par mois.
+              <strong>xaalispay.com/seller/{profile.username}</strong>.
             </p>
+            {cooldownUntil ? (
+              <p className="alert-info">
+                Prochain changement possible le {cooldownUntil.toLocaleDateString("fr-FR")}.
+              </p>
+            ) : (
+              <p className="text-xs text-muted">
+                Vous pouvez changer votre XaalisTag une fois tous les 30 jours.
+              </p>
+            )}
             <div className="pseudo-input-row">
               <span className="pseudo-prefix">@</span>
               <input
@@ -590,11 +611,12 @@ function CreatePageContent() {
                 onChange={(e) => setPseudo(slugifyUsername(e.target.value))}
                 maxLength={20}
                 placeholder="adba"
+                disabled={!!cooldownUntil}
               />
             </div>
             <button
               type="submit"
-              disabled={pseudoSaving || pseudo === profile.username}
+              disabled={pseudoSaving || pseudo === profile.username || !!cooldownUntil}
               className="btn-seller-primary btn-compact btn-inline"
             >
               {pseudoSaving ? "…" : "Enregistrer"}

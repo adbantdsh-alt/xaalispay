@@ -7,7 +7,7 @@ import { BrandMark } from "@/components/ui/BrandMark";
 import { OtpInput, emptyDigits } from "@/components/ui/OtpInput";
 import { useAuth } from "@/lib/auth-client";
 import { requestOtp, verifyOtp, resetPin } from "@/lib/otp-client";
-import { isValidUsername, isValidSenegalMobilePhone, slugifyUsername, toSenegalE164 } from "@/lib/utils";
+import { isValidSenegalMobilePhone, toSenegalE164 } from "@/lib/utils";
 
 type Step =
   | "login"
@@ -68,7 +68,6 @@ function AuthForm() {
   const [newPin2, setNewPin2] = useState<string[]>(emptyDigits(4));
   const [displayName, setDisplayName] = useState("");
   const [businessName, setBusinessName] = useState("");
-  const [username, setUsername] = useState("");
   const [signupPin1, setSignupPin1] = useState<string[]>(emptyDigits(4));
   const [signupPin2, setSignupPin2] = useState<string[]>(emptyDigits(4));
   const [error, setError] = useState("");
@@ -219,11 +218,6 @@ function AuthForm() {
   const handleSignupDetailsSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     resetMessages();
-    const cleanUsername = slugifyUsername(username);
-    if (!isValidUsername(cleanUsername)) {
-      setError("Identifiant invalide : 3-20 caractères, lettres minuscules, chiffres et _");
-      return;
-    }
     const pinValue = signupPin1.join("");
     if (pinValue.length !== 4) {
       setError("Choisissez un code à 4 chiffres.");
@@ -239,7 +233,6 @@ function AuthForm() {
         phone: toSenegalE164(phone),
         ticket,
         pin: pinValue,
-        username: cleanUsername,
         display_name: displayName,
         business_name: businessName,
       });
@@ -247,7 +240,7 @@ function AuthForm() {
         setError(result.error || "Inscription échouée");
         return;
       }
-      router.push("/dashboard");
+      router.push("/dashboard?welcome=1");
     } finally {
       setLoading(false);
     }
@@ -459,22 +452,8 @@ function AuthForm() {
               required
               placeholder="Ma Boutique SN"
             />
-          </div>
-          <div>
-            <label className="mb-1.5 block text-sm font-medium">Votre XaalisTag *</label>
-            <div className="relative">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-black">@</span>
-              <input
-                className="input-field pl-9"
-                value={username}
-                onChange={(e) => setUsername(slugifyUsername(e.target.value))}
-                required
-                placeholder="adba"
-              />
-            </div>
             <p className="mt-1 text-xs text-muted">
-              Votre identifiant unique. Vos clients vous paient via xaalispay.com/seller/
-              {username || "votre_tag"}
+              Votre XaalisTag (xaalispay.com/seller/...) sera généré automatiquement à partir de ce nom.
             </p>
           </div>
 

@@ -16,6 +16,7 @@ export function adaptProfile(p: Json): Profile {
     phone: p.phone,
     email: p.email || undefined,
     role: p.role,
+    usernameChangedAt: p.username_changed_at || undefined,
     payoutMethod: p.payout_method || undefined,
     payoutPhone: p.payout_phone || undefined,
     autoPayoutEnabled: p.auto_payout_enabled,

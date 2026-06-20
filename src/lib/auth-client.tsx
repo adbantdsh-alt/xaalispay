@@ -33,7 +33,6 @@ interface SignupPayload {
   phone: string;
   ticket: string;
   pin: string;
-  username: string;
   display_name: string;
   business_name: string;
   email?: string;
