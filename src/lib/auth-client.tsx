@@ -2,17 +2,16 @@
 
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
 import { getApiBaseUrl } from "./site-url";
-import { refreshAccessToken, setApiAccessToken } from "./api-client";
+import { refreshAccessToken, setApiAccessToken, extractApiError } from "./api-client";
 
 export interface Profile {
   id: number;
-  email: string;
+  phone: string;
+  email?: string | null;
   username: string;
   display_name: string;
   business_name: string;
-  phone: string;
   role: "seller" | "super_admin";
-  email_verified_at: string | null;
   [key: string]: unknown;
 }
 
@@ -21,20 +20,31 @@ interface AuthResult {
   error?: string;
 }
 
+/** Connexion en deux étapes : login() ne renvoie jamais de tokens — un
+ * succès signifie "PIN correct, OTP envoyé", la session ne devient
+ * effective qu'après confirmLogin(). Voir apps.accounts.views.LoginView
+ * côté backend (téléphone public sur la page boutique → l'OTP de
+ * confirmation à chaque connexion explicite compense). */
+interface LoginResult extends AuthResult {
+  lockedUntil?: string | null;
+}
+
 interface SignupPayload {
-  email: string;
-  password: string;
+  phone: string;
+  ticket: string;
+  pin: string;
   username: string;
   display_name: string;
   business_name: string;
-  phone?: string;
+  email?: string;
 }
 
 interface AuthContextValue {
   user: Profile | null;
   accessToken: string | null;
   loading: boolean;
-  login: (email: string, password: string) => Promise<AuthResult>;
+  login: (phone: string, pin: string) => Promise<LoginResult>;
+  confirmLogin: (phone: string, ticket: string) => Promise<AuthResult>;
   signup: (payload: SignupPayload) => Promise<AuthResult>;
   logout: () => Promise<void>;
 }
@@ -66,7 +76,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Au montage : tente un refresh silencieux via la même fonction partagée
   // que apiFetch (src/lib/api-client.ts) — jamais deux appels concurrents à
   // /api/auth/refresh, qui casseraient la rotation de refresh token côté
-  // Django (le second utiliserait un token déjà mis en liste noire).
+  // Django (le second utiliserait un token déjà mis en liste noire). Avec
+  // REFRESH_TOKEN_LIFETIME à 180 jours, ce refresh silencieux suffit à
+  // garder la session active sans repasser par /login dans l'immense
+  // majorité des cas (façon Wave).
   useEffect(() => {
     (async () => {
       try {
@@ -81,15 +94,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     })();
   }, []);
 
-  const login = useCallback(
-    async (email: string, password: string): Promise<AuthResult> => {
-      const res = await fetch("/api/auth/login", {
+  const login = useCallback(async (phone: string, pin: string): Promise<LoginResult> => {
+    const res = await fetch("/api/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ phone, pin }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      return { ok: false, error: extractApiError(data, "Connexion échouée"), lockedUntil: data.locked_until };
+    }
+    return { ok: true };
+  }, []);
+
+  const confirmLogin = useCallback(
+    async (phone: string, ticket: string): Promise<AuthResult> => {
+      const res = await fetch("/api/auth/login/confirm", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ phone, ticket }),
       });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) return { ok: false, error: data.error || "Connexion échouée" };
+      if (!res.ok) return { ok: false, error: extractApiError(data, "Code incorrect") };
       applyToken(data.access);
       setUser(data.profile);
       return { ok: true };
@@ -106,11 +132,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        const message =
-          data.error ||
-          (typeof data === "object" ? Object.values(data).flat()[0] : null) ||
-          "Inscription échouée";
-        return { ok: false, error: String(message) };
+        return { ok: false, error: extractApiError(data, "Inscription échouée") };
       }
       applyToken(data.access);
       setUser(data.profile);
@@ -126,7 +148,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [applyToken]);
 
   return (
-    <AuthContext.Provider value={{ user, accessToken, loading, login, signup, logout }}>
+    <AuthContext.Provider value={{ user, accessToken, loading, login, confirmLogin, signup, logout }}>
       {children}
     </AuthContext.Provider>
   );

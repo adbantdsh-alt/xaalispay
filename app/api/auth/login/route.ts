@@ -1,37 +1,20 @@
 import { NextResponse } from "next/server";
-import { REFRESH_COOKIE_MAX_AGE, REFRESH_COOKIE_NAME } from "@/lib/auth-cookies";
 import { getApiBaseUrl } from "@/lib/site-url";
 
+/** Étape 1/2 de la connexion : phone+PIN. Ne pose jamais de cookie ici — sur
+ * succès, Django répond {otp_sent: true} sans aucun token (voir
+ * apps.accounts.views.LoginView côté backend) ; le cookie n'est posé qu'à
+ * /api/auth/login/confirm une fois l'OTP vérifié. */
 export async function POST(request: Request) {
   const body = await request.text();
   const apiBaseUrl = getApiBaseUrl();
 
-  const tokenRes = await fetch(`${apiBaseUrl}/api/auth/login`, {
+  const res = await fetch(`${apiBaseUrl}/api/auth/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body,
   });
-  const tokenData = await tokenRes.json().catch(() => ({}));
+  const data = await res.json().catch(() => ({}));
 
-  if (!tokenRes.ok) {
-    return NextResponse.json(
-      { error: "Email ou mot de passe incorrect" },
-      { status: tokenRes.status }
-    );
-  }
-
-  const meRes = await fetch(`${apiBaseUrl}/api/auth/me`, {
-    headers: { Authorization: `Bearer ${tokenData.access}` },
-  });
-  const profile = meRes.ok ? await meRes.json() : null;
-
-  const response = NextResponse.json({ access: tokenData.access, profile });
-  response.cookies.set(REFRESH_COOKIE_NAME, tokenData.refresh, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    path: "/",
-    maxAge: REFRESH_COOKIE_MAX_AGE,
-  });
-  return response;
+  return NextResponse.json(data, { status: res.status });
 }

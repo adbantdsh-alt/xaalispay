@@ -12,9 +12,11 @@ export interface Profile {
   username: string;
   displayName: string;
   businessName: string;
-  phone?: string;
+  // Identifiant de connexion (E.164, +221XXXXXXXXX) — toujours présent,
+  // immuable après l'inscription (vérifié par OTP, voir apps.accounts).
+  phone: string;
+  email?: string | null;
   role?: "super_admin" | "seller";
-  emailVerifiedAt?: string;
   usernameChangedAt?: string;
   payoutMethod?: "wave" | "orange";
   payoutPhone?: string;
@@ -23,13 +25,6 @@ export interface Profile {
   autoPayoutMinAmount?: number;
   autoPayoutFixedAmount?: number;
   autoPayoutMinCompletedOrders?: number;
-  createdAt: string;
-}
-
-export interface AuthUser {
-  id: string;
-  email: string;
-  passwordHash: string;
   createdAt: string;
 }
 
@@ -183,18 +178,6 @@ export interface Payout {
   failureReason?: string;
   createdAt: string;
   updatedAt: string;
-}
-
-export interface Database {
-  authUsers: AuthUser[];
-  profiles: Profile[];
-  products: Product[];
-  orders: Order[];
-  ledgerEntries: LedgerEntry[];
-  sellerBalances: SellerBalance[];
-  paymentAttempts: PaymentAttempt[];
-  webhookEvents: WebhookEvent[];
-  payouts: Payout[];
 }
 
 export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {

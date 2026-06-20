@@ -3,8 +3,8 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { buildShopPath } from "@/lib/site-url";
+import { formatSenegalPhoneDisplay } from "@/lib/utils";
 import { DashboardSkeleton } from "@/components/ui/Skeleton";
-import { SettingsPhoneEditor } from "@/components/seller/SettingsPhoneEditor";
 import { SettingsProfileEditor } from "@/components/seller/SettingsProfileEditor";
 import { SettingsNotificationPrefs } from "@/components/seller/SettingsNotificationPrefs";
 import { useSellerData } from "@/components/seller/SellerDataProvider";
@@ -86,16 +86,6 @@ export default function SettingsPage() {
         <h1 className="settings-page-title">Paramètres</h1>
       </header>
 
-      {data && data.emailVerified === false && (
-        <div className="settings-email-alert" role="alert">
-          <p className="settings-email-alert-title">Confirmez votre email</p>
-          <p className="settings-email-alert-desc">
-            Vérifiez votre boîte mail pour activer la création de produits et les retraits.
-            Consultez aussi vos spams.
-          </p>
-        </div>
-      )}
-
       <section className="settings-profile-card">
         <div className="settings-profile-hero">
           <div className="settings-profile-avatar">{initial}</div>
@@ -124,12 +114,17 @@ export default function SettingsPage() {
           }}
         />
 
-        <SettingsPhoneEditor
-          phone={profile.phone}
-          onSaved={async () => {
-            await refresh({ silent: true });
-          }}
-        />
+        <div className="settings-info-grid settings-phone-grid">
+          <div className="settings-info-row settings-info-row-phone">
+            <span className="settings-phone-label">Téléphone</span>
+            <span className="settings-phone-value">
+              +221 {formatSenegalPhoneDisplay(profile.phone)}
+            </span>
+          </div>
+          <p className="settings-phone-hint text-muted">
+            Numéro de connexion — contactez le support pour le changer.
+          </p>
+        </div>
 
         <SettingsNotificationPrefs />
 

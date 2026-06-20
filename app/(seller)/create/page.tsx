@@ -32,7 +32,6 @@ function CreatePageContent() {
   const editProductId = searchParams.get("id");
   const { data: sellerData, refresh: refreshSeller } = useSellerData();
   const profile = sellerData?.profile ?? null;
-  const canCreateProducts = sellerData?.canCreateProducts !== false;
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -446,13 +445,6 @@ function CreatePageContent() {
           <ShopBackBar title="Nouveau produit" />
           {error && <p className="alert-danger">{error}</p>}
           {success && !createdPayUrl && <p className="toast-success" role="status">{success}</p>}
-          {!canCreateProducts && (
-            <p className="alert-danger" role="status">
-              Email non vérifié — connectez-vous et cliquez le lien reçu par mail pour publier des produits.
-              {" "}
-              <Link href="/auth" className="shop-inline-link-btn">Renvoyer le lien</Link>
-            </p>
-          )}
           {createdPayUrl ? (
             <PaymentLinkSuccessPanel
               payUrl={createdPayUrl}
@@ -473,7 +465,7 @@ function CreatePageContent() {
                 Chaque produit reçoit automatiquement son lien de paiement XaalisPay.
               </p>
               <ProductFields form={productForm} onChange={setProductForm} />
-              <button type="submit" disabled={saving || !canCreateProducts} className="btn-seller-primary btn-compact btn-inline">
+              <button type="submit" disabled={saving} className="btn-seller-primary btn-compact btn-inline">
                 {saving ? "Enregistrement…" : "Créer le produit"}
               </button>
             </form>

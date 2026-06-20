@@ -30,8 +30,6 @@ export interface SellerDashboardPayload {
   wallet: SellerWalletSummary;
   orders: Order[];
   protectionMinutes: number;
-  canCreateProducts?: boolean;
-  emailVerified?: boolean;
   isSuperAdmin?: boolean;
 }
 
@@ -78,11 +76,6 @@ async function fetchDashboard(): Promise<SellerDashboardPayload | null> {
       },
       orders: (ordersJson as Array<Record<string, unknown>>).map(adaptOrder),
       protectionMinutes: walletJson.protection_minutes ?? 30,
-      // Pas de flux de vérification email côté Django pour l'instant —
-      // jamais bloquer la création de produits sur une fonctionnalité qui
-      // n'existe pas encore (à durcir quand l'email-verification sera porté).
-      canCreateProducts: true,
-      emailVerified: true,
       isSuperAdmin: profileJson.role === "super_admin",
     };
   })().finally(() => {
