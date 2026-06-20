@@ -210,7 +210,7 @@ function DashboardContent() {
 
       {/* Alerte annulation */}
       {cancelWarning && (
-        <p className="alert-danger animate-fade-up" style={{ margin: "0.75rem 0", fontSize: "0.85rem" }}>
+        <p className="alert-danger animate-fade-up" role="alert" style={{ margin: "0.75rem 0", fontSize: "0.85rem" }}>
           {cancelWarning}
         </p>
       )}

@@ -36,13 +36,16 @@ export function SellerShopClient({
       ) : (
         products.map((product) => (
           <article key={product.id} className="product-card animate-fade-up">
-            <ProductImage
-              src={product.image}
-              alt={product.name}
-              className="product-card-media"
-              placeholderClassName="product-card-media-placeholder"
-              iconSize={32}
-            />
+            <div className="product-card-media-wrap">
+              <ProductImage
+                src={product.image}
+                alt={product.name}
+                className="product-card-media"
+                placeholderClassName="product-card-media-placeholder"
+                iconSize={32}
+                fill
+              />
+            </div>
             <div className="product-card-body">
               <p className="product-card-price">
                 {formatCurrency(getOrderTotal({ productPrice: product.price, deliveryCost: product.deliveryCost || 0 }))}

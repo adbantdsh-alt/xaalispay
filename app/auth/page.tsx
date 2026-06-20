@@ -342,7 +342,7 @@ function AuthForm() {
               />
             </div>
 
-            {error && <p className="alert-danger">{error}</p>}
+            {error && <p className="alert-danger" role="alert">{error}</p>}
 
             <button type="submit" disabled={loading || pin.length !== 4} className="btn-primary">
               {loading ? "Chargement..." : "Se connecter"}
@@ -373,8 +373,8 @@ function AuthForm() {
           </p>
           <OtpInput length={6} value={otpDigits} onChange={setOtpDigits} autoFocus />
 
-          {info && <p className="toast-success" style={{ textAlign: "center" }}>{info}</p>}
-          {error && <p className="alert-danger">{error}</p>}
+          {info && <p className="toast-success" role="status" style={{ textAlign: "center" }}>{info}</p>}
+          {error && <p className="alert-danger" role="alert">{error}</p>}
 
           <button
             type="submit"
@@ -419,7 +419,7 @@ function AuthForm() {
             style={{ display: "flex", flexDirection: "column", gap: "1rem" }}
           >
             <PhoneField value={phone} onChange={setPhone} />
-            {error && <p className="alert-danger">{error}</p>}
+            {error && <p className="alert-danger" role="alert">{error}</p>}
             <button type="submit" disabled={loading} className="btn-primary">
               {loading ? "Envoi..." : "Recevoir le code"}
             </button>
@@ -469,7 +469,7 @@ function AuthForm() {
             Ce code remplace le mot de passe — il vous sera demandé pour vous connecter.
           </p>
 
-          {error && <p className="alert-danger">{error}</p>}
+          {error && <p className="alert-danger" role="alert">{error}</p>}
 
           <button type="submit" disabled={loading} className="btn-primary">
             {loading ? "Création..." : "Créer mon compte vendeur"}
@@ -484,7 +484,7 @@ function AuthForm() {
           style={{ display: "flex", flexDirection: "column", gap: "1rem" }}
         >
           <PhoneField value={phone} onChange={setPhone} />
-          {error && <p className="alert-danger">{error}</p>}
+          {error && <p className="alert-danger" role="alert">{error}</p>}
           <button type="submit" disabled={loading} className="btn-primary">
             {loading ? "Envoi..." : "Recevoir le code"}
           </button>
@@ -513,7 +513,7 @@ function AuthForm() {
             <label className="mb-1.5 block text-sm font-medium">Confirmez le code</label>
             <OtpInput length={4} value={newPin2} onChange={setNewPin2} />
           </div>
-          {error && <p className="alert-danger">{error}</p>}
+          {error && <p className="alert-danger" role="alert">{error}</p>}
           <button type="submit" disabled={loading} className="btn-primary">
             {loading ? "Enregistrement..." : "Valider"}
           </button>

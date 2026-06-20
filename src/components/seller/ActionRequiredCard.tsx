@@ -61,13 +61,14 @@ export function ActionRequiredCard({
         </p>
         <form onSubmit={handleSubmit} className="action-card-form">
           <input
-            className="input-field action-pin-input"
+            className={`input-field action-pin-input${error ? " has-error" : ""}`}
             placeholder="Code PIN client"
             maxLength={4}
             value={pin}
             onChange={(e) => setPin(e.target.value.replace(/\D/g, ""))}
             inputMode="numeric"
             autoComplete="off"
+            aria-invalid={!!error}
           />
           <button
             type="submit"
@@ -86,7 +87,7 @@ export function ActionRequiredCard({
           </button>
         </form>
         {error && (
-          <p className="alert-danger" style={{ marginTop: "0.75rem" }}>
+          <p className="alert-danger" role="alert" style={{ marginTop: "0.75rem" }}>
             {error}
           </p>
         )}
@@ -134,7 +135,7 @@ export function ActionRequiredCard({
               />
             </label>
             {cancelWarning && (
-              <p className="alert-danger" style={{ marginTop: "0.75rem", fontSize: "0.82rem" }}>
+              <p className="alert-danger" role="alert" style={{ marginTop: "0.75rem", fontSize: "0.82rem" }}>
                 {cancelWarning}
               </p>
             )}

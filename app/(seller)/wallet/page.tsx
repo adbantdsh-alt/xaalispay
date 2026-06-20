@@ -190,7 +190,7 @@ export default function WalletPage() {
           />
         </div>
 
-        {error && <p className="alert-danger">{error}</p>}
+        {error && <p className="alert-danger" role="alert">{error}</p>}
         {success && (
           <p className="toast-success" role="status">
             {success}

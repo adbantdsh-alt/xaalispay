@@ -55,7 +55,19 @@ export async function apiFetch(path: string, init: RequestInit = {}, _retried = 
     headers.set("Content-Type", "application/json");
   }
 
-  const response = await fetch(`${getApiBaseUrl()}${path}`, { ...init, headers });
+  let response: Response;
+  try {
+    response = await fetch(`${getApiBaseUrl()}${path}`, { ...init, headers });
+  } catch {
+    // Panne réseau réelle (hors-ligne, serveur inatteignable) — fetch() lève
+    // une exception ici, contrairement à un échec HTTP normal. On synthétise
+    // une Response pour que tous les appelants existants (if (!res.ok) {...})
+    // fonctionnent sans modification.
+    return new Response(
+      JSON.stringify({ error: "Connexion impossible. Vérifiez votre réseau et réessayez." }),
+      { status: 0, headers: { "Content-Type": "application/json" } }
+    );
+  }
 
   if (response.status === 401 && !_retried) {
     const newToken = await refreshAccessToken();

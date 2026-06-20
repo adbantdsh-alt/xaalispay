@@ -1,7 +1,11 @@
 "use client";
 
-import { useEffect } from "react";
+import { Drawer } from "vaul";
 
+/** Piège de focus, fermeture par Échap et geste de glissement pour fermer
+ * viennent gratuitement de vaul (qui encapsule Radix Dialog) — voir le plan
+ * d'amélioration UX/UI. Signature externe et classes CSS conservées à
+ * l'identique pour ne rien changer côté appelants (OrderDetailSheet…). */
 export function FloatingSheet({
   open,
   onClose,
@@ -13,35 +17,21 @@ export function FloatingSheet({
   title: string;
   children: React.ReactNode;
 }) {
-  useEffect(() => {
-    if (!open) return;
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = prev;
-    };
-  }, [open]);
-
-  if (!open) return null;
-
   return (
-    <div className="sheet-overlay" role="presentation" onClick={onClose}>
-      <div
-        className="sheet-panel animate-fade-up"
-        role="dialog"
-        aria-modal="true"
-        aria-label={title}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="sheet-panel-head">
-          <div className="sheet-handle" aria-hidden="true" />
-          <h2 className="sheet-panel-title">{title}</h2>
-          <button type="button" className="sheet-close" onClick={onClose} aria-label="Fermer">
-            ×
-          </button>
-        </div>
-        <div className="sheet-panel-body">{children}</div>
-      </div>
-    </div>
+    <Drawer.Root open={open} onOpenChange={(next) => !next && onClose()} shouldScaleBackground={false}>
+      <Drawer.Portal>
+        <Drawer.Overlay className="sheet-overlay" />
+        <Drawer.Content className="sheet-panel" aria-describedby={undefined}>
+          <div className="sheet-panel-head">
+            <Drawer.Handle className="sheet-handle" />
+            <Drawer.Title className="sheet-panel-title">{title}</Drawer.Title>
+            <Drawer.Close className="sheet-close" aria-label="Fermer">
+              ×
+            </Drawer.Close>
+          </div>
+          <div className="sheet-panel-body">{children}</div>
+        </Drawer.Content>
+      </Drawer.Portal>
+    </Drawer.Root>
   );
 }

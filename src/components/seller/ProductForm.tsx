@@ -251,7 +251,7 @@ export function ProductListItem({
   return (
     <article className="product-row">
       {product.image ? (
-        <ProductImage src={product.image} alt={product.name} className="product-row-img" />
+        <ProductImage src={product.image} alt={product.name} className="product-row-img" width={56} height={56} />
       ) : (
         <div className="product-row-img product-row-img-empty">
           <IconPackage size={22} />

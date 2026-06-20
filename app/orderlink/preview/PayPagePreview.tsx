@@ -147,7 +147,7 @@ export default function PayPagePreview() {
           <PayClientFields values={clientFields} onChange={setClientFields} />
         </PayCheckoutSection>
         <PayMethodButtons onPay={handleSimulatePay} paying={paying} />
-        {error && <p className="alert-danger">{error}</p>}
+        {error && <p className="alert-danger" role="alert">{error}</p>}
         <p className="pay-preview-sim-hint">
           Remplissez le formulaire puis cliquez Wave ou Orange pour simuler l&apos;achat.
         </p>

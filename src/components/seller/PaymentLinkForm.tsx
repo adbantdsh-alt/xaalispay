@@ -159,6 +159,8 @@ export function PaymentLinkForm({
                           className="product-pick-img"
                           placeholderClassName="product-pick-img product-pick-img-empty"
                           iconSize={20}
+                          width={40}
+                          height={40}
                         />
                         <div className="product-pick-body">
                           <p className="product-pick-name">{product.name}</p>

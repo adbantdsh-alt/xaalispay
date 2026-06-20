@@ -70,6 +70,8 @@ export function PaymentLinkSuccessPanel({
           className="link-success-product-img"
           placeholderClassName="link-success-product-img link-success-product-img-empty"
           iconSize={36}
+          width={400}
+          height={200}
         />
       ) : (
         <div className="link-success-product-img link-success-product-img-empty" aria-hidden>

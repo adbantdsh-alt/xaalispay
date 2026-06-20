@@ -37,6 +37,8 @@ export function PayOrderSummary({
             className={s.img}
             placeholderClassName={s.imgEmpty}
             iconSize={40}
+            width={112}
+            height={112}
           />
         ) : (
           <div className={s.imgEmpty} aria-hidden="true">

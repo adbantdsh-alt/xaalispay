@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { FloatingSheet } from "@/components/ui/FloatingSheet";
 import { formatCurrency, getOrderTotal } from "@/lib/utils";
 import { formatDeliveryWindow } from "@/lib/delivery-window";
@@ -168,11 +169,9 @@ export function OrderDetailSheet({
                   media.type === "video" ? (
                     <video key={`${media.url.slice(0, 32)}-${index}`} src={media.url} controls />
                   ) : (
-                    <img
-                      key={`${media.url.slice(0, 32)}-${index}`}
-                      src={media.url}
-                      alt={`Preuve ${index + 1}`}
-                    />
+                    <div key={`${media.url.slice(0, 32)}-${index}`} className="order-sheet-photo-cell">
+                      <Image src={media.url} alt={`Preuve ${index + 1}`} fill />
+                    </div>
                   )
                 )}
             </div>

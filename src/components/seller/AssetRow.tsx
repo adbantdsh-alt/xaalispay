@@ -86,6 +86,8 @@ export function AssetRow({
             className="asset-row-thumb"
             placeholderClassName="asset-row-thumb-empty"
             iconSize={18}
+            width={44}
+            height={44}
           />
         ) : (
           <StatusIcon type={visual.icon} />

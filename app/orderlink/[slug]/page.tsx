@@ -263,7 +263,7 @@ export default function PayPage() {
 
         <PayMethodButtons onPay={handlePay} paying={paying} />
 
-        {error && <p className="alert-danger">{error}</p>}
+        {error && <p className="alert-danger" role="alert">{error}</p>}
       </div>
     </div>
   );

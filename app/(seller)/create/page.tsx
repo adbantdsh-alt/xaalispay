@@ -417,7 +417,7 @@ function CreatePageContent() {
             filteredCount={filteredProducts.length}
           />
 
-          {error && <p className="alert-danger">{error}</p>}
+          {error && <p className="alert-danger" role="alert">{error}</p>}
           {success && <p className="toast-success" role="status">{success}</p>}
 
           <section className="shop-section shop-section-list">
@@ -456,7 +456,7 @@ function CreatePageContent() {
       {view === "product" && (
         <>
           <ShopBackBar title="Nouveau produit" />
-          {error && <p className="alert-danger">{error}</p>}
+          {error && <p className="alert-danger" role="alert">{error}</p>}
           {success && !createdPayUrl && <p className="toast-success" role="status">{success}</p>}
           {createdPayUrl ? (
             <PaymentLinkSuccessPanel
@@ -489,7 +489,7 @@ function CreatePageContent() {
       {view === "link" && (
         <>
           <ShopBackBar title="Lien de paiement" />
-          {error && <p className="alert-danger">{error}</p>}
+          {error && <p className="alert-danger" role="alert">{error}</p>}
           {success && <p className="toast-success" role="status">{success}</p>}
           <PaymentLinkForm
             products={products}
@@ -556,7 +556,7 @@ function CreatePageContent() {
                   {formatPublicUrl(buildProductPaymentUrl(editingProduct))}
                 </p>
               </div>
-              {error && <p className="alert-danger">{error}</p>}
+              {error && <p className="alert-danger" role="alert">{error}</p>}
               <ProductFields form={editForm} onChange={setEditForm} />
               <div className="edit-form-actions">
                 <button
@@ -586,7 +586,7 @@ function CreatePageContent() {
       {view === "pseudo" && profile && (
         <>
           <ShopBackBar title="Mon XaalisTag" />
-          {error && <p className="alert-danger">{error}</p>}
+          {error && <p className="alert-danger" role="alert">{error}</p>}
           {success && <p className="toast-success" role="status">{success}</p>}
           <form onSubmit={handlePseudoSave} className="shop-card form-stack">
             <p className="shop-card-desc text-muted">
