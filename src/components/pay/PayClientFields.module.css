@@ -1,4 +1,4 @@
-/* Bloc PayClientFields — design validé, ne pas modifier. */
+/* Bloc PayClientFields — mis à jour pour la charte graphique v2 (navy/coral). */
 
 .form {
   display: flex;
@@ -47,8 +47,8 @@
 
 .input:focus,
 .textarea:focus {
-  border-color: rgba(26, 79, 214, 0.45);
-  box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.15);
+  border-color: #1e3a5f;
+  box-shadow: 0 0 0 3px rgba(30, 58, 95, 0.12);
 }
 
 .phoneRow {
@@ -61,11 +61,11 @@
   align-items: center;
   padding: 0 0.875rem;
   border-radius: 14px;
-  background: #f4f7fb;
-  border: 1px solid rgba(15, 31, 102, 0.08);
+  background: #f5f5f5;
+  border: 1px solid #dedede;
   font-size: 0.875rem;
-  font-weight: 800;
-  color: #0f1f66;
+  font-weight: 700;
+  color: #1e3a5f;
   flex-shrink: 0;
 }
 

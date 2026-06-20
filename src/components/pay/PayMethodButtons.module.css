@@ -1,4 +1,4 @@
-/* Boutons PayMethodButtons — design validé, ne pas modifier. */
+/* Boutons PayMethodButtons — mis à jour pour la charte graphique v2 (navy/coral). */
 
 .stack {
   display: grid;
@@ -16,13 +16,12 @@
   min-height: 48px;
   padding: 0.5rem 0.625rem;
   border: none;
-  border-radius: 12px;
+  border-radius: 10px;
   cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
+  transition: transform 0.15s ease, filter 0.15s ease;
 }
 
 .payBtn:hover:not(:disabled) {
-  transform: translateY(-1px);
   filter: brightness(1.05);
 }
 
@@ -53,10 +52,10 @@
   to { transform: rotate(360deg); }
 }
 
-/* Wave — fond bleu, favicon + texte */
+/* Wave — fond bleu, favicon + texte (couleur de marque conservée) */
 .wave {
-  background: linear-gradient(180deg, #3dd5ff 0%, #00b8f0 100%);
-  box-shadow: 0 4px 16px rgba(0, 184, 240, 0.35);
+  background: #00b8e0;
+  box-shadow: none;
 }
 
 .waveFavicon {
@@ -77,10 +76,10 @@
   text-transform: lowercase;
 }
 
-/* Orange Money — fond sombre, favicon entier + texte blanc */
+/* Orange Money — fond sombre, favicon entier + texte blanc (couleur de marque conservée) */
 .orange {
   background: #2a2a2a;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.28);
+  box-shadow: none;
 }
 
 .orangeFaviconWrap {

@@ -1,11 +1,11 @@
-/* Bloc PayProtectionBlock — design validé, ne pas modifier. */
+/* Bloc PayProtectionBlock — mis à jour pour la charte graphique v2 (navy/coral). */
 
 .block {
   margin-bottom: 1.25rem;
   padding: 1rem;
-  border-radius: 18px;
-  background: linear-gradient(160deg, rgba(0, 212, 255, 0.09) 0%, rgba(15, 213, 199, 0.06) 100%);
-  border: 1px solid rgba(0, 212, 255, 0.22);
+  border-radius: 16px;
+  background: #f5f5f5;
+  border: 1px solid #dedede;
 }
 
 .header {
@@ -22,10 +22,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #0f1f66, #1a4fd6);
+  background: #1e3a5f;
   color: #fff;
   line-height: 1;
-  box-shadow: 0 4px 12px rgba(15, 31, 102, 0.16);
+  box-shadow: none;
 }
 
 .headerText {
@@ -35,10 +35,10 @@
 .kicker {
   margin: 0;
   font-size: 0.5625rem;
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: #1a4fd6;
+  color: #1e3a5f;
 }
 
 .title {
@@ -53,8 +53,8 @@
   margin-top: 0.75rem;
   padding: 0.75rem 0.875rem;
   border-radius: 14px;
-  background: rgba(255, 255, 255, 0.82);
-  border: 1px solid rgba(15, 31, 102, 0.06);
+  background: #fff;
+  border: 1px solid #dedede;
 }
 
 .steps {
@@ -95,18 +95,18 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #eef3fa;
-  color: #0f1f66;
+  background: #f5f5f5;
+  color: #1e3a5f;
   font-size: 0.6875rem;
-  font-weight: 800;
+  font-weight: 700;
   flex-shrink: 0;
   z-index: 1;
 }
 
 .stepNumActive {
-  background: linear-gradient(135deg, #0f1f66, #1a4fd6);
+  background: #1e3a5f;
   color: #fff;
-  box-shadow: 0 0 0 2px rgba(0, 212, 255, 0.22);
+  box-shadow: 0 0 0 2px rgba(30, 58, 95, 0.18);
 }
 
 .stepLine {
@@ -115,7 +115,7 @@
   min-height: 0.5rem;
   margin: 3px 0;
   border-radius: 999px;
-  background: linear-gradient(180deg, rgba(26, 79, 214, 0.35), rgba(15, 31, 102, 0.08));
+  background: #dedede;
 }
 
 .stepBody {

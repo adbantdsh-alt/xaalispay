@@ -32,7 +32,7 @@ export function LandingBuyers() {
           {CARDS.map((card, i) => (
             <Reveal key={card.title} className="lp-card" delay={i * 0.08}>
               <span className="lp-card-icon">
-                <card.Icon size={30} strokeWidth={1.25} />
+                <card.Icon size={30} strokeWidth={1.5} />
               </span>
               <h3 className="lp-card-title serif">{card.title}</h3>
               <p className="lp-card-desc">{card.desc}</p>

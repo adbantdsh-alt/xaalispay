@@ -71,7 +71,7 @@ export function LandingHowItWorks() {
             <Reveal key={step.num} className="lp-step" delay={i * 0.1}>
               <span className="lp-step-num serif">{step.num}</span>
               <span className="lp-step-icon">
-                <step.Icon size={26} strokeWidth={1.25} />
+                <step.Icon size={26} strokeWidth={1.5} />
               </span>
               <h3 className="lp-step-title serif">{step.title}</h3>
               <p className="lp-step-desc">{step.desc}</p>

@@ -66,7 +66,7 @@ export function LandingHero() {
             transition={{ duration: 0.6, ease: EASE, delay: 0.6 }}
           >
             <span className="lp-hero-search-label">
-              <AtSign size={15} strokeWidth={1.75} />
+              <AtSign size={15} strokeWidth={1.5} />
               Vous avez un XaalisTag ? Trouvez le vendeur et payez en sécurité
             </span>
             <VendorSearch large />
@@ -80,7 +80,7 @@ export function LandingHero() {
           >
             <Link href="/auth?mode=signup" className="lp-btn lp-btn-primary">
               Créer un compte
-              <ArrowRight size={18} strokeWidth={1.75} />
+              <ArrowRight size={18} strokeWidth={1.5} />
             </Link>
             <button
               type="button"

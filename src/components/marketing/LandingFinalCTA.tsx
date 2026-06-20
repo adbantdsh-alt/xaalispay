@@ -14,7 +14,7 @@ export function LandingFinalCTA() {
           </p>
           <Link href="/auth?mode=signup" className="lp-btn lp-btn-primary lp-btn-xl">
             Créer un compte
-            <ArrowRight size={20} strokeWidth={1.75} />
+            <ArrowRight size={20} strokeWidth={1.5} />
           </Link>
         </Reveal>
       </div>

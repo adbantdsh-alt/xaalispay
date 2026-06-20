@@ -25,7 +25,7 @@ export function LandingPaymentMockup() {
         <div className="lp-mini-steps">
           {TIMELINE.map((s) => (
             <div key={s.label} className={`lp-mini-step ${s.done ? "" : "is-pending"}`}>
-              <span className="lp-mini-tick">{s.done ? <Check size={11} strokeWidth={2.5} /> : null}</span>
+              <span className="lp-mini-tick">{s.done ? <Check size={11} strokeWidth={1.5} /> : null}</span>
               {s.label}
             </div>
           ))}
@@ -37,7 +37,7 @@ export function LandingPaymentMockup() {
           <div className="lp-phone-notch" aria-hidden="true" />
           <div className="lp-phone-top">
             <span className="lp-phone-brand">
-              <ShieldCheck size={15} strokeWidth={1.6} />
+              <ShieldCheck size={15} strokeWidth={1.5} />
               XaalisPay
             </span>
             <span>Paiement sécurisé</span>

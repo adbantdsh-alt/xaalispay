@@ -33,7 +33,7 @@ export function LandingSellers() {
         <Reveal className="lp-dash" y={24}>
           <div className="lp-dash-top">
             <span className="lp-dash-brand">
-              <ShieldCheck size={16} strokeWidth={1.6} />
+              <ShieldCheck size={16} strokeWidth={1.5} />
               Tableau de bord
             </span>
             <span className="lp-dash-pill">Aujourd&apos;hui</span>
@@ -80,7 +80,7 @@ export function LandingSellers() {
             {BULLETS.map((b, i) => (
               <Reveal key={b.title} className="lp-bullet" delay={i * 0.08}>
                 <span className="lp-bullet-icon">
-                  <b.Icon size={24} strokeWidth={1.25} />
+                  <b.Icon size={24} strokeWidth={1.5} />
                 </span>
                 <span>
                   <h3 className="lp-bullet-title">{b.title}</h3>
@@ -93,7 +93,7 @@ export function LandingSellers() {
           <Reveal delay={0.1}>
             <Link href="/auth?mode=signup" className="lp-btn lp-btn-teal-outline">
               Créer un compte gratuitement
-              <ArrowRight size={18} strokeWidth={1.75} />
+              <ArrowRight size={18} strokeWidth={1.5} />
             </Link>
           </Reveal>
         </div>

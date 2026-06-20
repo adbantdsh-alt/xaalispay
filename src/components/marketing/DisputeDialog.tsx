@@ -332,7 +332,7 @@ export function DisputeDialog({
                           aria-label={`Retirer la preuve ${index + 1}`}
                           onClick={() => setMedia(media.filter((_, i) => i !== index))}
                         >
-                          <Trash2 size={14} strokeWidth={1.7} />
+                          <Trash2 size={14} strokeWidth={1.5} />
                         </button>
                       </div>
                     ))}
