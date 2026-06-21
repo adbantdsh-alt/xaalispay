@@ -16,7 +16,6 @@ import {
   PayCheckoutSection,
 } from "@/components/pay/PayPageSections";
 import { calculateBuyerProtectionFee } from "@/lib/fees";
-import { formatDeliveryWindow } from "@/lib/delivery-window";
 import type { OrderStatus } from "@/lib/types";
 import { apiFetch, extractApiError } from "@/lib/api-client";
 import { adaptOrderToPayOrder, adaptPublicProductToPayOrder, type AdaptedPayOrder } from "@/lib/api-adapters";
@@ -30,6 +29,7 @@ export default function PayPage() {
   const [clientLastName, setClientLastName] = useState("");
   const [clientPhone, setClientPhone] = useState("");
   const [clientAddress, setClientAddress] = useState("");
+  const [selectedZoneId, setSelectedZoneId] = useState("");
   const [trackingSlug, setTrackingSlug] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [paying, setPaying] = useState(false);
@@ -82,9 +82,9 @@ export default function PayPage() {
       !clientFirstName.trim() ||
       !clientLastName.trim() ||
       !clientPhone.trim() ||
-      !clientAddress.trim()
+      !selectedZoneId
     ) {
-      setError("Prénom, nom, téléphone et adresse obligatoires");
+      setError("Prénom, nom, téléphone et zone de livraison obligatoires");
       return;
     }
     setError("");
@@ -96,6 +96,7 @@ export default function PayPage() {
         client_first_name: clientFirstName.trim(),
         client_phone: clientPhone.trim(),
         client_address: clientAddress.trim(),
+        delivery_zone_id: Number(selectedZoneId),
       }),
     });
     const data = await res.json();
@@ -198,6 +199,14 @@ export default function PayPage() {
     );
   }
 
+  // Avant la création de la commande, le prix de livraison dépend de la zone
+  // que l'acheteur va choisir (order.deliveryZones) — pas encore connu tant
+  // qu'aucune zone n'est sélectionnée. Une fois la commande créée,
+  // order.deliveryCost est déjà le prix figé à la création (voir
+  // create_order_from_product côté backend).
+  const selectedZone = order.deliveryZones?.find((z) => z.id === selectedZoneId);
+  const liveDeliveryCost = order.isProductLink ? selectedZone?.price ?? 0 : order.deliveryCost || 0;
+
   return (
     <div className="pay-app">
       <header className="pay-brand-bar">
@@ -215,10 +224,10 @@ export default function PayPage() {
           productName={order.productName}
           productImage={order.productImage}
           productPrice={order.productPrice}
-          deliveryCost={order.deliveryCost || 0}
+          deliveryCost={liveDeliveryCost}
           buyerProtectionFee={
             order.fees?.buyerProtectionFee ??
-            calculateBuyerProtectionFee(order.productPrice + (order.deliveryCost || 0))
+            calculateBuyerProtectionFee(order.productPrice + liveDeliveryCost)
           }
           seller={order.seller}
         />
@@ -238,12 +247,6 @@ export default function PayPage() {
           </div>
         )}
 
-        {order.deliveryHours ? (
-          <p className="pay-delivery-meta">
-            Livraison estimée : <strong>{formatDeliveryWindow(order.deliveryHours)}</strong>
-          </p>
-        ) : null}
-
         <PayCheckoutSection>
           <PayClientFields
             values={{
@@ -251,13 +254,16 @@ export default function PayPage() {
               lastName: clientLastName,
               phone: clientPhone,
               address: clientAddress,
+              deliveryZoneId: selectedZoneId,
             }}
             onChange={(v) => {
               setClientFirstName(v.firstName);
               setClientLastName(v.lastName);
               setClientPhone(v.phone);
               setClientAddress(v.address);
+              setSelectedZoneId(v.deliveryZoneId);
             }}
+            zones={order.deliveryZones || []}
           />
         </PayCheckoutSection>
 

@@ -1,7 +1,6 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { formatCurrency } from "@/lib/utils";
 import { buildPaymentLinkPath } from "@/lib/site-url";
 import { IconArrowRight, IconPackage } from "@/components/ui/AppIcon";
 
@@ -11,7 +10,6 @@ export interface VendorProduct {
   name: string;
   description: string;
   price: number;
-  deliveryCost: number;
   totalLabel: string;
   image: string;
 }
@@ -81,15 +79,7 @@ export function VendorProductGrid({
                   {product.description ? (
                     <p className="vendor-picker-product-desc">{product.description}</p>
                   ) : null}
-                  <p className="vendor-picker-product-price">
-                    {product.totalLabel}
-                    {product.deliveryCost > 0 && (
-                      <span className="vendor-picker-product-delivery">
-                        {" "}
-                        · dont {formatCurrency(product.deliveryCost)} livr.
-                      </span>
-                    )}
-                  </p>
+                  <p className="vendor-picker-product-price">{product.totalLabel}</p>
                 </div>
                 <span className="vendor-picker-product-go" aria-hidden="true">
                   <IconArrowRight size={18} />

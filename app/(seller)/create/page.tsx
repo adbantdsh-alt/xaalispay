@@ -15,6 +15,7 @@ import {
   ProductListItem,
   emptyProductForm,
   productToFormValues,
+  zonesToPayload,
   type ProductFormValues,
 } from "@/components/seller/ProductForm";
 import { buildShopUrl, buildProductPaymentUrl, formatPublicUrl } from "@/lib/site-url";
@@ -174,8 +175,7 @@ function CreatePageContent() {
           name: productForm.name,
           description: productForm.description,
           price: Number(productForm.price),
-          deliveryCost: Number(productForm.deliveryCost) || 0,
-          deliveryHours: Number(productForm.deliveryHours),
+          deliveryZones: zonesToPayload(productForm.deliveryZones),
           note: productForm.note,
           image: productForm.image,
         })
@@ -254,8 +254,7 @@ function CreatePageContent() {
         toProductPayload({
           name: inlineProduct.name,
           price: Number(inlineProduct.price),
-          deliveryCost: Number(inlineProduct.deliveryCost) || 0,
-          deliveryHours: Number(inlineProduct.deliveryHours),
+          deliveryZones: zonesToPayload(inlineProduct.deliveryZones),
           note: inlineProduct.note,
           image: inlineProduct.image,
           description: inlineProduct.description,
@@ -311,8 +310,8 @@ function CreatePageContent() {
     if (!editingProduct) return;
     resetMessages();
 
-    if (!editForm.name.trim() || Number(editForm.price) <= 0 || Number(editForm.deliveryHours) <= 0) {
-      setError("Nom, prix et délai livraison requis");
+    if (!editForm.name.trim() || Number(editForm.price) <= 0) {
+      setError("Nom et prix requis");
       return;
     }
 
@@ -328,8 +327,7 @@ function CreatePageContent() {
           name: editForm.name,
           description: editForm.description,
           price: Number(editForm.price),
-          deliveryCost: Number(editForm.deliveryCost) || 0,
-          deliveryHours: Number(editForm.deliveryHours),
+          deliveryZones: zonesToPayload(editForm.deliveryZones),
           note: editForm.note,
           image: editForm.image,
         })

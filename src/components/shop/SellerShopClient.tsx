@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { formatCurrency, getOrderTotal } from "@/lib/utils";
+import { formatCurrency } from "@/lib/utils";
 import { buildPaymentLinkPath } from "@/lib/site-url";
 import { ProductImage } from "@/components/ui/ProductImage";
 
@@ -10,7 +10,6 @@ interface ShopProduct {
   paymentSlug: string;
   name: string;
   price: number;
-  deliveryCost: number;
   image: string;
 }
 
@@ -47,9 +46,7 @@ export function SellerShopClient({
               />
             </div>
             <div className="product-card-body">
-              <p className="product-card-price">
-                {formatCurrency(getOrderTotal({ productPrice: product.price, deliveryCost: product.deliveryCost || 0 }))}
-              </p>
+              <p className="product-card-price">{formatCurrency(product.price)}</p>
               <p className="product-card-name">{product.name}</p>
               <button
                 type="button"

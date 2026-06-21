@@ -137,7 +137,6 @@ export default async function SellerPublicPage({
           paymentSlug: p.payment_slug,
           name: p.name,
           price: p.price,
-          deliveryCost: p.delivery_cost || 0,
           image: p.image || "",
         }))}
       />

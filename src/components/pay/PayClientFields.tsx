@@ -1,6 +1,9 @@
-/** Formulaire infos client — design validé, ne pas modifier. */
+/** Formulaire infos client — zone de livraison ajoutée pour la tarification
+ * par zone (voir ProductForm côté vendeur) ; reste de la mise en page
+ * inchangée par rapport au design validé. */
 "use client";
 
+import { formatCurrency } from "@/lib/utils";
 import s from "./PayClientFields.module.css";
 
 export interface PayClientFieldsValues {
@@ -8,14 +11,16 @@ export interface PayClientFieldsValues {
   lastName: string;
   phone: string;
   address: string;
+  deliveryZoneId: string;
 }
 
 interface PayClientFieldsProps {
   values: PayClientFieldsValues;
   onChange: (values: PayClientFieldsValues) => void;
+  zones: Array<{ id: string; label: string; price: number }>;
 }
 
-export function PayClientFields({ values, onChange }: PayClientFieldsProps) {
+export function PayClientFields({ values, onChange, zones }: PayClientFieldsProps) {
   const set = (key: keyof PayClientFieldsValues, value: string) => {
     onChange({ ...values, [key]: value });
   };
@@ -70,8 +75,27 @@ export function PayClientFields({ values, onChange }: PayClientFieldsProps) {
       </div>
 
       <div className={s.field}>
+        <label className={s.label} htmlFor="pay-zone">
+          Zone de livraison
+        </label>
+        <select
+          id="pay-zone"
+          className={s.input}
+          value={values.deliveryZoneId}
+          onChange={(e) => set("deliveryZoneId", e.target.value)}
+        >
+          <option value="">Choisir une zone…</option>
+          {zones.map((z) => (
+            <option key={z.id} value={z.id}>
+              {z.label} — {formatCurrency(z.price)}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div className={s.field}>
         <label className={s.label} htmlFor="pay-address">
-          Adresse de livraison
+          Adresse de livraison <span className="text-muted">(optionnel)</span>
         </label>
         <textarea
           id="pay-address"

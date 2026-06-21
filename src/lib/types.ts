@@ -28,6 +28,16 @@ export interface Profile {
   createdAt: string;
 }
 
+export interface ProductDeliveryZone {
+  id: string;
+  level: "region" | "department" | "town";
+  label: string;
+  regionId?: string;
+  departmentId?: string;
+  townId?: string;
+  price: number;
+}
+
 export interface Product {
   id: string;
   sellerId: string;
@@ -35,8 +45,7 @@ export interface Product {
   name: string;
   description: string;
   price: number;
-  deliveryCost: number;
-  deliveryHours: number;
+  deliveryZones: ProductDeliveryZone[];
   note: string;
   image: string;
   hasImage?: boolean;
@@ -66,6 +75,8 @@ export interface Order {
   productPrice: number;
   deliveryCost: number;
   deliveryHours: number;
+  /** Libellé dénormalisé de la zone choisie par l'acheteur (ex. "Pikine (Dakar)"). */
+  deliveryZoneLabel?: string;
   status: OrderStatus;
   paymentMethod?: string;
   paymentReference?: string;

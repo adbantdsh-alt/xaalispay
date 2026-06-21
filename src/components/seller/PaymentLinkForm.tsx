@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import type { Product } from "@/lib/types";
-import { formatCurrency, getOrderTotal } from "@/lib/utils";
+import { formatCurrency } from "@/lib/utils";
 import { ProductFields, type ProductFormValues } from "@/components/seller/ProductForm";
 import { buildPaymentLinkMessage, buildWhatsAppUrl } from "@/lib/share";
 import { PaymentLinkSuccessPanel } from "@/components/seller/PaymentLinkSuccessPanel";
@@ -134,10 +134,7 @@ export function PaymentLinkForm({
                 ) : (
                   filteredProducts.map((product) => {
                     const selected = product.id === selectedProductId;
-                    const total = getOrderTotal({
-                      productPrice: product.price,
-                      deliveryCost: product.deliveryCost || 0,
-                    });
+                    const total = product.price;
 
                     return (
                       <div

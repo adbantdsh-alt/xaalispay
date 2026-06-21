@@ -92,8 +92,7 @@ export function VendorSearch({ large = false }: { large?: boolean }) {
             name: p.name,
             description: p.description || "",
             price: p.price,
-            deliveryCost: p.delivery_cost || 0,
-            totalLabel: formatCurrency(p.price + (p.delivery_cost || 0)),
+            totalLabel: formatCurrency(p.price),
             image: p.image || "",
           }))
         );

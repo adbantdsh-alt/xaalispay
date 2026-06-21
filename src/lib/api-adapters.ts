@@ -2,10 +2,23 @@
  * fonctions utilitaires comme computeWalletBreakdown/computeSellerStats)
  * attend le camelCase de src/lib/types.ts. Ces fonctions isolent la
  * conversion en un seul endroit plutôt que de réécrire ces composants. */
-import type { DisputeMedia, Order, Product, Profile } from "./types";
+import type { DisputeMedia, Order, Product, ProductDeliveryZone, Profile } from "./types";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Json = Record<string, any>;
+
+function adaptDeliveryZones(zones: Json[] | undefined): ProductDeliveryZone[] {
+  if (!zones) return [];
+  return zones.map((z) => ({
+    id: String(z.id),
+    level: z.level,
+    label: z.label,
+    regionId: z.region != null ? String(z.region) : undefined,
+    departmentId: z.department != null ? String(z.department) : undefined,
+    townId: z.town != null ? String(z.town) : undefined,
+    price: z.price,
+  }));
+}
 
 export function adaptProfile(p: Json): Profile {
   return {
@@ -53,6 +66,7 @@ export function adaptOrder(o: Json): Order {
     productPrice: o.product_price,
     deliveryCost: o.delivery_cost || 0,
     deliveryHours: o.delivery_hours || 0,
+    deliveryZoneLabel: o.delivery_zone_label || undefined,
     status: o.status,
     paymentMethod: o.payment_method || undefined,
     paidAt: o.paid_at || undefined,
@@ -188,14 +202,20 @@ export function adaptProduct(p: Json): Product {
     name: p.name,
     description: p.description || "",
     price: p.price,
-    deliveryCost: p.delivery_cost || 0,
-    deliveryHours: p.delivery_hours,
+    deliveryZones: adaptDeliveryZones(p.delivery_zones),
     note: p.note || "",
     image: p.image || "",
     active: p.active,
     createdAt: p.created_at,
     updatedAt: p.updated_at,
   };
+}
+
+export interface DeliveryZoneInputPayload {
+  region?: number;
+  department?: number;
+  town?: number;
+  price: number;
 }
 
 /** Inverse d'adaptProduct : champs camelCase du formulaire -> payload Django.
@@ -205,8 +225,7 @@ export function toProductPayload(fields: {
   name: string;
   description?: string;
   price: number;
-  deliveryCost?: number;
-  deliveryHours: number;
+  deliveryZones?: DeliveryZoneInputPayload[];
   note?: string;
   image?: string;
 }): Json {
@@ -214,8 +233,7 @@ export function toProductPayload(fields: {
     name: fields.name,
     description: fields.description || "",
     price: fields.price,
-    delivery_cost: fields.deliveryCost || 0,
-    delivery_hours: fields.deliveryHours,
+    delivery_zones_input: fields.deliveryZones || [],
     note: fields.note || "",
     image: fields.image ?? "",
   };
@@ -253,6 +271,10 @@ export interface AdaptedPayOrder {
   productDescription?: string;
   productNote?: string;
   deliveryHours?: number;
+  deliveryZoneLabel?: string;
+  /** Zones configurées par le vendeur — seulement présent avant la création
+   * de la commande (le buyer doit en choisir une pour fixer le prix). */
+  deliveryZones?: ProductDeliveryZone[];
   status: string;
   slug: string;
   isProductLink?: boolean;
@@ -264,16 +286,17 @@ export interface AdaptedPayOrder {
 }
 
 /** Avant la création de la commande : la page de paiement n'a qu'un produit
- * (PublicProductSerializer), pas encore de commande. */
+ * (PublicProductSerializer), pas encore de commande — le prix de livraison
+ * n'est pas encore connu, il dépend de la zone que l'acheteur va choisir. */
 export function adaptPublicProductToPayOrder(p: Json): AdaptedPayOrder {
   return {
     productName: p.name,
     productPrice: p.price,
-    deliveryCost: p.delivery_cost || 0,
+    deliveryCost: 0,
     productImage: p.image || undefined,
     productDescription: p.description || undefined,
     productNote: p.note || undefined,
-    deliveryHours: p.delivery_hours,
+    deliveryZones: adaptDeliveryZones(p.delivery_zones),
     status: "pending_payment",
     slug: p.payment_slug,
     isProductLink: true,
@@ -290,6 +313,7 @@ export function adaptOrderToPayOrder(o: Json): AdaptedPayOrder {
     productImage: o.product_image || undefined,
     productDescription: o.product_description || undefined,
     deliveryHours: o.delivery_hours,
+    deliveryZoneLabel: o.delivery_zone_label || undefined,
     status: o.status,
     slug: o.slug,
     isProductLink: false,

@@ -24,6 +24,7 @@ const DEMO = {
   productPrice: 250000,
   deliveryCost: 2000,
   seller: { displayName: "Adba Shop", username: "adba", phone: "77 123 45 67" },
+  zones: [{ id: "demo-zone", label: "Dakar", price: 2000 }],
 };
 
 type Mode = "checkout" | "paid";
@@ -39,6 +40,7 @@ export default function PayPagePreview() {
     lastName: "",
     phone: "",
     address: "",
+    deliveryZoneId: "",
   });
 
   const handleSimulatePay = async (_method: MobileMoneyMethod) => {
@@ -46,9 +48,9 @@ export default function PayPagePreview() {
       !clientFields.firstName.trim() ||
       !clientFields.lastName.trim() ||
       !clientFields.phone.trim() ||
-      !clientFields.address.trim()
+      !clientFields.deliveryZoneId
     ) {
-      setError("Remplissez prénom, nom, téléphone et adresse pour simuler.");
+      setError("Remplissez prénom, nom, téléphone et zone de livraison pour simuler.");
       return;
     }
     setError("");
@@ -144,7 +146,7 @@ export default function PayPagePreview() {
         />
         <PayProtectionBlock protectionMinutes={30} />
         <PayCheckoutSection>
-          <PayClientFields values={clientFields} onChange={setClientFields} />
+          <PayClientFields values={clientFields} onChange={setClientFields} zones={DEMO.zones} />
         </PayCheckoutSection>
         <PayMethodButtons onPay={handleSimulatePay} paying={paying} />
         {error && <p className="alert-danger" role="alert">{error}</p>}
