@@ -87,7 +87,7 @@ export function PayClientFields({ values, onChange, zones }: PayClientFieldsProp
           <option value="">Choisir une zone…</option>
           {zones.map((z) => (
             <option key={z.id} value={z.id}>
-              {z.name} — {formatCurrency(z.price)}
+              {z.name} — {z.price > 0 ? formatCurrency(z.price) : "Gratuite"}
             </option>
           ))}
         </select>

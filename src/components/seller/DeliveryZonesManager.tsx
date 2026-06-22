@@ -17,7 +17,7 @@ export function DeliveryZonesManager() {
     e.preventDefault();
     setError("");
     const priceValue = Number(price);
-    if (!name.trim() || !priceValue || priceValue < 0) {
+    if (!name.trim() || price.trim() === "" || Number.isNaN(priceValue) || priceValue < 0) {
       setError("Indiquez un nom et un prix valides.");
       return;
     }
@@ -101,6 +101,9 @@ export function DeliveryZonesManager() {
           {saving ? "…" : "Ajouter cette zone"}
         </button>
       </form>
+      <p className="text-muted" style={{ fontSize: "0.6875rem", marginTop: "0.35rem" }}>
+        Indiquez 0 si la livraison est gratuite pour cette zone.
+      </p>
       {error && <span className="field-error">{error}</span>}
     </div>
   );
