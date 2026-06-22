@@ -17,7 +17,7 @@ export interface PayClientFieldsValues {
 interface PayClientFieldsProps {
   values: PayClientFieldsValues;
   onChange: (values: PayClientFieldsValues) => void;
-  zones: Array<{ id: string; label: string; price: number }>;
+  zones: Array<{ id: string; name: string; price: number }>;
 }
 
 export function PayClientFields({ values, onChange, zones }: PayClientFieldsProps) {
@@ -87,7 +87,7 @@ export function PayClientFields({ values, onChange, zones }: PayClientFieldsProp
           <option value="">Choisir une zone…</option>
           {zones.map((z) => (
             <option key={z.id} value={z.id}>
-              {z.label} — {formatCurrency(z.price)}
+              {z.name} — {formatCurrency(z.price)}
             </option>
           ))}
         </select>

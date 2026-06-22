@@ -1,7 +1,7 @@
 "use client";
 
 import { formatCurrency } from "@/lib/utils";
-import { adminStatusClass, formatAdminDate, type PayoutRow } from "./admin-types";
+import { adminStatusClass, formatAdminDate, payoutStatusLabel, type PayoutRow } from "./admin-types";
 
 export function AdminPayoutsSection({
   payouts,
@@ -23,7 +23,12 @@ export function AdminPayoutsSection({
         <p className="admin-section-hint">
           {pendingCount > 0 && `${pendingCount} en cours`}
           {pendingCount > 0 && failedCount > 0 && " · "}
-          {failedCount > 0 && `${failedCount} échoué(s) — relancer si le vendeur n'a pas reçu`}
+          {failedCount > 0 && (
+            <>
+              <span className="admin-hint-strong admin-hint-strong--bad">{failedCount} échoué(s)</span>
+              {" — relancer si le vendeur n'a pas reçu"}
+            </>
+          )}
         </p>
       )}
 
@@ -50,14 +55,14 @@ export function AdminPayoutsSection({
                 <tr key={payout.id}>
                   <td>
                     <strong>{payout.sellerName}</strong>
-                    <span className="admin-cell-sub">@{payout.sellerUsername}</span>
+                    <span className="admin-cell-sub admin-mono">@{payout.sellerUsername}</span>
                   </td>
-                  <td>{formatCurrency(payout.amount)}</td>
+                  <td className="admin-mono">{formatCurrency(payout.amount)}</td>
                   <td>{payout.method}</td>
-                  <td>{payout.phone}</td>
+                  <td className="admin-mono">{payout.phone}</td>
                   <td>
                     <span className={`admin-badge ${adminStatusClass(payout.status)}`}>
-                      {payout.status}
+                      {payoutStatusLabel(payout.status)}
                     </span>
                     {payout.failureReason && (
                       <span className="admin-cell-sub">{payout.failureReason}</span>

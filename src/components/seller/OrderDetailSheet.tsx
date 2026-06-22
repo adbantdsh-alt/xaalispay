@@ -140,40 +140,40 @@ export function OrderDetailSheet({
         </div>
       </div>
 
-      {order.status === "dispute" && (
+      {order.status === "dispute" && order.dispute && (
         <div>
           <p className="shop-section-label">Litige</p>
           <div className="profile-sheet-rows">
-            {order.disputeOpenedAt && (
-              <div className="profile-sheet-row">
-                <span className="text-muted">Ouvert le</span>
-                <span>{formatDateTime(order.disputeOpenedAt)}</span>
-              </div>
-            )}
-            {order.disputeReason && (
+            <div className="profile-sheet-row">
+              <span className="text-muted">Type</span>
+              <span className="order-sheet-value-right">{order.dispute.disputeTypeLabel}</span>
+            </div>
+            <div className="profile-sheet-row">
+              <span className="text-muted">Ouvert le</span>
+              <span>{formatDateTime(order.dispute.openedAt)}</span>
+            </div>
+            {order.dispute.reason && (
               <div className="profile-sheet-row">
                 <span className="text-muted">Motif</span>
-                <span className="order-sheet-value-right">{order.disputeReason}</span>
+                <span className="order-sheet-value-right">{order.dispute.reason}</span>
               </div>
             )}
             <div className="profile-sheet-row">
               <span className="text-muted">Preuves photo</span>
-              <span>{order.disputeMedia?.length || order.disputePhotos?.length || 0} preuve(s)</span>
+              <span>{order.dispute.media.length} preuve(s)</span>
             </div>
           </div>
-          {!!(order.disputeMedia?.length || order.disputePhotos?.length) && (
+          {order.dispute.media.length > 0 && (
             <div className="order-sheet-photo-grid" aria-label="Photos du litige">
-              {(order.disputeMedia || order.disputePhotos?.map((url) => ({ type: "image" as const, url })) || [])
-                .slice(0, 10)
-                .map((media, index) =>
-                  media.type === "video" ? (
-                    <video key={`${media.url.slice(0, 32)}-${index}`} src={media.url} controls />
-                  ) : (
-                    <div key={`${media.url.slice(0, 32)}-${index}`} className="order-sheet-photo-cell">
-                      <Image src={media.url} alt={`Preuve ${index + 1}`} fill />
-                    </div>
-                  )
-                )}
+              {order.dispute.media.slice(0, 10).map((media, index) =>
+                media.type === "video" ? (
+                  <video key={`${media.url.slice(0, 32)}-${index}`} src={media.url} controls />
+                ) : (
+                  <div key={`${media.url.slice(0, 32)}-${index}`} className="order-sheet-photo-cell">
+                    <Image src={media.url} alt={`Preuve ${index + 1}`} fill />
+                  </div>
+                )
+              )}
             </div>
           )}
         </div>
@@ -184,7 +184,7 @@ export function OrderDetailSheet({
         <div className="profile-sheet-rows">
           <div className="profile-sheet-row">
             <span className="text-muted">Référence</span>
-            <span className="order-sheet-ref">#{order.id.slice(0, 8).toUpperCase()}</span>
+            <span className="order-sheet-ref">{order.orderNumber}</span>
           </div>
           <div className="profile-sheet-row">
             <span className="text-muted">Reçue le</span>

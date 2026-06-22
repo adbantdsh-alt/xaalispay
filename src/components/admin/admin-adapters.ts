@@ -1,0 +1,85 @@
+import type { DisputeRow, PayoutRow, ProductRow, SellerRow } from "./admin-types";
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function adaptDisputeRow(o: any): DisputeRow {
+  const dispute = o.dispute || {};
+  return {
+    id: String(o.id),
+    orderNumber: o.order_number,
+    slug: o.slug,
+    sellerId: "",
+    sellerUsername: o.seller_username,
+    sellerName: o.seller_business_name,
+    sellerPhone: o.seller_phone || null,
+    productName: o.product_name,
+    clientName: o.client_name,
+    clientPhone: o.client_phone,
+    clientAddress: o.client_address || null,
+    status: o.status,
+    total: o.total_amount,
+    buyerProtectionFee: o.buyer_protection_fee || 0,
+    paymentMethod: o.payment_method,
+    paidAt: o.paid_at || undefined,
+    clientDeliveryConfirmedAt: o.delivery_validated_at || undefined,
+    disputeType: dispute.dispute_type,
+    disputeTypeLabel: dispute.dispute_type_display || "",
+    responsibleParty: dispute.responsible_party,
+    disputeOpenedAt: dispute.opened_at || undefined,
+    sellerResponseDeadlineAt: dispute.seller_response_deadline_at || undefined,
+    disputeReason: dispute.reason || "",
+    disputeMedia: dispute.media || [],
+    createdAt: o.created_at,
+    updatedAt: o.created_at,
+  };
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function adaptPayoutRow(p: any): PayoutRow {
+  return {
+    id: String(p.id),
+    sellerUsername: p.seller_username,
+    sellerName: p.seller_business_name,
+    amount: p.amount,
+    method: p.method,
+    phone: p.phone,
+    status: p.status,
+    failureReason: p.failure_reason || undefined,
+    createdAt: p.created_at,
+  };
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function adaptSellerRow(s: any): SellerRow {
+  return {
+    id: s.id,
+    username: s.username,
+    businessName: s.business_name,
+    displayName: s.display_name,
+    phone: s.phone,
+    email: s.email || null,
+    isActive: s.is_active,
+    createdAt: s.created_at,
+    ordersCount: s.orders_count,
+    lifetimeGmv: s.lifetime_gmv,
+    balance: {
+      escrowBalance: s.balance.escrow_balance,
+      availableBalance: s.balance.available_balance,
+      blockedBalance: s.balance.blocked_balance,
+      paidOutBalance: s.balance.paid_out_balance,
+    },
+  };
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function adaptProductRow(p: any): ProductRow {
+  return {
+    id: p.id,
+    name: p.name,
+    price: p.price,
+    active: p.active,
+    sellerUsername: p.seller_username,
+    sellerBusinessName: p.seller_business_name,
+    ordersCount: p.orders_count,
+    createdAt: p.created_at,
+  };
+}

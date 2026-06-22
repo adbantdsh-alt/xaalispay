@@ -2,22 +2,18 @@
  * fonctions utilitaires comme computeWalletBreakdown/computeSellerStats)
  * attend le camelCase de src/lib/types.ts. Ces fonctions isolent la
  * conversion en un seul endroit plutôt que de réécrire ces composants. */
-import type { DisputeMedia, Order, Product, ProductDeliveryZone, Profile } from "./types";
+import type { DeliveryZone, Dispute, DisputeMedia, Order, Product, Profile } from "./types";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Json = Record<string, any>;
 
-function adaptDeliveryZones(zones: Json[] | undefined): ProductDeliveryZone[] {
+export function adaptDeliveryZone(z: Json): DeliveryZone {
+  return { id: String(z.id), name: z.name, price: z.price };
+}
+
+function adaptDeliveryZones(zones: Json[] | undefined): DeliveryZone[] {
   if (!zones) return [];
-  return zones.map((z) => ({
-    id: String(z.id),
-    level: z.level,
-    label: z.label,
-    regionId: z.region != null ? String(z.region) : undefined,
-    departmentId: z.department != null ? String(z.department) : undefined,
-    townId: z.town != null ? String(z.town) : undefined,
-    price: z.price,
-  }));
+  return zones.map(adaptDeliveryZone);
 }
 
 export function adaptProfile(p: Json): Profile {
@@ -41,9 +37,27 @@ export function adaptProfile(p: Json): Profile {
   };
 }
 
-function adaptDisputeMedia(items: Json[] | undefined): DisputeMedia[] | undefined {
-  if (!items || items.length === 0) return undefined;
+function adaptDisputeMedia(items: Json[] | undefined): DisputeMedia[] {
+  if (!items) return [];
   return items.map((m) => ({ type: m.type, url: m.url, name: m.name || undefined }));
+}
+
+export function adaptDispute(d: Json | null | undefined): Dispute | undefined {
+  if (!d) return undefined;
+  return {
+    disputeType: d.dispute_type,
+    disputeTypeLabel: d.dispute_type_display,
+    responsibleParty: d.responsible_party,
+    reason: d.reason,
+    openedAt: d.opened_at,
+    sellerResponseDeadlineAt: d.seller_response_deadline_at,
+    resolvedAt: d.resolved_at || undefined,
+    resolutionAction: d.resolution_action || undefined,
+    refundAmount: d.refund_amount ?? undefined,
+    resolutionNote: d.resolution_note || undefined,
+    autoResolved: !!d.auto_resolved,
+    media: adaptDisputeMedia(d.media),
+  };
 }
 
 /** Vue vendeur d'une commande (OrderSellerSerializer côté Django). Le PIN
@@ -53,6 +67,7 @@ function adaptDisputeMedia(items: Json[] | undefined): DisputeMedia[] | undefine
 export function adaptOrder(o: Json): Order {
   return {
     id: String(o.id),
+    orderNumber: o.order_number,
     sellerId: "",
     productId: "",
     slug: o.slug,
@@ -72,9 +87,7 @@ export function adaptOrder(o: Json): Order {
     paidAt: o.paid_at || undefined,
     deliveryDeadlineAt: o.delivery_deadline_at || undefined,
     protectionEndsAt: o.protection_ends_at || undefined,
-    disputeReason: o.dispute_reason || undefined,
-    disputeMedia: adaptDisputeMedia(o.dispute_media),
-    disputeOpenedAt: o.dispute_opened_at || undefined,
+    dispute: adaptDispute(o.dispute),
     releasedAt: o.released_at || undefined,
     refundedAt: o.refunded_at || undefined,
     cancelledAt: o.cancelled_at || undefined,
@@ -211,13 +224,6 @@ export function adaptProduct(p: Json): Product {
   };
 }
 
-export interface DeliveryZoneInputPayload {
-  region?: number;
-  department?: number;
-  town?: number;
-  price: number;
-}
-
 /** Inverse d'adaptProduct : champs camelCase du formulaire -> payload Django.
  * `image` est volontairement omis si vide pour ne jamais écraser une image
  * existante par erreur — l'appelant l'ajoute explicitement pour la supprimer. */
@@ -225,7 +231,7 @@ export function toProductPayload(fields: {
   name: string;
   description?: string;
   price: number;
-  deliveryZones?: DeliveryZoneInputPayload[];
+  deliveryZoneIds?: number[];
   note?: string;
   image?: string;
 }): Json {
@@ -233,7 +239,7 @@ export function toProductPayload(fields: {
     name: fields.name,
     description: fields.description || "",
     price: fields.price,
-    delivery_zones_input: fields.deliveryZones || [],
+    delivery_zone_ids: fields.deliveryZoneIds || [],
     note: fields.note || "",
     image: fields.image ?? "",
   };
@@ -274,7 +280,7 @@ export interface AdaptedPayOrder {
   deliveryZoneLabel?: string;
   /** Zones configurées par le vendeur — seulement présent avant la création
    * de la commande (le buyer doit en choisir une pour fixer le prix). */
-  deliveryZones?: ProductDeliveryZone[];
+  deliveryZones?: DeliveryZone[];
   status: string;
   slug: string;
   isProductLink?: boolean;

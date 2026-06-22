@@ -28,13 +28,9 @@ export interface Profile {
   createdAt: string;
 }
 
-export interface ProductDeliveryZone {
+export interface DeliveryZone {
   id: string;
-  level: "region" | "department" | "town";
-  label: string;
-  regionId?: string;
-  departmentId?: string;
-  townId?: string;
+  name: string;
   price: number;
 }
 
@@ -45,7 +41,7 @@ export interface Product {
   name: string;
   description: string;
   price: number;
-  deliveryZones: ProductDeliveryZone[];
+  deliveryZones: DeliveryZone[];
   note: string;
   image: string;
   hasImage?: boolean;
@@ -60,8 +56,40 @@ export interface DisputeMedia {
   name?: string;
 }
 
+export type DisputeType =
+  | "non_conforme"
+  | "non_fonctionnel"
+  | "erreur_taille_couleur"
+  | "annulation_caprice"
+  | "colis_endommage"
+  | "article_manquant"
+  | "autre";
+
+export type DisputeResponsibleParty = "vendeur" | "client" | "admin";
+
+export type DisputeResolutionAction = "release_full" | "refund_full" | "split";
+
+export interface Dispute {
+  disputeType: DisputeType;
+  disputeTypeLabel: string;
+  responsibleParty: DisputeResponsibleParty;
+  reason: string;
+  openedAt: string;
+  sellerResponseDeadlineAt: string;
+  resolvedAt?: string;
+  resolutionAction?: DisputeResolutionAction;
+  refundAmount?: number;
+  resolutionNote?: string;
+  autoResolved: boolean;
+  media: DisputeMedia[];
+}
+
 export interface Order {
   id: string;
+  /** Référence lisible et permanente (ex. "XP-000128") — contrairement au
+   * slug (opaque) et au pin (4 chiffres, non unique, masqué hors paid/
+   * protection), c'est la seule référence stable à donner au support. */
+  orderNumber: string;
   sellerId: string;
   productId: string;
   slug: string;
@@ -93,10 +121,7 @@ export interface Order {
   /** Confirmation réception par l'acheteur sur la page sécurisée. */
   clientDeliveryConfirmedAt?: string;
   protectionEndsAt?: string;
-  disputeReason?: string;
-  disputePhotos?: string[];
-  disputeMedia?: DisputeMedia[];
-  disputeOpenedAt?: string;
+  dispute?: Dispute;
   releasedAt?: string;
   refundedAt?: string;
   cancelledAt?: string;

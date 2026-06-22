@@ -7,13 +7,23 @@ import { isProtectedSellerPath } from "@/lib/demo-account";
  * visiteur évidemment déconnecté). La vraie autorisation se fait à chaque
  * appel API côté Django (IsAuthenticated) — ce middleware n'est qu'un confort
  * de navigation, jamais la frontière de sécurité réelle. */
-export async function updateSession(request: NextRequest) {
+export async function redirectIfLoggedOut(request: NextRequest) {
+  const { pathname } = request.nextUrl;
   const hasSession = Boolean(request.cookies.get(REFRESH_COOKIE_NAME)?.value);
 
-  if (!hasSession && isProtectedSellerPath(request.nextUrl.pathname)) {
+  // /admin/login doit toujours rester accessible sans session, sinon
+  // isProtectedSellerPath (qui matche tout /admin*) créerait une boucle de
+  // redirection infinie pour un visiteur non connecté.
+  if (pathname === "/admin/login") {
+    return NextResponse.next();
+  }
+
+  if (!hasSession && isProtectedSellerPath(pathname)) {
     const redirect = request.nextUrl.clone();
-    redirect.pathname = "/auth";
-    redirect.searchParams.set("redirect", request.nextUrl.pathname);
+    // Page de connexion dédiée pour /admin (email + mot de passe, jamais
+    // d'OTP) — distincte du flux vendeur /auth (téléphone + PIN + OTP).
+    redirect.pathname = pathname.startsWith("/admin") ? "/admin/login" : "/auth";
+    redirect.searchParams.set("redirect", pathname);
     return NextResponse.redirect(redirect);
   }
 

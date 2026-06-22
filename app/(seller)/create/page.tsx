@@ -23,11 +23,13 @@ import { PaymentLinkForm } from "@/components/seller/PaymentLinkForm";
 import { PaymentLinkSuccessPanel } from "@/components/seller/PaymentLinkSuccessPanel";
 import { CopyButton } from "@/components/ui/CopyButton";
 import { useSellerData } from "@/components/seller/SellerDataProvider";
+import { useDeliveryZones } from "@/lib/use-delivery-zones";
 import { apiFetch, extractApiError } from "@/lib/api-client";
 import { adaptProduct, toProductPayload } from "@/lib/api-adapters";
 
 function CreatePageContent() {
   const view = useShopView();
+  const { zones: deliveryZones } = useDeliveryZones();
   const router = useRouter();
   const searchParams = useSearchParams();
   const editProductId = searchParams.get("id");
@@ -175,7 +177,7 @@ function CreatePageContent() {
           name: productForm.name,
           description: productForm.description,
           price: Number(productForm.price),
-          deliveryZones: zonesToPayload(productForm.deliveryZones),
+          deliveryZoneIds: zonesToPayload(productForm.deliveryZoneIds, deliveryZones),
           note: productForm.note,
           image: productForm.image,
         })
@@ -254,7 +256,7 @@ function CreatePageContent() {
         toProductPayload({
           name: inlineProduct.name,
           price: Number(inlineProduct.price),
-          deliveryZones: zonesToPayload(inlineProduct.deliveryZones),
+          deliveryZoneIds: zonesToPayload(inlineProduct.deliveryZoneIds, deliveryZones),
           note: inlineProduct.note,
           image: inlineProduct.image,
           description: inlineProduct.description,
@@ -327,7 +329,7 @@ function CreatePageContent() {
           name: editForm.name,
           description: editForm.description,
           price: Number(editForm.price),
-          deliveryZones: zonesToPayload(editForm.deliveryZones),
+          deliveryZoneIds: zonesToPayload(editForm.deliveryZoneIds, deliveryZones),
           note: editForm.note,
           image: editForm.image,
         })

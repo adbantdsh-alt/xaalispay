@@ -24,7 +24,7 @@ const DEMO = {
   productPrice: 250000,
   deliveryCost: 2000,
   seller: { displayName: "Adba Shop", username: "adba", phone: "77 123 45 67" },
-  zones: [{ id: "demo-zone", label: "Dakar", price: 2000 }],
+  zones: [{ id: "demo-zone", name: "Dakar", price: 2000 }],
 };
 
 type Mode = "checkout" | "paid";

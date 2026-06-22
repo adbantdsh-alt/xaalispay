@@ -1,8 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { TriangleAlert } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
-import { formatAdminDate, type DisputeRow } from "./admin-types";
+import { formatAdminDate, isDisputeOverdue, type DisputeRow } from "./admin-types";
+
+type ResolutionAction = "release_full" | "refund_full" | "split";
 
 export function AdminDisputesSection({
   disputes,
@@ -12,20 +15,26 @@ export function AdminDisputesSection({
 }: {
   disputes: DisputeRow[];
   resolving: string | null;
-  onResolve: (disputeId: string, action: "refund" | "release", force?: boolean) => Promise<boolean>;
+  onResolve: (disputeId: string, action: ResolutionAction, refundAmount?: number) => Promise<boolean>;
   onActivityChange?: (busy: boolean) => void;
 }) {
   const [selectedDispute, setSelectedDispute] = useState<DisputeRow | null>(null);
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
+  const [splitAmount, setSplitAmount] = useState("");
+  const [showSplitForm, setShowSplitForm] = useState(false);
 
   useEffect(() => {
     onActivityChange?.(!!selectedDispute || !!lightboxUrl);
   }, [selectedDispute, lightboxUrl, onActivityChange]);
 
-  const openDispute = (dispute: DisputeRow) => setSelectedDispute(dispute);
+  const openDispute = (dispute: DisputeRow) => {
+    setSelectedDispute(dispute);
+    setShowSplitForm(false);
+    setSplitAmount("");
+  };
 
-  const resolve = async (disputeId: string, action: "refund" | "release", force = false) => {
-    const ok = await onResolve(disputeId, action, force);
+  const resolve = async (disputeId: string, action: ResolutionAction, refundAmount?: number) => {
+    const ok = await onResolve(disputeId, action, refundAmount);
     if (ok) setSelectedDispute(null);
   };
 
@@ -35,11 +44,20 @@ export function AdminDisputesSection({
         {disputes.length === 0 ? (
           <p className="admin-empty">Aucun litige ouvert — bonne nouvelle.</p>
         ) : (
-          <div className="admin-table-wrap">
+          <>
+            <div className="admin-hint-banner">
+              <span className="admin-hint-dot" aria-hidden="true" />
+              <span className="admin-hint-strong">
+                {`${disputes.length} litige${disputes.length > 1 ? "s" : ""} en attente d'arbitrage`}
+              </span>
+              <span className="admin-hint-muted">— argent réel bloqué, traiter en priorité.</span>
+            </div>
+            <div className="admin-table-wrap">
             <table className="admin-table">
               <thead>
                 <tr>
                   <th>Commande</th>
+                  <th>Type</th>
                   <th>Vendeur</th>
                   <th>Acheteur</th>
                   <th>Montant</th>
@@ -52,8 +70,12 @@ export function AdminDisputesSection({
                 {disputes.map((d) => (
                   <tr key={d.id}>
                     <td>
-                      <strong>{d.slug}</strong>
+                      <strong>{d.orderNumber}</strong>
                       <span className="admin-cell-sub">{d.productName}</span>
+                    </td>
+                    <td>
+                      {d.disputeTypeLabel}
+                      {isDisputeOverdue(d) && <span className="admin-badge bad">Délai dépassé</span>}
                     </td>
                     <td>
                       @{d.sellerUsername}
@@ -90,7 +112,8 @@ export function AdminDisputesSection({
                 ))}
               </tbody>
             </table>
-          </div>
+            </div>
+          </>
         )}
       </section>
 
@@ -98,17 +121,35 @@ export function AdminDisputesSection({
         <div className="admin-modal-backdrop" onClick={() => setSelectedDispute(null)}>
           <article className="admin-modal admin-modal--dispute" onClick={(e) => e.stopPropagation()}>
             <header className="admin-modal-head">
-              <h2>Litige #{selectedDispute.slug}</h2>
-              <button type="button" className="admin-modal-close" onClick={() => setSelectedDispute(null)}>
+              <div className="admin-modal-head-id">
+                <div>
+                  <div className="admin-modal-head-title">Litige {selectedDispute.orderNumber}</div>
+                  <div className="admin-modal-head-subtitle">{selectedDispute.productName}</div>
+                </div>
+              </div>
+              <button
+                type="button"
+                className="admin-modal-close"
+                onClick={() => setSelectedDispute(null)}
+                aria-label="Fermer"
+              >
                 ×
               </button>
             </header>
 
             <div className="admin-dispute-section">
-              <h3 className="admin-dispute-section-title">Motif du litige</h3>
+              <h3 className="admin-dispute-section-title">
+                {selectedDispute.disputeTypeLabel}
+                {isDisputeOverdue(selectedDispute) && <span className="admin-badge bad">Délai dépassé</span>}
+              </h3>
               <p className="admin-dispute-text">
                 {selectedDispute.disputeReason || <em>Non précisé par l&apos;acheteur</em>}
               </p>
+              {selectedDispute.sellerResponseDeadlineAt && (
+                <p className="admin-contact-sub">
+                  Délai vendeur : {formatAdminDate(selectedDispute.sellerResponseDeadlineAt)}
+                </p>
+              )}
             </div>
 
             {selectedDispute.disputeMedia.length > 0 && (
@@ -246,17 +287,18 @@ export function AdminDisputesSection({
 
             <div className="admin-dispute-section admin-arbitrage">
               <h3 className="admin-dispute-section-title">Décision arbitrage</h3>
-              <p className="admin-arbitrage-warn">
-                Action irréversible — vérifiez les preuves et contactez les parties avant de trancher.
-              </p>
+              <div className="admin-arbitrage-warn">
+                <TriangleAlert size={18} aria-hidden="true" />
+                <span>Action irréversible — vérifiez les preuves et contactez les parties avant de trancher.</span>
+              </div>
               <div className="admin-arbitrage-actions">
                 <button
                   type="button"
                   className="admin-arbitrage-btn admin-arbitrage-refund"
                   disabled={resolving !== null}
-                  onClick={() => resolve(selectedDispute.id, "refund")}
+                  onClick={() => resolve(selectedDispute.id, "refund_full")}
                 >
-                  {resolving === selectedDispute.id + "refund" ? (
+                  {resolving === selectedDispute.id + "refund_full" ? (
                     <>
                       <span className="btn-spinner" aria-hidden="true" />
                       En cours…
@@ -269,9 +311,9 @@ export function AdminDisputesSection({
                   type="button"
                   className="admin-arbitrage-btn admin-arbitrage-release"
                   disabled={resolving !== null}
-                  onClick={() => resolve(selectedDispute.id, "release")}
+                  onClick={() => resolve(selectedDispute.id, "release_full")}
                 >
-                  {resolving === selectedDispute.id + "release" ? (
+                  {resolving === selectedDispute.id + "release_full" ? (
                     <>
                       <span className="btn-spinner" aria-hidden="true" />
                       En cours…
@@ -281,6 +323,47 @@ export function AdminDisputesSection({
                   )}
                 </button>
               </div>
+              <button
+                type="button"
+                className="admin-arbitrage-split"
+                disabled={resolving !== null}
+                onClick={() => setShowSplitForm((v) => !v)}
+              >
+                Remboursement partiel…
+              </button>
+
+              {showSplitForm && (
+                <div className="admin-split-form">
+                  <label className="admin-split-label" htmlFor="split-amount">
+                    Montant envoyé à l&apos;acheteur (le reste est libéré au vendeur, moins commission)
+                  </label>
+                  <input
+                    id="split-amount"
+                    type="number"
+                    min={1}
+                    max={selectedDispute.total - 1}
+                    className="input-field input-compact"
+                    value={splitAmount}
+                    onChange={(e) => setSplitAmount(e.target.value)}
+                    placeholder={`Max ${selectedDispute.total - 1} FCFA`}
+                  />
+                  <button
+                    type="button"
+                    className="admin-arbitrage-split"
+                    disabled={resolving !== null || !Number(splitAmount)}
+                    onClick={() => resolve(selectedDispute.id, "split", Number(splitAmount))}
+                  >
+                    {resolving === selectedDispute.id + "split" ? (
+                      <>
+                        <span className="btn-spinner" aria-hidden="true" />
+                        En cours…
+                      </>
+                    ) : (
+                      "Confirmer le partage"
+                    )}
+                  </button>
+                </div>
+              )}
             </div>
           </article>
         </div>

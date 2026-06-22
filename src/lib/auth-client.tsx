@@ -38,6 +38,10 @@ interface SignupPayload {
   email?: string;
 }
 
+interface AdminLoginResult extends AuthResult {
+  lockedUntil?: string | null;
+}
+
 interface AuthContextValue {
   user: Profile | null;
   accessToken: string | null;
@@ -45,6 +49,7 @@ interface AuthContextValue {
   login: (phone: string, pin: string) => Promise<LoginResult>;
   confirmLogin: (phone: string, ticket: string) => Promise<AuthResult>;
   signup: (payload: SignupPayload) => Promise<AuthResult>;
+  adminLogin: (email: string, password: string) => Promise<AdminLoginResult>;
   logout: () => Promise<void>;
 }
 
@@ -140,6 +145,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [applyToken]
   );
 
+  const adminLogin = useCallback(
+    async (email: string, password: string): Promise<AdminLoginResult> => {
+      const res = await fetch("/api/auth/admin-login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        return { ok: false, error: extractApiError(data, "Connexion échouée"), lockedUntil: data.locked_until };
+      }
+      applyToken(data.access);
+      setUser(data.profile);
+      return { ok: true };
+    },
+    [applyToken]
+  );
+
   const logout = useCallback(async () => {
     await fetch("/api/auth/logout", { method: "POST" }).catch(() => {});
     applyToken(null);
@@ -147,7 +170,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [applyToken]);
 
   return (
-    <AuthContext.Provider value={{ user, accessToken, loading, login, confirmLogin, signup, logout }}>
+    <AuthContext.Provider value={{ user, accessToken, loading, login, confirmLogin, signup, adminLogin, logout }}>
       {children}
     </AuthContext.Provider>
   );

@@ -1,34 +1,25 @@
 "use client";
 
 import { useId, useRef, useState } from "react";
-import type { Product } from "@/lib/types";
-import type { DeliveryZoneInputPayload } from "@/lib/api-adapters";
+import Link from "next/link";
+import type { DeliveryZone, Product } from "@/lib/types";
 import { formatCurrency } from "@/lib/utils";
 import { DELIVERY_DEADLINE_HOURS } from "@/lib/delivery-window";
 import { uploadProductImageFile, MAX_IMAGE_INPUT_MB } from "@/lib/product-form";
-import { useGeography } from "@/lib/use-geography";
+import { useDeliveryZones } from "@/lib/use-delivery-zones";
 import { IconCheck, IconPackage } from "@/components/ui/AppIcon";
 import { ProductImage } from "@/components/ui/ProductImage";
 import { ChargebackExplainDialog } from "@/components/seller/ChargebackExplainDialog";
 import { copyToClipboard } from "@/lib/share";
 import { buildProductPaymentUrl, formatPublicUrl } from "@/lib/site-url";
 
-export interface DeliveryZoneFormValue {
-  /** Identifiant client-side (pas l'id serveur — la sauvegarde remplace
-   * toutes les zones en une fois, voir toProductPayload). */
-  tempId: string;
-  level: "region" | "department" | "town";
-  regionId?: string;
-  departmentId?: string;
-  townId?: string;
-  label: string;
-  price: string;
-}
-
 export interface ProductFormValues {
   name: string;
   price: string;
-  deliveryZones: DeliveryZoneFormValue[];
+  /** null = pas encore personnalisé par le vendeur : toutes les zones
+   * définies en Paramètres s'appliquent par défaut (voir zonesToPayload). Un
+   * tableau (même vide) reflète une sélection explicite. */
+  deliveryZoneIds: string[] | null;
   note: string;
   description: string;
   image: string;
@@ -37,7 +28,7 @@ export interface ProductFormValues {
 export const emptyProductForm = (): ProductFormValues => ({
   name: "",
   price: "",
-  deliveryZones: [],
+  deliveryZoneIds: null,
   note: "",
   description: "",
   image: "",
@@ -47,31 +38,18 @@ export function productToFormValues(product: Product): ProductFormValues {
   return {
     name: product.name,
     price: String(product.price),
-    deliveryZones: (product.deliveryZones || []).map((z) => ({
-      tempId: z.id,
-      level: z.level,
-      regionId: z.regionId || "",
-      departmentId: z.departmentId,
-      townId: z.townId,
-      label: z.label,
-      price: String(z.price),
-    })),
+    deliveryZoneIds: (product.deliveryZones || []).map((z) => z.id),
     note: product.note || "",
     description: product.description || "",
     image: product.image || "",
   };
 }
 
-/** Forme minimale attendue par le backend (delivery_zones_input) — un seul
- * niveau renseigné par zone, jamais l'id de la zone elle-même (la sauvegarde
- * remplace toutes les zones existantes, voir ProductSerializer._sync_zones). */
-export function zonesToPayload(zones: DeliveryZoneFormValue[]): DeliveryZoneInputPayload[] {
-  return zones.map((z) => {
-    const price = Number(z.price) || 0;
-    if (z.level === "town" && z.townId) return { town: Number(z.townId), price };
-    if (z.level === "department" && z.departmentId) return { department: Number(z.departmentId), price };
-    return { region: Number(z.regionId), price };
-  });
+/** Résout la sélection du formulaire en ids serveur — null (non personnalisé)
+ * vaut "toutes les zones actuellement définies". */
+export function zonesToPayload(ids: string[] | null, zones: DeliveryZone[]): number[] {
+  const effective = ids ?? zones.map((z) => z.id);
+  return effective.map(Number);
 }
 
 export function ProductFields({
@@ -89,69 +67,14 @@ export function ProductFields({
   const fileId = useId();
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const { regions } = useGeography();
-  const [pickerRegion, setPickerRegion] = useState("");
-  const [pickerDepartment, setPickerDepartment] = useState("");
-  const [pickerTown, setPickerTown] = useState("");
-  const [pickerPrice, setPickerPrice] = useState("");
-  const [zoneError, setZoneError] = useState("");
+  const { zones, loading: zonesLoading } = useDeliveryZones();
+  const effectiveZoneIds = form.deliveryZoneIds ?? zones.map((z) => z.id);
 
-  const selectedRegion = regions.find((r) => r.id === pickerRegion);
-  const selectedDepartment = selectedRegion?.departments.find((d) => d.id === pickerDepartment);
-
-  const resetPicker = () => {
-    setPickerRegion("");
-    setPickerDepartment("");
-    setPickerTown("");
-    setPickerPrice("");
-  };
-
-  const addZone = () => {
-    setZoneError("");
-    const price = Number(pickerPrice);
-    if (!pickerRegion || !price || price < 0) {
-      setZoneError("Choisissez une zone et un prix valide.");
-      return;
-    }
-
-    let zone: DeliveryZoneFormValue;
-    if (pickerTown && selectedDepartment) {
-      zone = {
-        tempId: `town-${selectedDepartment.town.id}`,
-        level: "town",
-        townId: selectedDepartment.town.id,
-        label: `${selectedDepartment.town.name} (${selectedRegion!.name})`,
-        price: pickerPrice,
-      };
-    } else if (pickerDepartment && selectedDepartment) {
-      zone = {
-        tempId: `department-${selectedDepartment.id}`,
-        level: "department",
-        departmentId: selectedDepartment.id,
-        label: `${selectedDepartment.name} (${selectedRegion!.name})`,
-        price: pickerPrice,
-      };
-    } else {
-      zone = {
-        tempId: `region-${pickerRegion}`,
-        level: "region",
-        regionId: pickerRegion,
-        label: selectedRegion!.name,
-        price: pickerPrice,
-      };
-    }
-
-    if (form.deliveryZones.some((z) => z.tempId === zone.tempId)) {
-      setZoneError("Cette zone est déjà configurée pour ce produit.");
-      return;
-    }
-
-    onChange({ ...form, deliveryZones: [...form.deliveryZones, zone] });
-    resetPicker();
-  };
-
-  const removeZone = (tempId: string) => {
-    onChange({ ...form, deliveryZones: form.deliveryZones.filter((z) => z.tempId !== tempId) });
+  const toggleZone = (zoneId: string) => {
+    const next = effectiveZoneIds.includes(zoneId)
+      ? effectiveZoneIds.filter((id) => id !== zoneId)
+      : [...effectiveZoneIds, zoneId];
+    onChange({ ...form, deliveryZoneIds: next });
   };
 
   const handleImage = async (file: File | null) => {
@@ -243,88 +166,27 @@ export function ProductFields({
       <div className="field-block">
         <span className="field-block-label">Zones de livraison</span>
 
-        <div className="delivery-zone-list">
-          {form.deliveryZones.length === 0 ? (
-            <p className="text-muted">Aucune zone configurée — ajoutez-en une ci-dessous.</p>
-          ) : (
-            form.deliveryZones.map((z) => (
-              <div key={z.tempId} className="delivery-zone-chip">
-                <span className="delivery-zone-chip-label">{z.label}</span>
-                <span className="delivery-zone-chip-price">{formatCurrency(Number(z.price) || 0)}</span>
-                <button
-                  type="button"
-                  className="delivery-zone-chip-remove"
-                  onClick={() => removeZone(z.tempId)}
-                  aria-label={`Retirer la zone ${z.label}`}
-                >
-                  ×
-                </button>
-              </div>
-            ))
-          )}
-        </div>
-
-        <div className="delivery-zone-picker">
-          <select
-            className="input-field input-compact"
-            value={pickerRegion}
-            onChange={(e) => {
-              setPickerRegion(e.target.value);
-              setPickerDepartment("");
-              setPickerTown("");
-            }}
-          >
-            <option value="">Région…</option>
-            {regions.map((r) => (
-              <option key={r.id} value={r.id}>
-                {r.name}
-              </option>
-            ))}
-          </select>
-
-          {selectedRegion && (
-            <select
-              className="input-field input-compact"
-              value={pickerDepartment}
-              onChange={(e) => {
-                setPickerDepartment(e.target.value);
-                setPickerTown("");
-              }}
-            >
-              <option value="">Toute la région ({selectedRegion.name})</option>
-              {selectedRegion.departments.map((d) => (
-                <option key={d.id} value={d.id}>
-                  {d.name}
-                </option>
-              ))}
-            </select>
-          )}
-
-          {selectedDepartment && (
-            <select
-              className="input-field input-compact"
-              value={pickerTown}
-              onChange={(e) => setPickerTown(e.target.value)}
-            >
-              <option value="">Tout le département ({selectedDepartment.name})</option>
-              <option value={selectedDepartment.town.id}>{selectedDepartment.town.name}</option>
-            </select>
-          )}
-
-          <input
-            className="input-field input-compact"
-            type="number"
-            placeholder="Prix livraison (FCFA)"
-            value={pickerPrice}
-            onChange={(e) => setPickerPrice(e.target.value)}
-            min={0}
-          />
-
-          <button type="button" className="btn-secondary btn-compact" onClick={addZone} disabled={!pickerRegion}>
-            Ajouter cette zone
-          </button>
-        </div>
-        {zoneError && <span className="field-error">{zoneError}</span>}
+        {zonesLoading ? (
+          <p className="text-muted">Chargement…</p>
+        ) : zones.length === 0 ? (
+          <p className="text-muted">
+            Aucune zone de livraison définie.{" "}
+            <Link href="/settings/delivery-zones">Configurer mes zones de livraison</Link>
+          </p>
+        ) : (
+          <div className="delivery-zone-list">
+            {zones.map((z) => {
+              const checked = effectiveZoneIds.includes(z.id);
+              return (
+                <label key={z.id} className={`delivery-zone-chip ${checked ? "" : "delivery-zone-chip-off"}`}>
+                  <input type="checkbox" checked={checked} onChange={() => toggleZone(z.id)} />
+                  <span className="delivery-zone-chip-label">{z.name}</span>
+                  <span className="delivery-zone-chip-price">{formatCurrency(z.price)}</span>
+                </label>
+              );
+            })}
+          </div>
+        )}
 
         <p className="delivery-policy-notice">
           Si le produit n&apos;est pas livré dans les{" "}

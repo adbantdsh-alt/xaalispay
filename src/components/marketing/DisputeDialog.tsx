@@ -8,6 +8,7 @@ import { formatCurrency } from "@/lib/utils";
 import { apiFetch, extractApiError } from "@/lib/api-client";
 
 interface PublicDisputeOrder {
+  orderNumber: string;
   productName: string;
   productImage?: string;
   productDescription?: string;
@@ -15,6 +16,16 @@ interface PublicDisputeOrder {
   amount: number;
   status: string;
 }
+
+const DISPUTE_TYPE_OPTIONS = [
+  { value: "non_conforme", label: "Produit non conforme" },
+  { value: "non_fonctionnel", label: "Produit non fonctionnel" },
+  { value: "erreur_taille_couleur", label: "Erreur taille / couleur" },
+  { value: "annulation_caprice", label: "Je ne veux plus du produit" },
+  { value: "colis_endommage", label: "Colis endommagé" },
+  { value: "article_manquant", label: "Article manquant" },
+  { value: "autre", label: "Autre" },
+] as const;
 
 interface EvidenceMedia {
   type: "image" | "video";
@@ -54,6 +65,7 @@ export function DisputeDialog({
 }) {
   const [pin, setPin] = useState(initialPin.replace(/\D/g, "").slice(0, 4));
   const [order, setOrder] = useState<PublicDisputeOrder | null>(null);
+  const [disputeType, setDisputeType] = useState("");
   const [reason, setReason] = useState("");
   const [media, setMedia] = useState<EvidenceMedia[]>([]);
   const [error, setError] = useState("");
@@ -79,6 +91,7 @@ export function DisputeDialog({
         }
         const data = await res.json();
         setOrder({
+          orderNumber: data.order_number,
           productName: data.product_name,
           productImage: data.product_image || undefined,
           productDescription: data.product_description || undefined,
@@ -99,6 +112,7 @@ export function DisputeDialog({
   useEffect(() => {
     if (open) return;
     setPin(initialPin.replace(/\D/g, "").slice(0, 4));
+    setDisputeType("");
     setReason("");
     setMedia([]);
     setError("");
@@ -145,6 +159,10 @@ export function DisputeDialog({
       setError("Entrez le code livraison à 4 chiffres reçu après paiement.");
       return;
     }
+    if (!disputeType) {
+      setError("Choisissez le type de problème rencontré.");
+      return;
+    }
     if (reason.trim().length < 12) {
       setError("Expliquez le problème en quelques mots.");
       return;
@@ -158,7 +176,7 @@ export function DisputeDialog({
     try {
       const res = await apiFetch(`/api/orders/${orderSlug}/dispute`, {
         method: "POST",
-        body: JSON.stringify({ pin, reason, media }),
+        body: JSON.stringify({ pin, dispute_type: disputeType, reason, media }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(extractApiError(data, "Litige impossible"));
@@ -258,7 +276,7 @@ export function DisputeDialog({
                 />
               )}
               <div>
-                <p className="lp-dispute-order-label">Commande retrouvée</p>
+                <p className="lp-dispute-order-label">Commande retrouvée · {order.orderNumber}</p>
                 <p className="lp-dispute-order-name">{order.productName}</p>
                 <p className="lp-dispute-order-meta">
                   {order.sellerName} · {formatCurrency(order.amount)}
@@ -281,8 +299,8 @@ export function DisputeDialog({
             {!success && order.status === "protection" && (
               <>
                 <p className="lp-dispute-copy">
-                  Entrez le code livraison à 4 chiffres reçu après paiement, le motif et au
-                  moins une preuve.
+                  Entrez le code livraison à 4 chiffres reçu après paiement, le type de problème,
+                  le motif et au moins une preuve.
                 </p>
 
                 <input
@@ -294,6 +312,20 @@ export function DisputeDialog({
                   placeholder="Code livraison"
                   aria-label="Code livraison"
                 />
+
+                <select
+                  value={disputeType}
+                  onChange={(e) => setDisputeType(e.target.value)}
+                  className="lp-dispute-select"
+                  aria-label="Type de problème"
+                >
+                  <option value="">Type de problème…</option>
+                  {DISPUTE_TYPE_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
 
                 <textarea
                   value={reason}
