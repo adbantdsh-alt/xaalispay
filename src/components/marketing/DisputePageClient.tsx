@@ -1,6 +1,5 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { DisputeDialog } from "./DisputeDialog";
 
 export function DisputePageClient({
@@ -10,15 +9,5 @@ export function DisputePageClient({
   initialPin?: string;
   orderSlug?: string;
 }) {
-  const router = useRouter();
-
-  return (
-    <DisputeDialog
-      open
-      onClose={() => router.push("/")}
-      initialPin={initialPin}
-      orderSlug={orderSlug}
-      variant="page"
-    />
-  );
+  return <DisputeDialog initialPin={initialPin} orderSlug={orderSlug} />;
 }

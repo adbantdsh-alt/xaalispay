@@ -3,37 +3,66 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Menu, X } from "lucide-react";
 import { BrandMark } from "@/components/ui/BrandMark";
+import { IconMenu, IconX } from "@/components/icons";
 
 const NAV = [
-  { href: "/#acheteurs", label: "Acheteurs" },
-  { href: "/#vendeurs", label: "Vendeurs" },
-  { href: "/#tarifs", label: "Tarifs" },
+  { href: "/#probleme", label: "Problème" },
+  { href: "/#comment", label: "Comment ça marche" },
+  { href: "/#demo", label: "Démo" },
+  { href: "/#faq", label: "FAQ" },
   { href: "/blog", label: "Blog" },
   { href: "/litige", label: "Litige" },
   { href: "/histoire", label: "Notre histoire" },
 ];
 
+const ANCHOR_IDS = NAV.filter((item) => item.href.startsWith("/#")).map((item) => item.href.slice(2));
+
 export function SiteHeader() {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
+  const [activeSection, setActiveSection] = useState("");
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 8);
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
+    if (!menuOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [menuOpen]);
+
+  // Scroll-spy : une seule section de la home peut etre "active" a la fois,
+  // determinee par celle qui croise le milieu du viewport -- sans ca, isActive()
+  // marquait tous les liens d'ancre actifs simultanement dès que pathname === "/".
+  useEffect(() => {
+    if (pathname !== "/") {
+      setActiveSection("");
+      return;
+    }
+    const elements = ANCHOR_IDS.map((id) => document.getElementById(id)).filter(
+      (el): el is HTMLElement => el !== null
+    );
+    if (elements.length === 0) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries.filter((e) => e.isIntersecting);
+        setActiveSection(visible.length > 0 ? visible[0].target.id : "");
+      },
+      { rootMargin: "-40% 0px -55% 0px" }
+    );
+    elements.forEach((el) => observer.observe(el));
+    return () => observer.disconnect();
+  }, [pathname]);
 
   const isActive = (href: string) => {
-    if (href.startsWith("/#")) return pathname === "/";
+    if (href.startsWith("/#")) return pathname === "/" && activeSection === href.slice(2);
     return pathname === href;
   };
 
   return (
-    <header className={`site-header ${scrolled ? "is-scrolled" : ""}`}>
+    <header className="site-header">
       <div className="site-header-inner">
         <BrandMark size="sm" />
 
@@ -63,12 +92,13 @@ export function SiteHeader() {
             aria-expanded={menuOpen}
             onClick={() => setMenuOpen((v) => !v)}
           >
-            {menuOpen ? <X size={22} strokeWidth={1.5} /> : <Menu size={22} strokeWidth={1.5} />}
+            {menuOpen ? <IconX size={22} strokeWidth={1.5} /> : <IconMenu size={22} strokeWidth={1.5} />}
           </button>
         </div>
       </div>
 
-      {menuOpen && (
+      <div className={`site-mobile-overlay ${menuOpen ? "is-open" : ""}`}>
+        <div className="site-mobile-backdrop" onClick={() => setMenuOpen(false)} />
         <nav className="site-mobile-nav" aria-label="Navigation mobile">
           {NAV.map((item) => (
             <Link
@@ -80,18 +110,20 @@ export function SiteHeader() {
               {item.label}
             </Link>
           ))}
-          <Link href="/auth" className="site-mobile-link" onClick={() => setMenuOpen(false)}>
-            Connexion
-          </Link>
-          <Link
-            href="/auth?mode=signup"
-            className="site-mobile-link site-mobile-link-cta"
-            onClick={() => setMenuOpen(false)}
-          >
-            Créer un compte
-          </Link>
+          <div className="site-mobile-actions">
+            <Link href="/auth" className="site-mobile-link" onClick={() => setMenuOpen(false)}>
+              Connexion
+            </Link>
+            <Link
+              href="/auth?mode=signup"
+              className="site-mobile-link site-mobile-link-cta"
+              onClick={() => setMenuOpen(false)}
+            >
+              Créer un compte
+            </Link>
+          </div>
         </nav>
-      )}
+      </div>
     </header>
   );
 }

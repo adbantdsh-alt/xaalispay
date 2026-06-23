@@ -1,5 +1,13 @@
 import { customAlphabet } from "nanoid";
+import { parsePhoneNumberFromString, type CountryCode } from "libphonenumber-js/max";
 import type { Order } from "./types";
+
+// Région par défaut tant que l'UI n'a pas de sélecteur de pays — seul point
+// à changer le jour où XaalisPay s'ouvre à un marché où les vendeurs tapent
+// leur numéro local sans indicatif (ex. Côte d'Ivoire -> "CI"). Même moteur
+// (libphonenumber) que le backend (apps.accounts.services.normalize_phone)
+// pour que la validation client ne dérive jamais de celle du serveur.
+const DEFAULT_PHONE_REGION: CountryCode = "SN";
 
 const pinAlphabet = customAlphabet("0123456789", 4);
 
@@ -45,7 +53,7 @@ export function isValidUsername(username: string): boolean {
   return /^[a-z0-9_]{3,20}$/.test(username);
 }
 
-/** Numéro local Sénégal sans indicatif (+221). */
+/** Numéro local Sénégal sans indicatif (+221) — usage interne, affichage uniquement. */
 export function normalizeSenegalPhoneLocal(phone: string): string {
   let digits = phone.replace(/\D/g, "");
   while (digits.startsWith("221") && digits.length > 9) {
@@ -54,10 +62,21 @@ export function normalizeSenegalPhoneLocal(phone: string): string {
   return digits.replace(/^0+/, "");
 }
 
-/** Mobile Sénégal : 9 chiffres commençant par 7 (Wave / Orange Money). */
-export function isValidSenegalMobilePhone(phone: string): boolean {
-  const local = normalizeSenegalPhoneLocal(phone);
-  return /^7\d{8}$/.test(local);
+function parseMobilePhone(phone: string, region: CountryCode = DEFAULT_PHONE_REGION) {
+  let digits = phone.replace(/[^\d+]/g, "");
+  if (region === "SN" && !digits.startsWith("+") && !digits.startsWith("221")) {
+    digits = digits.replace(/^0+/, "");
+  }
+  const parsed = parsePhoneNumberFromString(digits, region);
+  if (!parsed?.isValid()) return null;
+  const type = parsed.getType();
+  if (type !== "MOBILE" && type !== "FIXED_LINE_OR_MOBILE") return null;
+  return parsed;
+}
+
+/** Vrai si `phone` est un numéro mobile valide pour `region` (SN par défaut). */
+export function isValidMobilePhone(phone: string, region: CountryCode = DEFAULT_PHONE_REGION): boolean {
+  return parseMobilePhone(phone, region) !== null;
 }
 
 export function formatSenegalPhoneDisplay(phone: string): string {
@@ -66,9 +85,12 @@ export function formatSenegalPhoneDisplay(phone: string): string {
   return `${local.slice(0, 2)} ${local.slice(2, 5)} ${local.slice(5, 7)} ${local.slice(7)}`;
 }
 
-/** Format E.164 attendu par le backend (Profile.phone, identifiant de connexion). */
-export function toSenegalE164(phone: string): string {
-  return `+221${normalizeSenegalPhoneLocal(phone)}`;
+/** Format E.164 attendu par le backend (Profile.phone, identifiant de
+ * connexion) — à appeler après isValidMobilePhone(). Retombe sur l'ancien
+ * format best-effort (Sénégal) si le numéro n'est plus parsable à ce
+ * stade, pour ne jamais lever côté UI. */
+export function toE164(phone: string, region: CountryCode = DEFAULT_PHONE_REGION): string {
+  return parseMobilePhone(phone, region)?.number ?? `+221${normalizeSenegalPhoneLocal(phone)}`;
 }
 
 export function slugifyUsername(input: string): string {

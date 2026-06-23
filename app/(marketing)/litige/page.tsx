@@ -7,11 +7,5 @@ export default async function DisputePage({
 }) {
   const { code = "", slug } = await searchParams;
 
-  return (
-    <section className="dispute-page">
-      <div className="dispute-page-shell">
-        <DisputePageClient initialPin={code} orderSlug={slug} />
-      </div>
-    </section>
-  );
+  return <DisputePageClient initialPin={code} orderSlug={slug} />;
 }

@@ -4,7 +4,7 @@ import { useState } from "react";
 
 export default function ContactPage() {
   const [sent, setSent] = useState(false);
-  const [form, setForm] = useState({ name: "", email: "", subject: "", message: "" });
+  const [form, setForm] = useState({ name: "", email: "", subject: "Support client", message: "" });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,7 +28,27 @@ export default function ContactPage() {
       </header>
 
       <div className="content-two-col">
-        <form onSubmit={handleSubmit} className="glass-card-blue content-form">
+        <aside className="content-aside">
+          <div className="lp-card-flat content-aside-block">
+            <p className="section-label">Email</p>
+            <a href="mailto:contact@xaalispay.sn" className="content-link">
+              contact@xaalispay.sn
+            </a>
+          </div>
+          <div className="lp-card-flat content-aside-block">
+            <p className="section-label">Adresse</p>
+            <p className="text-black">Dakar, Sénégal</p>
+          </div>
+          <div className="lp-card-flat content-aside-block">
+            <p className="section-label">Support litiges</p>
+            <p className="text-sm text-muted">
+              Pour un litige en cours, utilisez le bouton sur votre page de paiement ou écrivez-nous
+              avec votre référence de commande.
+            </p>
+          </div>
+        </aside>
+
+        <form onSubmit={handleSubmit} className="lp-card-flat content-form">
           <input
             className="input-field"
             placeholder="Votre nom *"
@@ -44,12 +64,17 @@ export default function ContactPage() {
             onChange={(e) => setForm({ ...form, email: e.target.value })}
             required
           />
-          <input
+          <select
             className="input-field"
-            placeholder="Sujet"
             value={form.subject}
             onChange={(e) => setForm({ ...form, subject: e.target.value })}
-          />
+          >
+            <option>Support client</option>
+            <option>Question commerciale</option>
+            <option>Partenariat</option>
+            <option>Presse</option>
+            <option>Autre</option>
+          </select>
           <textarea
             className="input-field min-h-[140px]"
             placeholder="Votre message *"
@@ -57,7 +82,7 @@ export default function ContactPage() {
             onChange={(e) => setForm({ ...form, message: e.target.value })}
             required
           />
-          <button type="submit" className="btn-relief-blue w-full">
+          <button type="submit" className="lp-btn lp-btn-primary w-full">
             Envoyer le message
           </button>
           {sent && (
@@ -66,26 +91,6 @@ export default function ContactPage() {
             </p>
           )}
         </form>
-
-        <aside className="content-aside">
-          <div className="glass-card content-aside-block">
-            <p className="section-label">Email</p>
-            <a href="mailto:contact@xaalispay.sn" className="content-link">
-              contact@xaalispay.sn
-            </a>
-          </div>
-          <div className="glass-card content-aside-block">
-            <p className="section-label">Adresse</p>
-            <p className="text-black">Dakar, Sénégal</p>
-          </div>
-          <div className="glass-card content-aside-block">
-            <p className="section-label">Support litiges</p>
-            <p className="text-sm text-muted">
-              Pour un litige en cours, utilisez le bouton sur votre page de paiement ou écrivez-nous
-              avec votre référence de commande.
-            </p>
-          </div>
-        </aside>
       </div>
     </div>
   );

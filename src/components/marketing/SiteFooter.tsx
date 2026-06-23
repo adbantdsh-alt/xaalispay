@@ -6,16 +6,18 @@ const COLS = [
     title: "Produit",
     links: [
       { label: "Comment ça marche", href: "/#comment" },
-      { label: "FAQ", href: "/#faq" },
-      { label: "Blog", href: "/blog" },
-      { label: "Nous contacter", href: "/contact" },
+      { label: "Démo", href: "/#demo" },
+      { label: "FAQ", href: "/faq" },
+      { label: "Ouvrir un litige", href: "/litige" },
     ],
   },
   {
-    title: "Acheteurs",
+    title: "Entreprise",
     links: [
-      { label: "Le séquestre", href: "/#comment" },
-      { label: "Ouvrir un litige", href: "/litige" },
+      { label: "Notre histoire", href: "/histoire" },
+      { label: "Blog", href: "/blog" },
+      { label: "Carrières", href: "/carrieres" },
+      { label: "Nous contacter", href: "/contact" },
     ],
   },
   {

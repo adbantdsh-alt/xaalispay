@@ -1,5 +1,7 @@
 import { SiteFooter } from "@/components/marketing/SiteFooter";
 import { SiteHeader } from "@/components/marketing/SiteHeader";
+import { MobileDisputeFab } from "@/components/marketing/MobileDisputeFab";
+import { BackToTop } from "@/components/marketing/BackToTop";
 
 export default function MarketingLayout({
   children,
@@ -11,6 +13,8 @@ export default function MarketingLayout({
       <SiteHeader />
       <main className="marketing-main">{children}</main>
       <SiteFooter />
+      <MobileDisputeFab />
+      <BackToTop />
     </div>
   );
 }
