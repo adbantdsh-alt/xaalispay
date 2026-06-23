@@ -1,6 +1,5 @@
-/** Bloc protection XaalisPay — rendu rétractable (slim par défaut) à la
- * demande du vendeur, reste sur la même charte navy/coral que le design
- * validé d'origine. */
+/** Bloc protection XaalisPay — rétractable, mais ouvert par défaut pour que
+ * l'acheteur voie immédiatement comment se déroule l'achat. */
 "use client";
 
 import { useState } from "react";
@@ -10,7 +9,7 @@ import s from "./PayProtectionBlock.module.css";
 import { IconShield } from "@/components/ui/AppIcon";
 
 export function PayProtectionBlock({ protectionMinutes = 30 }: { protectionMinutes?: number }) {
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(true);
 
   const steps = [
     {
