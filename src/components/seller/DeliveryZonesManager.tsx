@@ -97,7 +97,7 @@ export function DeliveryZonesManager() {
           min={0}
           disabled={saving}
         />
-        <button type="submit" className="btn-secondary btn-compact" disabled={saving}>
+        <button type="submit" className="btn-seller-primary btn-compact" disabled={saving}>
           {saving ? "…" : "Ajouter cette zone"}
         </button>
       </form>

@@ -95,6 +95,21 @@ export function getSellerHumanStatus(status: OrderStatus): string {
   return labels[status];
 }
 
+/** Étiquette courte pour un badge compact (liste de commandes), par
+ * opposition à getSellerHumanStatus qui est la phrase complète. */
+export function getSellerBadgeStatus(status: OrderStatus): string {
+  const labels: Record<OrderStatus, string> = {
+    pending_payment: "En attente",
+    paid: "En séquestre",
+    protection: "En séquestre",
+    released: "Libérée",
+    dispute: "Litige",
+    refunded: "Remboursée",
+    cancelled: "Annulée",
+  };
+  return labels[status];
+}
+
 export function getBuyerHumanStatus(status: OrderStatus): string {
   const labels: Record<OrderStatus, string> = {
     pending_payment: "À payer",

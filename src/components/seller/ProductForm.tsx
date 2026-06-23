@@ -2,15 +2,16 @@
 
 import { useId, useRef, useState } from "react";
 import Link from "next/link";
+import { ImagePlus, ShieldCheck } from "lucide-react";
 import type { DeliveryZone, Product } from "@/lib/types";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, splitCurrency } from "@/lib/utils";
 import { DELIVERY_DEADLINE_HOURS } from "@/lib/delivery-window";
 import { uploadProductImageFile, MAX_IMAGE_INPUT_MB } from "@/lib/product-form";
 import { useDeliveryZones } from "@/lib/use-delivery-zones";
 import { IconCheck, IconPackage } from "@/components/ui/AppIcon";
 import { ProductImage } from "@/components/ui/ProductImage";
 import { ChargebackExplainDialog } from "@/components/seller/ChargebackExplainDialog";
-import { copyToClipboard } from "@/lib/share";
+import { copyToClipboard, buildPaymentLinkMessage, buildWhatsAppUrl } from "@/lib/share";
 import { buildProductPaymentUrl, formatPublicUrl } from "@/lib/site-url";
 
 export interface ProductFormValues {
@@ -119,13 +120,15 @@ export function ProductFields({
             <img src={form.image} alt="" className="photo-picker-preview" />
           ) : (
             <>
-              <span className="photo-picker-icon">📷</span>
+              <span className="photo-picker-icon">
+                <ImagePlus size={20} strokeWidth={1.5} />
+              </span>
               <span>Ajouter une photo</span>
             </>
           )}
         </button>
         {!uploadingImage && !form.image && (
-          <p className="photo-picker-hint text-muted">JPEG, PNG ou WebP — max {MAX_IMAGE_INPUT_MB} Mo</p>
+          <p className="photo-picker-hint text-muted">JPEG, PNG ou WebP · max {MAX_IMAGE_INPUT_MB} Mo</p>
         )}
         {form.image && (
           <button
@@ -151,7 +154,7 @@ export function ProductFields({
       </label>
 
       <label className="field-block">
-        <span className="field-block-label">Prix (FCFA)</span>
+        <span className="field-block-label">Prix</span>
         <input
           className="input-field input-compact"
           type="number"
@@ -188,26 +191,32 @@ export function ProductFields({
           </div>
         )}
 
-        <p className="delivery-policy-notice">
-          Si le produit n&apos;est pas livré dans les{" "}
-          <strong>{DELIVERY_DEADLINE_HOURS} h après paiement</strong>, remboursement automatique
-          au client — compté comme un{" "}
-          <button
-            type="button"
-            className="chargeback-link"
-            onClick={() => setChargebackOpen(true)}
-          >
-            chargeback
-          </button>
-          .
-        </p>
+        <div className="delivery-policy-notice">
+          <ShieldCheck size={19} strokeWidth={1.5} className="delivery-policy-notice-icon" />
+          <p className="delivery-policy-notice-text">
+            Si le produit n&apos;est pas livré dans les{" "}
+            <strong>{DELIVERY_DEADLINE_HOURS} h après paiement</strong>, remboursement automatique
+            au client — compté comme un{" "}
+            <button
+              type="button"
+              className="chargeback-link"
+              onClick={() => setChargebackOpen(true)}
+            >
+              chargeback
+            </button>
+            .
+          </p>
+        </div>
       </div>
 
       <ChargebackExplainDialog open={chargebackOpen} onClose={() => setChargebackOpen(false)} />
 
       {showDescription && (
         <label className="field-block">
-          <span className="field-block-label">Description (optionnel)</span>
+          <span className="field-block-label-row">
+            <span className="field-block-label">Description</span>
+            <span className="field-block-optional">optionnel</span>
+          </span>
           <textarea
             className="input-field input-compact form-textarea-sm"
             placeholder="Décrivez votre produit…"
@@ -219,7 +228,10 @@ export function ProductFields({
       )}
 
       <label className="field-block">
-        <span className="field-block-label">Note interne (optionnel)</span>
+        <span className="field-block-label-row">
+          <span className="field-block-label">Note interne</span>
+          <span className="field-block-optional">visible par vous seul</span>
+        </span>
         <textarea
           className="input-field input-compact form-textarea-sm"
           placeholder="Couleur, taille, précisions…"
@@ -234,12 +246,14 @@ export function ProductFields({
 
 export function ProductListItem({
   product,
+  sales,
   onToggle,
   onEdit,
   onDelete,
   deleting = false,
 }: {
   product: Product;
+  sales?: { count: number; revenue: number };
   onToggle: () => void;
   onEdit: () => void;
   onDelete?: () => void;
@@ -258,66 +272,106 @@ export function ProductListItem({
 
   return (
     <article className="product-row">
-      {product.image ? (
-        <ProductImage src={product.image} alt={product.name} className="product-row-img" width={56} height={56} />
-      ) : (
-        <div className="product-row-img product-row-img-empty">
-          <IconPackage size={22} />
-        </div>
-      )}
-      <div className="product-row-body">
-        <p className="product-row-name">{product.name}</p>
-        <p className="product-row-meta">
-          {formatCurrency(product.price)}
-          {product.deliveryZones.length > 0 &&
-            ` · ${product.deliveryZones.length} zone${product.deliveryZones.length > 1 ? "s" : ""} de livraison`}
-        </p>
-        {product.description && (
-          <p className="product-row-note">{product.description}</p>
+      <div className="product-row-top">
+        {product.image ? (
+          <ProductImage src={product.image} alt={product.name} className="product-row-img" width={56} height={56} />
+        ) : (
+          <div className="product-row-img product-row-img-empty">
+            <IconPackage size={22} />
+          </div>
         )}
-        {product.note && <p className="product-row-note text-muted">{product.note}</p>}
-        {product.paymentSlug && (
+        <div className="product-row-body">
+          <div className="product-row-name-row">
+            <p className="product-row-name">{product.name}</p>
+            <span className={`product-status-badge ${product.active ? "" : "product-status-badge-off"}`}>
+              {product.active ? "Publié" : "Dépublié"}
+            </span>
+          </div>
+          <p className="product-row-price">
+            {splitCurrency(product.price)[0]}
+            <span className="product-row-price-suffix">{splitCurrency(product.price)[1]}</span>
+          </p>
+          <p className="product-row-meta">
+            {product.active
+              ? sales && sales.count > 0
+                ? `${sales.count} vente${sales.count > 1 ? "s" : ""} · ${splitCurrency(sales.revenue)[0]} F encaissés`
+                : "Aucune vente encore"
+              : "Lien de paiement désactivé"}
+          </p>
+          {product.description && (
+            <p className="product-row-note">{product.description}</p>
+          )}
+          {product.note && <p className="product-row-note text-muted">{product.note}</p>}
+        </div>
+      </div>
+
+      {product.paymentSlug && (
+        <>
+          <button
+            type="button"
+            className="product-link-tap"
+            onClick={handleQuickCopy}
+            aria-label="Copier le lien de paiement"
+          >
+            <span className="product-link-tap-url">{formatPublicUrl(payUrl)}</span>
+            <span className="product-link-tap-hint">
+              {copied ? (
+                <span className="copy-btn-copied">
+                  <IconCheck size={14} /> Copié !
+                </span>
+              ) : (
+                "Copier"
+              )}
+            </span>
+          </button>
           <div className="product-row-actions">
-            <button
-              type="button"
-              className="product-link-tap"
-              onClick={handleQuickCopy}
-              aria-label="Copier le lien de paiement"
-            >
-              <span className="product-link-tap-url">{formatPublicUrl(payUrl)}</span>
-              <span className="product-link-tap-hint">
-                {copied ? (
-                  <span className="copy-btn-copied">
-                    <IconCheck size={14} /> Copié !
-                  </span>
-                ) : (
-                  "Appuyer pour copier"
-                )}
-              </span>
-            </button>
-            <button type="button" className="btn-secondary btn-compact" onClick={onEdit}>
-              Modifier
-            </button>
+            {product.active ? (
+              <>
+                <button type="button" className="btn-ghost btn-compact product-row-action-btn" onClick={onEdit}>
+                  Modifier
+                </button>
+                <button
+                  type="button"
+                  className="btn-ghost btn-compact product-row-action-btn"
+                  onClick={() =>
+                    window.open(
+                      buildWhatsAppUrl(buildPaymentLinkMessage(payUrl, product.name)),
+                      "_blank"
+                    )
+                  }
+                >
+                  Partager
+                </button>
+              </>
+            ) : (
+              <>
+                <button type="button" className="btn-secondary btn-compact product-row-action-btn" onClick={onToggle}>
+                  Republier
+                </button>
+                <button type="button" className="btn-ghost btn-compact product-row-action-btn" onClick={onEdit}>
+                  Modifier
+                </button>
+              </>
+            )}
             {onDelete && (
               <button
                 type="button"
                 className="btn-ghost btn-compact product-delete-btn"
                 onClick={onDelete}
                 disabled={deleting}
+                aria-label="Supprimer"
               >
-                {deleting ? "…" : "Supprimer"}
+                {deleting ? "…" : "✕"}
               </button>
             )}
           </div>
-        )}
-      </div>
-      <button
-        type="button"
-        onClick={onToggle}
-        className={`chip-toggle product-publish-toggle ${product.active ? "chip-toggle-on" : ""}`}
-      >
-        {product.active ? "Dépublier" : "Publier"}
-      </button>
+          {product.active && (
+            <button type="button" className="product-row-unpublish" onClick={onToggle}>
+              Dépublier ce produit
+            </button>
+          )}
+        </>
+      )}
     </article>
   );
 }

@@ -1,40 +1,42 @@
 "use client";
 
 import { useState } from "react";
+import { ToggleSwitch } from "@/components/ui/ToggleSwitch";
 
 export function SettingsNotificationPrefs() {
   const [status, setStatus] = useState<string>("");
+  const [granted, setGranted] = useState(
+    typeof Notification !== "undefined" && Notification.permission === "granted"
+  );
 
-  const enableBrowser = async () => {
+  const handleToggle = async () => {
     setStatus("");
     if (typeof Notification === "undefined") {
       setStatus("Notifications non supportées sur cet appareil.");
       return;
     }
     if (Notification.permission === "granted") {
-      setStatus("Notifications déjà activées.");
+      setStatus("Déjà activées — désactivez-les depuis les réglages de votre navigateur.");
       return;
     }
     const result = await Notification.requestPermission();
-    if (result === "granted") {
-      setStatus("Notifications activées — vous serez alerté des nouvelles commandes.");
-    } else if (result === "denied") {
+    setGranted(result === "granted");
+    if (result === "denied") {
       setStatus("Refusé — autorisez les notifications dans les paramètres du navigateur.");
-    } else {
-      setStatus("Autorisation en attente.");
     }
   };
 
   return (
     <div className="settings-notify-prefs">
-      <p className="settings-section-label">Notifications</p>
-      <p className="settings-notify-desc text-muted">
-        Recevez une alerte navigateur quand une nouvelle commande est payée (en plus du toast
-        dans l&apos;app).
-      </p>
-      <button type="button" className="btn-secondary settings-notify-btn" onClick={enableBrowser}>
-        Activer les notifications navigateur
-      </button>
+      <div className="settings-notify-row">
+        <div className="settings-notify-row-body">
+          <p className="settings-notify-row-title">Alertes navigateur</p>
+          <p className="settings-notify-row-desc text-muted">
+            Quand une commande est payée ou livrée.
+          </p>
+        </div>
+        <ToggleSwitch checked={granted} onClick={handleToggle} label="Alertes navigateur" />
+      </div>
       {status && <p className="settings-notify-status">{status}</p>}
     </div>
   );

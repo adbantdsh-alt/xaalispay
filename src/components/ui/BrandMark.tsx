@@ -25,7 +25,7 @@ export function BrandMark({
           <XaalisIcon size={iconSizes[size]} />
         </span>
         <span className="brand-name">
-          <span className="brand-name-strong">Xaalis</span><span className="brand-name-light">Pay</span>
+          <span className="brand-name-light">Xaalis</span><span className="brand-name-strong">Pay</span>
         </span>
       </>
     );

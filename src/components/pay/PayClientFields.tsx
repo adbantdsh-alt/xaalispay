@@ -3,7 +3,7 @@
  * inchangée par rapport au design validé. */
 "use client";
 
-import { formatCurrency } from "@/lib/utils";
+import { splitCurrency } from "@/lib/utils";
 import s from "./PayClientFields.module.css";
 
 export interface PayClientFieldsValues {
@@ -18,9 +18,12 @@ interface PayClientFieldsProps {
   values: PayClientFieldsValues;
   onChange: (values: PayClientFieldsValues) => void;
   zones: Array<{ id: string; name: string; price: number }>;
+  /** Total à payer recalculé pour la zone sélectionnée — affiché en rappel
+   * juste sous le choix de zone, pour éviter de remonter voir le résumé. */
+  totalToPay?: number;
 }
 
-export function PayClientFields({ values, onChange, zones }: PayClientFieldsProps) {
+export function PayClientFields({ values, onChange, zones, totalToPay }: PayClientFieldsProps) {
   const set = (key: keyof PayClientFieldsValues, value: string) => {
     onChange({ ...values, [key]: value });
   };
@@ -87,15 +90,20 @@ export function PayClientFields({ values, onChange, zones }: PayClientFieldsProp
           <option value="">Choisir une zone…</option>
           {zones.map((z) => (
             <option key={z.id} value={z.id}>
-              {z.name} — {z.price > 0 ? formatCurrency(z.price) : "Gratuite"}
+              {z.name} — {z.price > 0 ? `${splitCurrency(z.price)[0]} F` : "Gratuite"}
             </option>
           ))}
         </select>
+        {values.deliveryZoneId && totalToPay !== undefined && (
+          <p className={s.zoneTotalHint}>
+            Total à payer pour cette zone : <strong>{splitCurrency(totalToPay)[0]} F CFA</strong>
+          </p>
+        )}
       </div>
 
       <div className={s.field}>
         <label className={s.label} htmlFor="pay-address">
-          Adresse de livraison <span className="text-muted">(optionnel)</span>
+          Adresse de livraison <span className={s.labelOptional}>(optionnel)</span>
         </label>
         <textarea
           id="pay-address"

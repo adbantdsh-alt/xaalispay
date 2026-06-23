@@ -2,24 +2,43 @@
 
 import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
+import { ChevronRight } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { Order } from "@/lib/types";
-import { formatCurrency, getOrderTotal } from "@/lib/utils";
+import { getOrderTotal, splitCurrency } from "@/lib/utils";
 import { filterOrders, type OrderFilterKey } from "@/lib/order-filters";
 import { computeWalletBreakdown } from "@/lib/wallet-breakdown";
 import { computeChargebackStats } from "@/lib/chargeback";
 import { SellerOnboarding } from "@/components/seller/SellerOnboarding";
 import { ActionRequiredCard } from "@/components/seller/ActionRequiredCard";
+import { DisputeAlertBanner } from "@/components/seller/DisputeAlertBanner";
 import { DashboardSkeleton } from "@/components/ui/Skeleton";
 import { WalletOverview } from "@/components/seller/WalletOverview";
 import { AssetRow } from "@/components/seller/AssetRow";
 import { OrderFilterTabs } from "@/components/seller/OrderFilterTabs";
 import { OrderDetailSheet } from "@/components/seller/OrderDetailSheet";
-import { SellerStatsCard } from "@/components/seller/SellerStatsCard";
-import { computeSellerStats } from "@/lib/seller-stats";
 import { buildShopUrl, formatPublicUrl } from "@/lib/site-url";
 import { useSellerData } from "@/components/seller/SellerDataProvider";
 import { apiFetch } from "@/lib/api-client";
+
+const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
+
+function computeDashboardStats(orders: Order[]) {
+  const now = Date.now();
+  const salesLast30Days = orders
+    .filter(
+      (o) =>
+        ["paid", "protection", "released"].includes(o.status) &&
+        o.paidAt &&
+        now - new Date(o.paidAt).getTime() <= THIRTY_DAYS_MS
+    )
+    .reduce((sum, o) => sum + getOrderTotal(o), 0);
+  const thisMonth = new Date().getMonth();
+  const ordersThisMonthCount = orders.filter(
+    (o) => new Date(o.createdAt).getMonth() === thisMonth
+  ).length;
+  return { salesLast30Days, ordersThisMonthCount };
+}
 
 function DashboardContent() {
   const { data, loading, refresh } = useSellerData();
@@ -28,6 +47,7 @@ function DashboardContent() {
   const [productCount, setProductCount] = useState(0);
   const [error, setError] = useState("");
   const [pinErrorOrderId, setPinErrorOrderId] = useState<string | null>(null);
+  const [expandedActionId, setExpandedActionId] = useState<string | null>(null);
   const [orderFilter, setOrderFilter] = useState<OrderFilterKey>("all");
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [cancelWarning, setCancelWarning] = useState("");
@@ -115,7 +135,7 @@ function DashboardContent() {
     })),
   });
 
-  const releasing = data.wallet.sequestered
+  const releasingRaw = data.wallet.sequestered
     .filter((s) => s.status === "protection" && s.protectionEndsAt)
     .sort(
       (a, b) =>
@@ -123,18 +143,17 @@ function DashboardContent() {
     )[0];
 
   const actionOrders = data.orders.filter((o) => o.status === "paid");
-  const paidOrders = data.orders.filter((o) => o.status !== "pending_payment");
-  const totalSales = paidOrders.reduce((sum, o) => sum + getOrderTotal(o), 0);
+  const disputeOrders = data.orders.filter((o) => o.status === "dispute");
   const filteredOrders = filterOrders(data.orders, orderFilter);
   const hasValidatedDelivery = data.orders.some(
     (o) => o.status === "protection" || o.status === "released"
   );
   const shopUrl = buildShopUrl(data.profile.username);
   const showEmpty = data.orders.length === 0 && productCount === 0;
+  const { salesLast30Days, ordersThisMonthCount } = computeDashboardStats(data.orders);
 
   // Chargeback stats
   const cbStats = computeChargebackStats(data.orders);
-  const sellerStats = computeSellerStats(data.orders);
 
   return (
     <div className="seller-dashboard">
@@ -151,42 +170,54 @@ function DashboardContent() {
           </button>
         </p>
       )}
+
+      <p className="seller-greeting-line">
+        Bonjour, <span className="seller-greeting-name">{data.profile.displayName.split(" ")[0]}</span>
+      </p>
+
       <WalletOverview
         breakdown={breakdown}
-        shopUrl={shopUrl}
-        username={data.profile.username}
-        actionSlot={
-          actionOrders.length > 0 ? (
-            <div id="pin-action" className="action-cards-stack">
-              {actionOrders.length > 1 && (
-                <p className="action-cards-stack-label">
-                  {actionOrders.length} livraisons à valider
-                </p>
-              )}
-              {actionOrders.map((order) => (
-                <ActionRequiredCard
-                  key={order.id}
-                  order={order}
-                  onValidate={validateDelivery}
-                  onCancel={cancelOrder}
-                  error={pinErrorOrderId === order.id ? error : undefined}
-                  protectionMinutes={data.protectionMinutes}
-                />
-              ))}
-            </div>
-          ) : undefined
-        }
         releasing={
-          releasing?.protectionEndsAt
+          releasingRaw?.protectionEndsAt
             ? {
-                protectionEndsAt: releasing.protectionEndsAt,
-                productName: releasing.productName,
+                protectionEndsAt: releasingRaw.protectionEndsAt,
+                productName: releasingRaw.productName,
+                amount: releasingRaw.amount,
               }
             : undefined
         }
         protectionMinutes={data.protectionMinutes}
         onCountdownExpire={() => refresh({ silent: true })}
       />
+
+      {actionOrders.length > 0 && (
+        <section className="action-required-section animate-fade-up">
+          <div className="action-required-head">
+            <p className="section-label action-required-label">Action requise</p>
+            {actionOrders.length > 1 && (
+              <span className="action-required-count">{actionOrders.length} à valider</span>
+            )}
+          </div>
+          <div className="action-required-list">
+            {actionOrders.map((order, index) => (
+              <ActionRequiredCard
+                key={order.id}
+                order={order}
+                onValidate={validateDelivery}
+                onCancel={cancelOrder}
+                error={pinErrorOrderId === order.id ? error : undefined}
+                protectionMinutes={data.protectionMinutes}
+                expanded={
+                  expandedActionId === null ? index === 0 : expandedActionId === order.id
+                }
+                onExpand={() => setExpandedActionId(order.id)}
+              />
+            ))}
+          </div>
+        </section>
+      )}
+
+      <DisputeAlertBanner disputeOrders={disputeOrders} onClick={() => setOrderFilter("dispute")} />
 
       {/* Alerte chargeback */}
       {cbStats.level !== "ok" && (
@@ -215,7 +246,22 @@ function DashboardContent() {
         </p>
       )}
 
-      <SellerStatsCard stats={sellerStats} />
+      <div className="dashboard-stats-row">
+        <div className="dashboard-stat-card">
+          <p className="eyebrow-mono">Ventes · 30 j</p>
+          <p className="dashboard-stat-value">
+            {splitCurrency(salesLast30Days)[0]}
+            <span className="dashboard-stat-suffix">F</span>
+          </p>
+        </div>
+        <div className="dashboard-stat-card">
+          <p className="eyebrow-mono">Commandes</p>
+          <p className="dashboard-stat-value">
+            {ordersThisMonthCount}
+            <span className="dashboard-stat-suffix">ce mois</span>
+          </p>
+        </div>
+      </div>
 
       {showEmpty ? (
         <section className="seller-tip-card animate-fade-up-d2">
@@ -230,21 +276,20 @@ function DashboardContent() {
       ) : (
         <section className="seller-assets dashboard-orders animate-fade-up-d2">
           <div className="dashboard-orders-head">
-            <h2 className="seller-section-title">Commandes</h2>
+            <h2 className="dashboard-orders-title">Commandes</h2>
             {data.orders.length > 0 && (
-              <p className="dashboard-orders-summary text-muted">
-                {paidOrders.length} vente{paidOrders.length !== 1 ? "s" : ""}
-                {totalSales > 0 ? ` · ${formatCurrency(totalSales)}` : ""}
-              </p>
+              <button
+                type="button"
+                className="dashboard-orders-see-all"
+                onClick={() => setOrderFilter("all")}
+              >
+                Tout voir <ChevronRight size={14} strokeWidth={1.5} />
+              </button>
             )}
           </div>
 
           {data.orders.length > 0 && (
-            <OrderFilterTabs
-              orders={data.orders}
-              filter={orderFilter}
-              onFilterChange={setOrderFilter}
-            />
+            <OrderFilterTabs filter={orderFilter} onFilterChange={setOrderFilter} />
           )}
 
           <div className="asset-list">

@@ -366,7 +366,7 @@ export function DeliveryValidation({
 
           <h2 className={styles.title}>Validation livraison</h2>
           <p className={styles.subtitle}>
-            Code livraison {productName} — à donner au livreur après réception
+            Code livraison {productName} — à donner au livreur après réception.
           </p>
 
           {/* Avertissement + bouton révélation */}

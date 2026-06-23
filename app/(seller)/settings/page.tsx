@@ -1,9 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import type { ReactNode } from "react";
+import { Eye, Lock, LogOut } from "lucide-react";
 import { buildShopPath } from "@/lib/site-url";
 import { formatSenegalPhoneDisplay } from "@/lib/utils";
+import { IconCheck } from "@/components/ui/AppIcon";
 import { DashboardSkeleton } from "@/components/ui/Skeleton";
 import { SettingsProfileEditor } from "@/components/seller/SettingsProfileEditor";
 import { SettingsNotificationPrefs } from "@/components/seller/SettingsNotificationPrefs";
@@ -26,17 +28,30 @@ function SettingsLink({
   href,
   label,
   desc,
+  icon,
 }: {
   href: string;
   label: string;
   desc?: string;
+  icon?: ReactNode;
 }) {
+  const text = (
+    <>
+      <span className="settings-link-label">{label}</span>
+      {desc && <span className="settings-link-desc">{desc}</span>}
+    </>
+  );
+
   return (
     <Link href={href} className="settings-link-item">
-      <div className="settings-link-body">
-        <span className="settings-link-label">{label}</span>
-        {desc && <span className="settings-link-desc">{desc}</span>}
-      </div>
+      {icon ? (
+        <div className="settings-link-body-iconed">
+          {icon}
+          <div className="settings-link-body">{text}</div>
+        </div>
+      ) : (
+        <div className="settings-link-body">{text}</div>
+      )}
       <svg className="settings-link-chevron" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" aria-hidden="true">
         <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
       </svg>
@@ -45,7 +60,6 @@ function SettingsLink({
 }
 
 export default function SettingsPage() {
-  const router = useRouter();
   const { logout: authLogout } = useAuth();
   const { data, loading, refresh } = useSellerData();
   const profile = data?.profile ?? null;
@@ -73,65 +87,51 @@ export default function SettingsPage() {
 
   return (
     <div className="settings-page animate-settings-slide">
-      <header className="settings-page-head">
-        <button
-          type="button"
-          className="settings-page-back"
-          aria-label="Retour à l'accueil"
-          onClick={() => router.push("/dashboard")}
-        >
-          <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-          </svg>
-        </button>
-        <h1 className="settings-page-title">Paramètres</h1>
+      <header className="settings-page-head settings-page-head-plain">
+        <h1 className="settings-page-title settings-page-title-plain">Paramètres</h1>
       </header>
 
       <section className="settings-profile-card">
         <div className="settings-profile-hero">
-          <div className="settings-profile-avatar">{initial}</div>
-          <div className="settings-profile-identity">
-            <p className="settings-profile-name">{profile.displayName}</p>
-            <p className="settings-profile-tag">@{profile.username}</p>
+          <div className="settings-profile-hero-id">
+            <div className="settings-profile-avatar">{initial}</div>
+            <div className="settings-profile-identity">
+              <p className="settings-profile-name">{profile.displayName}</p>
+              <p className="settings-profile-tag">@{profile.username}</p>
+            </div>
           </div>
+          <span className="settings-verified-badge">
+            <IconCheck size={12} /> Vérifié
+          </span>
         </div>
 
-        <dl className="settings-info-grid">
+        <div className="settings-info-grid">
+          <SettingsProfileEditor
+            displayName={profile.displayName}
+            businessName={profile.businessName}
+            onSaved={async () => {
+              await refresh({ silent: true });
+            }}
+          />
           <div className="settings-info-row">
-            <dt>Pays</dt>
-            <dd>Sénégal</dd>
-          </div>
-          <div className="settings-info-row">
-            <dt>Devise</dt>
-            <dd>FCFA</dd>
-          </div>
-        </dl>
-
-        <SettingsProfileEditor
-          displayName={profile.displayName}
-          businessName={profile.businessName}
-          onSaved={async () => {
-            await refresh({ silent: true });
-          }}
-        />
-
-        <div className="settings-info-grid settings-phone-grid">
-          <div className="settings-info-row settings-info-row-phone">
             <span className="settings-phone-label">Téléphone</span>
-            <span className="settings-phone-value">
-              +221 {formatSenegalPhoneDisplay(profile.phone)}
-            </span>
+            <div className="settings-phone-value-wrap">
+              <span className="settings-phone-value">
+                +221 {formatSenegalPhoneDisplay(profile.phone)}
+              </span>
+              <Lock size={14} strokeWidth={1.75} className="settings-row-lock" aria-label="Non modifiable" />
+            </div>
           </div>
-          <p className="settings-phone-hint text-muted">
-            Numéro de connexion — contactez le support pour le changer.
-          </p>
+          <div className="settings-info-row">
+            <span className="settings-phone-label">Pays &amp; devise</span>
+            <span className="settings-phone-value">Sénégal · FCFA</span>
+          </div>
         </div>
+      </section>
 
+      <section className="settings-section">
+        <p className="settings-section-label">Notifications</p>
         <SettingsNotificationPrefs />
-
-        <Link href={buildShopPath(profile.username)} className="settings-public-link">
-          Voir ma page publique
-        </Link>
       </section>
 
       {showAdmin && (
@@ -157,6 +157,11 @@ export default function SettingsPage() {
           {ACCOUNT_LINKS.map((item) => (
             <SettingsLink key={item.href} {...item} />
           ))}
+          <SettingsLink
+            href={buildShopPath(profile.username)}
+            label="Voir ma page publique"
+            icon={<Eye size={17} strokeWidth={1.5} />}
+          />
         </div>
       </section>
 
@@ -171,8 +176,10 @@ export default function SettingsPage() {
 
       <div className="settings-logout-wrap">
         <button type="button" className="settings-logout-btn" onClick={logout}>
+          <LogOut size={17} strokeWidth={1.5} />
           Se déconnecter
         </button>
+        <p className="settings-version">XaalisPay · v1.0</p>
       </div>
     </div>
   );

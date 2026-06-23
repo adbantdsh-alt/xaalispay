@@ -1,6 +1,7 @@
 "use client";
 
 import { MobileBottomNav } from "./MobileBottomNav";
+import { SellerDesktopTabs } from "./SellerDesktopTabs";
 import { SellerHeader } from "./seller/SellerHeader";
 import { SellerDataProvider } from "./seller/SellerDataProvider";
 import { SellerOrderNotifier } from "./seller/SellerOrderNotifier";
@@ -14,6 +15,7 @@ export function SellerShellClient({ children }: { children: React.ReactNode }) {
         <OfflineBanner />
         <header className="seller-shell-header">
           <SellerHeader />
+          <SellerDesktopTabs />
         </header>
         <main className="seller-content">{children}</main>
         <MobileBottomNav />

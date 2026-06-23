@@ -130,16 +130,28 @@ export default function PayPage() {
 
   if (["dispute", "refunded", "released"].includes(status)) {
     const meta = {
-      dispute: { Icon: IconAlert, title: "Litige ouvert", desc: "Examen en cours." },
-      refunded: { Icon: IconUndo, title: "Remboursé", desc: "Votre argent vous a été rendu." },
-      released: { Icon: IconCheck, title: "Terminé", desc: "Transaction finalisée." },
+      dispute: {
+        Icon: IconAlert,
+        title: "Litige ouvert",
+        desc: "Examen en cours. Votre argent reste bloqué chez XaalisPay le temps de la vérification.",
+      },
+      refunded: {
+        Icon: IconUndo,
+        title: "Remboursé",
+        desc: "Votre argent vous a été rendu sur votre compte mobile money.",
+      },
+      released: {
+        Icon: IconCheck,
+        title: "Terminé",
+        desc: "Transaction finalisée. Les fonds ont été libérés au vendeur.",
+      },
     } as const;
     const { Icon, title, desc } = meta[status as keyof typeof meta];
     return (
       <div className="page-shell status-screen">
         <BrandMark />
-        <p className="status-screen-icon" aria-hidden="true">
-          <Icon size={36} />
+        <p className="status-screen-icon status-screen-icon-coral" aria-hidden="true">
+          <Icon size={28} />
         </p>
         <h2 className="status-screen-title">{title}</h2>
         <p className="status-screen-desc">{desc}</p>
@@ -206,6 +218,10 @@ export default function PayPage() {
   // create_order_from_product côté backend).
   const selectedZone = order.deliveryZones?.find((z) => z.id === selectedZoneId);
   const liveDeliveryCost = order.isProductLink ? selectedZone?.price ?? 0 : order.deliveryCost || 0;
+  const buyerProtectionFee =
+    order.fees?.buyerProtectionFee ??
+    calculateBuyerProtectionFee(order.productPrice + liveDeliveryCost);
+  const checkoutTotal = order.productPrice + liveDeliveryCost + buyerProtectionFee;
 
   return (
     <div className="pay-app">
@@ -220,19 +236,16 @@ export default function PayPage() {
       <div className="pay-sheet pay-sheet-flat animate-fade-up">
         <div className="pay-sheet-handle" />
 
+        <PayProtectionBlock protectionMinutes={protectionMinutes} />
+
         <PayOrderSummary
           productName={order.productName}
           productImage={order.productImage}
           productPrice={order.productPrice}
           deliveryCost={liveDeliveryCost}
-          buyerProtectionFee={
-            order.fees?.buyerProtectionFee ??
-            calculateBuyerProtectionFee(order.productPrice + liveDeliveryCost)
-          }
+          buyerProtectionFee={buyerProtectionFee}
           seller={order.seller}
         />
-
-        <PayProtectionBlock protectionMinutes={protectionMinutes} />
 
         {(order.productDescription || order.productNote) && (
           <div className="pay-product-details">
@@ -264,6 +277,7 @@ export default function PayPage() {
               setSelectedZoneId(v.deliveryZoneId);
             }}
             zones={order.deliveryZones || []}
+            totalToPay={checkoutTotal}
           />
         </PayCheckoutSection>
 

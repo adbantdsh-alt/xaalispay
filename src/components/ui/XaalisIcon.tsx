@@ -1,4 +1,4 @@
-const ICON_SRC = "/branding/xaalis-icon.png";
+const ICON_SRC = "/branding/xaalis-mark.png";
 
 export function XaalisIcon({
   size = 32,

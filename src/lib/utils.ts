@@ -13,6 +13,14 @@ export function formatCurrency(amount: number): string {
     .replace("XOF", "FCFA");
 }
 
+/** Sépare "47 500 FCFA" en ["47 500", "FCFA"] pour estomper le suffixe à
+ * l'affichage — retombe sur le texte plein si le format ne matche pas. */
+export function splitCurrency(amount: number): [string, string] {
+  const formatted = formatCurrency(amount);
+  const match = formatted.match(/^([\d\s .,]+)\s*(\D+)$/);
+  return match ? [match[1].trim(), match[2].trim()] : [formatted, ""];
+}
+
 /** Code factice pour la page de démo statique (orderlink/preview) — le vrai
  * PIN est généré côté Django (apps.orders.services.generate_pin). */
 export function generatePin(): string {

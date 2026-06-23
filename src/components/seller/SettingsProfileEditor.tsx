@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Pencil } from "lucide-react";
 import { apiFetch, extractApiError } from "@/lib/api-client";
 
 export function SettingsProfileEditor({
@@ -59,20 +60,20 @@ export function SettingsProfileEditor({
   if (editing) {
     return (
       <div className="settings-profile-editor">
-        <label className="field-block">
-          <span className="field-block-label">Nom affiché</span>
+        <label className="settings-edit-field">
+          <span className="settings-edit-label">Nom affiché</span>
           <input
-            className="input-field input-compact"
+            className="settings-edit-input"
             value={name}
             onChange={(e) => setName(e.target.value)}
             maxLength={60}
             disabled={saving}
           />
         </label>
-        <label className="field-block">
-          <span className="field-block-label">Nom de la boutique</span>
+        <label className="settings-edit-field">
+          <span className="settings-edit-label">Nom de la boutique</span>
           <input
-            className="input-field input-compact"
+            className="settings-edit-input"
             value={shop}
             onChange={(e) => setShop(e.target.value)}
             maxLength={80}
@@ -80,11 +81,11 @@ export function SettingsProfileEditor({
           />
         </label>
         {error && <p className="settings-phone-error">{error}</p>}
-        <div className="settings-phone-actions">
-          <button type="button" className="btn-secondary settings-phone-btn" onClick={cancel} disabled={saving}>
+        <div className="settings-edit-actions">
+          <button type="button" className="settings-edit-btn settings-edit-btn-ghost" onClick={cancel} disabled={saving}>
             Annuler
           </button>
-          <button type="button" className="btn-seller-primary settings-phone-btn" onClick={save} disabled={saving}>
+          <button type="button" className="settings-edit-btn settings-edit-btn-primary" onClick={save} disabled={saving}>
             {saving ? "Enregistrement…" : "Enregistrer"}
           </button>
         </div>
@@ -93,26 +94,26 @@ export function SettingsProfileEditor({
   }
 
   return (
-    <div className="settings-info-grid settings-phone-grid">
-      <div className="settings-info-row settings-info-row-phone">
+    <>
+      <div className="settings-info-row">
         <span className="settings-phone-label">Nom</span>
         <div className="settings-phone-value-wrap">
           <span className="settings-phone-value">{displayName}</span>
-          <button type="button" className="settings-phone-edit" onClick={open}>
-            Modifier
+          <button type="button" className="settings-row-edit-btn" onClick={open} aria-label="Modifier le nom">
+            <Pencil size={14} strokeWidth={1.75} />
           </button>
         </div>
       </div>
-      <div className="settings-info-row settings-info-row-phone">
+      <div className="settings-info-row">
         <span className="settings-phone-label">Boutique</span>
         <div className="settings-phone-value-wrap">
           <span className="settings-phone-value">{businessName}</span>
-          <button type="button" className="settings-phone-edit" onClick={open}>
-            Modifier
+          <button type="button" className="settings-row-edit-btn" onClick={open} aria-label="Modifier la boutique">
+            <Pencil size={14} strokeWidth={1.75} />
           </button>
         </div>
       </div>
       {success && <p className="settings-phone-success">{success}</p>}
-    </div>
+    </>
   );
 }

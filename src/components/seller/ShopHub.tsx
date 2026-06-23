@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 export type ShopView = "home" | "product" | "link" | "pseudo" | "edit";
 
@@ -16,11 +16,19 @@ export function useShopView(): ShopView {
 }
 
 export function ShopBackBar({ title }: { title: string }) {
+  const router = useRouter();
   return (
     <div className="shop-back-bar">
-      <Link href="/create" className="shop-back-btn">
-        ← Retour
-      </Link>
+      <button
+        type="button"
+        className="icon-back-btn"
+        onClick={() => router.back()}
+        aria-label="Retour"
+      >
+        <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+        </svg>
+      </button>
       <p className="shop-back-title">{title}</p>
     </div>
   );

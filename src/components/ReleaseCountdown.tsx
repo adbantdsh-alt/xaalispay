@@ -6,6 +6,9 @@ interface ReleaseCountdownProps {
   endsAt: string;
   minutes: number;
   onExpire?: () => void;
+  /** Rendu compact en une ligne ("12 min · 23 000"), pour une stat plutôt qu'une carte dédiée. */
+  compact?: boolean;
+  compactAmount?: string;
 }
 
 function formatTime(ms: number) {
@@ -16,7 +19,17 @@ function formatTime(ms: number) {
   return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
 }
 
-export function ReleaseCountdown({ endsAt, minutes, onExpire }: ReleaseCountdownProps) {
+function formatMinutes(ms: number) {
+  return `${Math.max(0, Math.ceil(ms / 60000))} min`;
+}
+
+export function ReleaseCountdown({
+  endsAt,
+  minutes,
+  onExpire,
+  compact = false,
+  compactAmount,
+}: ReleaseCountdownProps) {
   const [remaining, setRemaining] = useState(0);
   const [expired, setExpired] = useState(false);
 
@@ -39,6 +52,15 @@ export function ReleaseCountdown({ endsAt, minutes, onExpire }: ReleaseCountdown
   }, [endsAt, expired, onExpire]);
 
   const progress = Math.max(0, Math.min(100, (remaining / (minutes * 60 * 1000)) * 100));
+
+  if (compact) {
+    return (
+      <span className="wallet-funds-value">
+        {formatMinutes(remaining)}
+        {compactAmount && <span className="wallet-funds-value-suffix">· {compactAmount}</span>}
+      </span>
+    );
+  }
 
   return (
     <div className="countdown-card animate-fade-up-d1">

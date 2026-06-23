@@ -17,3 +17,11 @@ export function getOrderStatusVisual(status: OrderStatus): OrderStatusVisual {
   };
   return map[status];
 }
+
+/** Couleur du badge de statut compact (liste de commandes) — uniquement
+ * navy/coral/gris, jamais de rouge/orange sémantique (charte 70/20/10). */
+export function getOrderBadgeTone(status: OrderStatus): "navy" | "coral" | "gray" {
+  if (status === "dispute") return "coral";
+  if (status === "paid" || status === "protection") return "navy";
+  return "gray";
+}

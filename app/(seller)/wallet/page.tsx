@@ -4,8 +4,8 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { computeWalletBreakdown } from "@/lib/wallet-breakdown";
 import { calculatePayoutFee, getPayoutNetAmount, FEE_POLICY } from "@/lib/fees";
-import { formatCurrency, formatSenegalPhoneDisplay } from "@/lib/utils";
-import { PayMethodButtons } from "@/components/pay/PayMethodButtons";
+import { formatCurrency, formatSenegalPhoneDisplay, splitCurrency } from "@/lib/utils";
+import { WalletPayoutMethodPicker } from "@/components/seller/WalletPayoutMethodPicker";
 import { WalletPayoutHistory } from "@/components/seller/WalletPayoutHistory";
 import { WalletTransactionHistory } from "@/components/seller/WalletTransactionHistory";
 import type { Order } from "@/lib/types";
@@ -39,14 +39,10 @@ export default function WalletPage() {
     };
   }, [parsedAmount]);
 
-  const handleWithdraw = async (method: string) => {
-    // Orange Money : intégration directe pas encore branchée côté backend
-    // (voir le plan) — seul Wave fonctionne réellement pour l'instant.
-    if (method !== "wave") {
-      setError("Orange Money n'est pas encore disponible pour les retraits directs. Utilisez Wave.");
-      return;
-    }
-
+  // Orange Money : intégration directe pas encore branchée côté backend
+  // (voir le plan) — seul Wave fonctionne réellement pour l'instant,
+  // WalletPayoutMethodPicker ne propose donc que ce choix.
+  const handleWithdraw = async () => {
     setError("");
     setSuccess("");
     setWithdrawing(true);
@@ -109,34 +105,35 @@ export default function WalletPage() {
 
       <section className="wallet-balance-card">
         <p className="wallet-balance-label">Solde disponible</p>
-        <p className="wallet-balance-amount">{formatCurrency(breakdown.available)}</p>
+        <p className="wallet-balance-amount mono">
+          {splitCurrency(breakdown.available)[0]}
+          <span className="wallet-balance-amount-suffix">{splitCurrency(breakdown.available)[1]}</span>
+        </p>
         <div className="wallet-balance-grid">
           <div>
             <span className="wallet-balance-meta-label">En séquestre</span>
-            <span className="wallet-balance-meta-value">{formatCurrency(breakdown.sequestered)}</span>
+            <span className="wallet-balance-meta-value mono">{splitCurrency(breakdown.sequestered)[0]}</span>
           </div>
           <div>
-            <span className="wallet-balance-meta-label">Bientôt dispo.</span>
-            <span className="wallet-balance-meta-value">{formatCurrency(breakdown.pendingRefund)}</span>
+            <span className="wallet-balance-meta-label">Bloqué · litige</span>
+            <span
+              className={`wallet-balance-meta-value mono${breakdown.blocked > 0 ? " wallet-balance-meta-value-coral" : ""}`}
+            >
+              {splitCurrency(breakdown.blocked)[0]}
+            </span>
           </div>
-          {breakdown.blocked > 0 && (
-            <div>
-              <span className="wallet-balance-meta-label">Bloqué (litige)</span>
-              <span className="wallet-balance-meta-value">{formatCurrency(breakdown.blocked)}</span>
-            </div>
-          )}
         </div>
       </section>
 
       <section className="wallet-withdraw-card">
+        <p className="section-label">Retrait</p>
         <h2 className="wallet-section-title">Retirer vers mobile money</h2>
         <p className="wallet-section-desc text-muted">
-          Frais transparents : {FEE_POLICY.payout.shortLabel}. Le montant net est affiché avant
-          confirmation.
+          Frais transparents : {FEE_POLICY.payout.shortLabel}, déduits du montant.
         </p>
 
         <label className="field-block">
-          <span className="field-block-label">Montant (FCFA)</span>
+          <span className="field-block-label">Montant</span>
           <input
             className="input-field input-compact"
             type="number"
@@ -165,30 +162,36 @@ export default function WalletPage() {
           </div>
         </label>
 
+        <label className="field-block">
+          <span className="field-block-label">Méthode</span>
+          <WalletPayoutMethodPicker />
+        </label>
+
         {withdrawPreview && parsedAmount > 0 && (
           <div className="wallet-fee-preview">
             <div className="wallet-fee-row">
-              <span>Montant retiré du solde</span>
-              <strong>{formatCurrency(parsedAmount)}</strong>
+              <span>Montant</span>
+              <strong>{splitCurrency(parsedAmount)[0]} F</strong>
             </div>
             <div className="wallet-fee-row">
-              <span>{FEE_POLICY.payout.label} ({FEE_POLICY.payout.shortLabel})</span>
-              <strong>− {formatCurrency(withdrawPreview.fee)}</strong>
+              <span>Frais ({FEE_POLICY.payout.shortLabel})</span>
+              <strong>− {splitCurrency(withdrawPreview.fee)[0]} F</strong>
             </div>
             <div className="wallet-fee-row wallet-fee-row-net">
-              <span>Vous recevez sur Wave/Orange</span>
-              <strong>{formatCurrency(withdrawPreview.net)}</strong>
+              <span>Vous recevrez</span>
+              <strong>{splitCurrency(withdrawPreview.net)[0]} F</strong>
             </div>
           </div>
         )}
 
-        <div className="wallet-withdraw-methods">
-          <PayMethodButtons
-            onPay={handleWithdraw}
-            paying={withdrawing}
-            disabled={!amount || !phone}
-          />
-        </div>
+        <button
+          type="button"
+          className="btn-primary wallet-withdraw-submit"
+          disabled={!amount || !phone || withdrawing}
+          onClick={handleWithdraw}
+        >
+          {withdrawing ? <span className="btn-spinner" aria-hidden="true" /> : "Confirmer le retrait"}
+        </button>
 
         {error && <p className="alert-danger" role="alert">{error}</p>}
         {success && (

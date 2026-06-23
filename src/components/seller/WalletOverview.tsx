@@ -1,76 +1,61 @@
 import Link from "next/link";
-import type { ReactNode } from "react";
-import { formatCurrency } from "@/lib/utils";
+import { ArrowRight, BookmarkCheck, Clock } from "lucide-react";
+import { splitCurrency } from "@/lib/utils";
 import type { WalletBreakdown } from "@/lib/wallet-breakdown";
 import { ReleaseCountdown } from "@/components/ReleaseCountdown";
-import { QuickActions } from "@/components/seller/QuickActions";
 
 export function WalletOverview({
   breakdown,
-  shopUrl,
-  username,
-  actionSlot,
   releasing,
   protectionMinutes,
   onCountdownExpire,
 }: {
   breakdown: WalletBreakdown;
-  shopUrl: string;
-  username: string;
-  actionSlot?: ReactNode;
-  releasing?: { protectionEndsAt: string; productName: string };
+  releasing?: { protectionEndsAt: string; productName: string; amount: number };
   protectionMinutes: number;
   onCountdownExpire?: () => void;
 }) {
-  const soonAvailable = breakdown.pendingRefund;
+  const [availAmount, availSuffix] = splitCurrency(breakdown.available);
 
   return (
     <section className="wallet-card-blue">
       <div className="wallet-card-blue-inner">
-        <p className="wallet-card-blue-label">Solde disponible</p>
-        <Link href="/wallet" className="wallet-balance-link" aria-label="Voir le portefeuille">
-          <p className="wallet-card-blue-amount">{formatCurrency(breakdown.available)}</p>
-          <span className="wallet-balance-link-hint">Appuyez pour retirer →</span>
+        <div className="wallet-card-blue-head">
+          <p className="wallet-card-blue-label">Solde disponible</p>
+          <BookmarkCheck size={18} strokeWidth={1.5} className="wallet-card-blue-icon" />
+        </div>
+        <p className="wallet-card-blue-amount">
+          {availAmount}
+          {availSuffix && <span className="wallet-card-blue-amount-suffix">{availSuffix}</span>}
+        </p>
+        <Link href="/wallet" className="wallet-card-blue-withdraw">
+          Retirer vers mobile money
+          <ArrowRight size={16} strokeWidth={1.5} />
         </Link>
 
         <div className="wallet-funds-grid">
           <div className="wallet-funds-item">
             <span className="wallet-funds-label">En séquestre</span>
-            <span className="wallet-funds-value">{formatCurrency(breakdown.sequestered)}</span>
-            <span className="wallet-funds-hint">En attente de livraison</span>
+            <span className="wallet-funds-value">{splitCurrency(breakdown.sequestered)[0]}</span>
           </div>
-          <div className="wallet-funds-item">
-            <span className="wallet-funds-label">Bientôt disponible</span>
-            <span className="wallet-funds-value">{formatCurrency(soonAvailable)}</span>
-            <span className="wallet-funds-hint">Après période de protection</span>
-          </div>
-          <div className="wallet-funds-item wallet-funds-item-blocked">
-            <span className="wallet-funds-label">Bloqué (litige)</span>
-            <span className="wallet-funds-value">{formatCurrency(breakdown.blocked)}</span>
-            <span className="wallet-funds-hint">Litige en cours</span>
+          <div className="wallet-funds-divider" />
+          <div className="wallet-funds-item wallet-funds-item-wide">
+            <span className="wallet-funds-label">
+              <Clock size={11} strokeWidth={1.5} /> Prochaine libération
+            </span>
+            {releasing?.protectionEndsAt ? (
+              <ReleaseCountdown
+                endsAt={releasing.protectionEndsAt}
+                minutes={protectionMinutes}
+                onExpire={onCountdownExpire}
+                compact
+                compactAmount={splitCurrency(releasing.amount)[0]}
+              />
+            ) : (
+              <span className="wallet-funds-value">—</span>
+            )}
           </div>
         </div>
-
-        {actionSlot && <div className="wallet-action-slot">{actionSlot}</div>}
-
-        {releasing?.protectionEndsAt && (
-          <div className="wallet-countdown">
-            <p className="wallet-countdown-title">
-              Libération · {releasing.productName}
-            </p>
-            <ReleaseCountdown
-              endsAt={releasing.protectionEndsAt}
-              minutes={protectionMinutes}
-              onExpire={onCountdownExpire}
-            />
-          </div>
-        )}
-
-        <QuickActions
-          shopUrl={shopUrl}
-          username={username}
-          embedded
-        />
       </div>
     </section>
   );

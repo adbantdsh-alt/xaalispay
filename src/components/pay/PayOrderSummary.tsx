@@ -29,72 +29,63 @@ export function PayOrderSummary({
 
   return (
     <article className={s.card}>
-      <div className={s.media}>
-        {productImage ? (
-          <ProductImage
-            src={productImage}
-            alt={productName}
-            className={s.img}
-            placeholderClassName={s.imgEmpty}
-            iconSize={40}
-            width={112}
-            height={112}
-          />
-        ) : (
-          <div className={s.imgEmpty} aria-hidden="true">
-            <IconPackage size={40} />
-          </div>
-        )}
-      </div>
-
-      <div className={s.info}>
-        <h1 className={s.name}>{productName}</h1>
-
-        <div className={s.prices}>
-          <div className={s.priceRow}>
-            <span className={s.priceLabel}>Prix</span>
-            <span className={s.priceValue}>{formatCurrency(productPrice)}</span>
-          </div>
-          <div className={s.priceRow}>
-            <span className={s.priceLabel}>Expédition</span>
-            <span className={s.priceValue}>
-              {deliveryCost > 0 ? formatCurrency(deliveryCost) : "Gratuite"}
-            </span>
-          </div>
-          <div className={s.priceRow}>
-            <span className={s.priceLabel}>{FEE_POLICY.buyer.label}</span>
-            <span className={s.priceValue}>{formatCurrency(buyerProtectionFee)}</span>
-          </div>
-          <p className={s.feeHint}>
-            {FEE_POLICY.buyer.shortLabel} — affiché avant paiement, sans frais cachés.
-          </p>
-          <div className={`${s.priceRow} ${s.totalRow}`}>
-            <span className={s.totalLabel}>Total à payer</span>
-            <span className={s.totalValue}>{formatCurrency(checkoutTotal)}</span>
-          </div>
+      <div className={s.head}>
+        <div className={s.media}>
+          {productImage ? (
+            <ProductImage
+              src={productImage}
+              alt={productName}
+              className={s.img}
+              placeholderClassName={s.imgEmpty}
+              iconSize={22}
+              width={56}
+              height={56}
+            />
+          ) : (
+            <div className={s.imgEmpty} aria-hidden="true">
+              <IconPackage size={22} />
+            </div>
+          )}
         </div>
 
-        <div className={s.vendor}>
-          <div className={s.vendorTop}>
+        <div className={s.headInfo}>
+          <h1 className={s.name}>{productName}</h1>
+          <div className={s.vendorInline}>
             <span className={s.vendorAvatar}>{initial}</span>
-            <div className={s.vendorTexts}>
-              <p className={s.vendorName}>{seller.displayName}</p>
-              <p className={s.vendorTag}>@{seller.username}</p>
-            </div>
-          </div>
-          <div className={s.vendorBottom}>
+            <span className={s.vendorName}>{seller.displayName}</span>
             <span className={s.badge}>
-              <IconCheck size={12} /> Vendeur vérifié
+              <IconCheck size={11} /> Vérifié
             </span>
             {seller.phone ? (
-              <a
-                href={phoneDigits ? `tel:+221${phoneDigits}` : undefined}
-                className={s.phone}
-              >
+              <a href={phoneDigits ? `tel:+221${phoneDigits}` : undefined} className={s.phone}>
                 {seller.phone}
               </a>
             ) : null}
           </div>
+        </div>
+      </div>
+
+      <div className={s.prices}>
+        <div className={s.priceRow}>
+          <span className={s.priceLabel}>Prix</span>
+          <span className={s.priceValue}>{formatCurrency(productPrice)}</span>
+        </div>
+        <div className={s.priceRow}>
+          <span className={s.priceLabel}>Expédition</span>
+          <span className={s.priceValue}>
+            {deliveryCost > 0 ? formatCurrency(deliveryCost) : "Gratuite"}
+          </span>
+        </div>
+        <div className={s.priceRow}>
+          <span className={s.priceLabel}>{FEE_POLICY.buyer.label}</span>
+          <span className={s.priceValue}>{formatCurrency(buyerProtectionFee)}</span>
+        </div>
+        <p className={s.feeHint}>
+          {FEE_POLICY.buyer.shortLabel} — affiché avant paiement, sans frais cachés.
+        </p>
+        <div className={s.totalRow}>
+          <span className={s.totalLabel}>Total à payer</span>
+          <span className={s.totalValue}>{formatCurrency(checkoutTotal)}</span>
         </div>
       </div>
     </article>

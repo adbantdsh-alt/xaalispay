@@ -2,9 +2,10 @@
 
 import { Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { Link2 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { Product } from "@/lib/types";
-import { slugifyUsername, isValidUsername } from "@/lib/utils";
+import { slugifyUsername, isValidUsername, getOrderTotal } from "@/lib/utils";
 import {
   ShopBackBar,
   useShopView,
@@ -47,6 +48,7 @@ function CreatePageContent() {
   const [inlineProduct, setInlineProduct] = useState<ProductFormValues>(emptyProductForm());
   const [createdPayUrl, setCreatedPayUrl] = useState("");
   const [createdProductName, setCreatedProductName] = useState("");
+  const [createdProductPrice, setCreatedProductPrice] = useState(0);
   const [createdProductId, setCreatedProductId] = useState("");
   const [createdProductImage, setCreatedProductImage] = useState("");
 
@@ -147,6 +149,22 @@ function CreatePageContent() {
     return next > new Date() ? next : null;
   }, [profile?.usernameChangedAt]);
 
+  // L'API commande n'expose pas encore de productId fiable (toujours "" côté
+  // adaptateur) — rapprochement par nom de produit en attendant un lien direct
+  // côté backend. Ne compte que les commandes réellement payées.
+  const productSales = useMemo(() => {
+    const sold = ["paid", "protection", "released"];
+    const byName = new Map<string, { count: number; revenue: number }>();
+    for (const order of sellerData?.orders ?? []) {
+      if (!sold.includes(order.status)) continue;
+      const entry = byName.get(order.productName) || { count: 0, revenue: 0 };
+      entry.count += 1;
+      entry.revenue += getOrderTotal(order);
+      byName.set(order.productName, entry);
+    }
+    return byName;
+  }, [sellerData?.orders]);
+
   const filteredProducts = useMemo(() => {
     const q = productSearch.trim().toLowerCase();
     if (!q) return products;
@@ -196,6 +214,7 @@ function CreatePageContent() {
     setProductForm(emptyProductForm());
     setCreatedPayUrl(buildProductPaymentUrl(product));
     setCreatedProductName(product.name);
+    setCreatedProductPrice(product.price);
     setCreatedProductId(product.id);
     setCreatedProductImage(product.image || productForm.image);
     setSuccess("Produit créé — lien de paiement prêt");
@@ -395,16 +414,8 @@ function CreatePageContent() {
         <>
           <header className="shop-page-head shop-page-head-compact">
             <div className="shop-page-head-main">
-              <h1 className="shop-page-title">Mes produits</h1>
-              {profile && (
-                <p className="shop-page-sub text-muted">
-                  @{profile.username}
-                  <span className="shop-page-dot"> · </span>
-                  <Link href="/create?tab=tag" className="shop-pseudo-inline">
-                    Mon XaalisTag
-                  </Link>
-                </p>
-              )}
+              <h1 className="shop-page-title">Ma boutique</h1>
+              <p className="shop-page-sub text-muted">Produits et liens de paiement</p>
             </div>
           </header>
 
@@ -441,6 +452,7 @@ function CreatePageContent() {
                   <ProductListItem
                     key={product.id}
                     product={product}
+                    sales={productSales.get(product.name)}
                     onToggle={() => toggleActive(product)}
                     onEdit={() => router.push(`/create?tab=edit&id=${product.id}`)}
                     onDelete={() => handleDeleteProduct(product)}
@@ -462,11 +474,13 @@ function CreatePageContent() {
             <PaymentLinkSuccessPanel
               payUrl={createdPayUrl}
               productName={createdProductName}
+              productPrice={createdProductPrice}
               productImage={createdProductImage}
               productId={createdProductId}
               onReset={() => {
                 setCreatedPayUrl("");
                 setCreatedProductName("");
+                setCreatedProductPrice(0);
                 setCreatedProductId("");
                 setCreatedProductImage("");
                 setSuccess("");
@@ -474,8 +488,9 @@ function CreatePageContent() {
             />
           ) : (
             <form onSubmit={handleCreateProduct} className="shop-card form-stack">
-              <p className="shop-card-desc text-muted">
-                Chaque produit reçoit automatiquement son lien de paiement XaalisPay.
+              <p className="shop-card-desc shop-card-desc-link text-muted">
+                <Link2 size={15} strokeWidth={1.5} />
+                Un lien de paiement est généré automatiquement à la création.
               </p>
               <ProductFields form={productForm} onChange={setProductForm} />
               <button type="submit" disabled={saving} className="btn-seller-primary btn-compact btn-inline">

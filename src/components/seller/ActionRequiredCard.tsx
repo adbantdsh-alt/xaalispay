@@ -1,9 +1,20 @@
 "use client";
 
 import { useState } from "react";
-import { formatCurrency } from "@/lib/utils";
+import { ArrowRight } from "lucide-react";
+import { formatCurrency, splitCurrency } from "@/lib/utils";
 import type { Order } from "@/lib/types";
-import { IconCheck } from "@/components/ui/AppIcon";
+import { IconCheck, IconPackage } from "@/components/ui/AppIcon";
+
+function timeAgo(iso?: string): string {
+  if (!iso) return "";
+  const minutes = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 60000));
+  if (minutes < 1) return "à l'instant";
+  if (minutes < 60) return `il y a ${minutes} min`;
+  const hours = Math.round(minutes / 60);
+  if (hours < 24) return `il y a ${hours} h`;
+  return `il y a ${Math.round(hours / 24)} j`;
+}
 
 export function ActionRequiredCard({
   order,
@@ -11,12 +22,17 @@ export function ActionRequiredCard({
   onCancel,
   error,
   protectionMinutes = 30,
+  expanded,
+  onExpand,
 }: {
   order: Order;
   onValidate: (orderId: string, pin: string) => Promise<boolean>;
   onCancel?: (orderId: string, reason: string) => Promise<void>;
   error?: string;
   protectionMinutes?: number;
+  /** Affiche le formulaire PIN directement ; sinon ligne compacte avec bouton "Valider". */
+  expanded: boolean;
+  onExpand?: () => void;
 }) {
   const [pin, setPin] = useState("");
   const [loading, setLoading] = useState(false);
@@ -50,62 +66,74 @@ export function ActionRequiredCard({
 
   return (
     <>
-      <section className="action-card animate-fade-up-d1">
-        <p className="action-card-badge">Action requise</p>
-        <h2 className="action-card-title">Valider la livraison</h2>
-        <p className="action-card-desc">
-          {order.productName} · {order.clientName || "Client"} · {formatCurrency(order.productPrice)}
-        </p>
-        <p className="action-card-hint">
-          Demandez le PIN au client après livraison.
-        </p>
-        <form onSubmit={handleSubmit} className="action-card-form">
-          <input
-            className={`input-field action-pin-input${error ? " has-error" : ""}`}
-            placeholder="Code PIN client"
-            maxLength={4}
-            value={pin}
-            onChange={(e) => setPin(e.target.value.replace(/\D/g, ""))}
-            inputMode="numeric"
-            autoComplete="off"
-            aria-invalid={!!error}
-          />
-          <button
-            type="submit"
-            disabled={loading || !pin}
-            className="btn-seller-primary btn-seller-primary-compact"
-          >
-            {success ? (
-              <span className="copy-btn-copied">
-                <IconCheck size={14} /> Validé
-              </span>
-            ) : loading ? (
-              <><span className="btn-spinner" aria-hidden="true" />…</>
-            ) : (
-              "Valider"
+      <div className="action-row">
+        <div className="action-row-main">
+          <span className="action-row-icon">
+            <IconPackage size={20} />
+          </span>
+          <div className="action-row-body">
+            <p className="action-row-name">{order.productName}</p>
+            <p className="action-row-meta">
+              {order.clientName || "Client"} · payé {timeAgo(order.paidAt)}
+            </p>
+          </div>
+          <div className="action-row-price">
+            <p className="action-row-price-amount">{splitCurrency(order.productPrice)[0]}</p>
+            <p className="action-row-price-suffix">{splitCurrency(order.productPrice)[1]}</p>
+          </div>
+        </div>
+
+        {expanded ? (
+          <>
+            <form onSubmit={handleSubmit} className="action-row-form">
+              <input
+                className={`input-field action-pin-input${error ? " has-error" : ""}`}
+                placeholder="Code PIN client"
+                maxLength={4}
+                value={pin}
+                onChange={(e) => setPin(e.target.value.replace(/\D/g, ""))}
+                inputMode="numeric"
+                autoComplete="off"
+                aria-invalid={!!error}
+              />
+              <button type="submit" disabled={loading || !pin} className="btn-primary action-row-submit">
+                {success ? (
+                  <span className="copy-btn-copied">
+                    <IconCheck size={14} /> Validé
+                  </span>
+                ) : loading ? (
+                  <><span className="btn-spinner" aria-hidden="true" />…</>
+                ) : (
+                  "Valider la livraison"
+                )}
+              </button>
+            </form>
+            {error && (
+              <p className="alert-danger" role="alert" style={{ marginTop: "0.75rem" }}>
+                {error}
+              </p>
             )}
+            {success && (
+              <p className="toast-success" role="status">
+                PIN validé — libération dans {protectionMinutes} min
+              </p>
+            )}
+            {onCancel && (
+              <button
+                type="button"
+                className="action-card-cancel-btn"
+                onClick={() => setShowCancelModal(true)}
+              >
+                Je ne peux pas livrer cette commande
+              </button>
+            )}
+          </>
+        ) : (
+          <button type="button" className="action-row-compact-btn" onClick={onExpand}>
+            Valider <ArrowRight size={14} strokeWidth={1.5} />
           </button>
-        </form>
-        {error && (
-          <p className="alert-danger" role="alert" style={{ marginTop: "0.75rem" }}>
-            {error}
-          </p>
         )}
-        {success && (
-          <p className="toast-success" role="status">
-            PIN validé — libération dans {protectionMinutes} min
-          </p>
-        )}
-        {onCancel && (
-          <button
-            type="button"
-            className="action-card-cancel-btn"
-            onClick={() => setShowCancelModal(true)}
-          >
-            Je ne peux pas livrer cette commande
-          </button>
-        )}
-      </section>
+      </div>
 
       {/* Modal de confirmation d'annulation */}
       {showCancelModal && (
