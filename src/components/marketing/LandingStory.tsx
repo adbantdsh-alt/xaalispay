@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { IconArrowRight, IconUser } from "@/components/icons";
+import { IconArrowRight } from "@/components/icons";
 import { Reveal } from "@/components/marketing/Reveal";
 
 export function LandingStory() {
@@ -9,19 +9,22 @@ export function LandingStory() {
     <section className="bg-white py-16 md:py-24 lp-hairline-t">
       <div className="lp-container">
         <Reveal className="max-w-3xl">
-          <div className="lp-eyebrow">Mot du co-fondateur</div>
+          <div className="lp-eyebrow">Mot du CEO</div>
           <h2 className="lp-h2 mt-4">Pourquoi XaalisPay existe.</h2>
         </Reveal>
 
         <div className="mt-10 md:mt-14 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
           <Reveal className="lg:col-span-5">
             <div className="relative rounded-2xl overflow-hidden lp-hairline bg-[#0B1B33] aspect-[4/5] flex items-end">
-              <div className="absolute inset-0 flex items-center justify-center text-white/20">
-                <IconUser size={96} />
-              </div>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/team/abdoulaye.jpg"
+                alt="Mr Abdoulaye Badji, CEO de XaalisPay"
+                className="absolute inset-0 w-full h-full object-cover"
+              />
               <div className="relative w-full p-4 md:p-5 bg-gradient-to-t from-[#0B1B33] via-[#0B1B33]/70 to-transparent">
                 <div className="text-white text-[18px] md:text-[20px] leading-tight">Mr Abdoulaye Badji</div>
-                <div className="text-white/70 text-[12px] md:text-[13px] mt-0.5">Co-fondateur · XaalisPay</div>
+                <div className="text-white/70 text-[12px] md:text-[13px] mt-0.5">CEO · XaalisPay</div>
               </div>
             </div>
           </Reveal>

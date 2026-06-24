@@ -1,12 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { buildPageMetadata } from "@/lib/seo";
-import { IconUser } from "@/components/icons";
 
 export const metadata: Metadata = buildPageMetadata({
-  title: "Mot du Co-fondateur — Notre histoire",
+  title: "Mot du CEO — Notre histoire",
   description:
-    "L'histoire de XaalisPay, racontée par Mr Abdoulaye Badji, son co-fondateur. Du boostage WhatsApp aux dizaines de millions de chiffre d'affaires, et la naissance d'un tiers de confiance pour l'e-commerce africain.",
+    "L'histoire de XaalisPay, racontée par Mr Abdoulaye Badji, son CEO. Du boostage WhatsApp aux dizaines de millions de chiffre d'affaires, et la naissance d'un tiers de confiance pour l'e-commerce africain.",
   path: "/histoire",
 });
 
@@ -55,18 +54,23 @@ export default function HistoirePage() {
   return (
     <article className="content-page">
       <header className="content-hero">
-        <p className="section-label">Mot du co-fondateur</p>
+        <p className="section-label">Mot du CEO</p>
         <h1 className="content-title">Mr Abdoulaye Badji</h1>
         <p className="content-lead">
-          L&apos;histoire de XaalisPay, racontée par son co-fondateur — e-commerçant et acteur du
-          terrain africain.
+          L&apos;histoire de XaalisPay, racontée par son CEO — e-commerçant et acteur du terrain
+          africain.
         </p>
       </header>
 
       <div className="content-timeline">
         <div className="lp-card-flat content-chapter">
-          <div className="rounded-2xl overflow-hidden bg-[#0B1B33] aspect-[4/5] max-w-md flex items-center justify-center">
-            <IconUser size={96} className="text-white/20" />
+          <div className="rounded-2xl overflow-hidden bg-[#0B1B33] aspect-[4/5] max-w-md">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/team/abdoulaye.jpg"
+              alt="Mr Abdoulaye Badji, CEO de XaalisPay"
+              className="w-full h-full object-cover"
+            />
           </div>
           <blockquote className="mt-6 text-[18px] md:text-[20px] text-[#1E3A5F] leading-[1.4]">
             « L&apos;Afrique attend depuis trop longtemps que quelqu&apos;un règle ce problème. Ce
@@ -89,7 +93,7 @@ export default function HistoirePage() {
           <p className="text-white text-[20px] md:text-[26px] leading-[1.35]">
             « L&apos;arnaque s&apos;arrête là où XaalisPay pose le pied. »
           </p>
-          <div className="mt-3 text-white/60 text-[13px]">— Mr Abdoulaye Badji, co-fondateur</div>
+          <div className="mt-3 text-white/60 text-[13px]">— Mr Abdoulaye Badji, CEO</div>
           <div className="mt-7 flex flex-wrap gap-3">
             <Link href="/auth?mode=signup" className="lp-btn lp-btn-primary">
               Rejoindre XaalisPay
