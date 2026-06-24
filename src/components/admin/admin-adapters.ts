@@ -1,4 +1,4 @@
-import type { DisputeRow, PayoutRow, ProductRow, SellerRow } from "./admin-types";
+import type { DisputeRow, PayoutRow, ProductRow, SellerRow, TeamMemberDetail, TeamMemberRow } from "./admin-types";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function adaptDisputeRow(o: any): DisputeRow {
@@ -81,5 +81,26 @@ export function adaptProductRow(p: any): ProductRow {
     sellerBusinessName: p.seller_business_name,
     ordersCount: p.orders_count,
     createdAt: p.created_at,
+  };
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function adaptTeamMemberRow(m: any): TeamMemberRow {
+  return {
+    id: m.id,
+    email: m.email || null,
+    displayName: m.display_name,
+    role: m.role,
+    isActive: m.is_active,
+    createdAt: m.created_at,
+  };
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function adaptTeamMemberDetail(m: any): TeamMemberDetail {
+  return {
+    ...adaptTeamMemberRow(m),
+    mustChangePassword: m.must_change_password,
+    tempPassword: m.temp_password ?? null,
   };
 }

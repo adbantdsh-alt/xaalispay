@@ -59,13 +59,15 @@ export async function apiFetch(path: string, init: RequestInit = {}, _retried = 
   try {
     response = await fetch(`${getApiBaseUrl()}${path}`, { ...init, headers });
   } catch {
-    // Panne réseau réelle (hors-ligne, serveur inatteignable) — fetch() lève
-    // une exception ici, contrairement à un échec HTTP normal. On synthétise
-    // une Response pour que tous les appelants existants (if (!res.ok) {...})
-    // fonctionnent sans modification.
+    // Panne réseau réelle (hors-ligne, serveur inatteignable, CORS) — fetch()
+    // lève une exception ici, contrairement à un échec HTTP normal. On
+    // synthétise une Response pour que tous les appelants existants
+    // (if (!res.ok) {...}) fonctionnent sans modification. status: 503 et non
+    // 0 — le constructeur Response interdit status: 0 (RangeError), même si
+    // une vraie réponse réseau opaque peut légitimement l'avoir.
     return new Response(
       JSON.stringify({ error: "Connexion impossible. Vérifiez votre réseau et réessayez." }),
-      { status: 0, headers: { "Content-Type": "application/json" } }
+      { status: 503, headers: { "Content-Type": "application/json" } }
     );
   }
 

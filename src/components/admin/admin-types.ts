@@ -158,6 +158,27 @@ export interface ProductRow {
   createdAt: string;
 }
 
+export type StaffRole = "super_admin" | "dispute_manager";
+
+export const TEAM_ROLE_LABELS: Record<StaffRole, string> = {
+  super_admin: "Admin",
+  dispute_manager: "Gestionnaire de litiges",
+};
+
+export interface TeamMemberRow {
+  id: number;
+  email: string | null;
+  displayName: string;
+  role: StaffRole;
+  isActive: boolean;
+  createdAt: string;
+}
+
+export interface TeamMemberDetail extends TeamMemberRow {
+  mustChangePassword: boolean;
+  tempPassword: string | null;
+}
+
 export function activeStatusClass(isActive: boolean) {
   return isActive ? "good" : "neutral";
 }

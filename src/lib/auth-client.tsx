@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { getApiBaseUrl } from "./site-url";
 import { refreshAccessToken, setApiAccessToken, extractApiError } from "./api-client";
 
@@ -11,7 +11,8 @@ export interface Profile {
   username: string;
   display_name: string;
   business_name: string;
-  role: "seller" | "super_admin";
+  role: "seller" | "super_admin" | "dispute_manager";
+  must_change_password: boolean;
   [key: string]: unknown;
 }
 
@@ -51,6 +52,10 @@ interface AuthContextValue {
   signup: (payload: SignupPayload) => Promise<AuthResult>;
   adminLogin: (email: string, password: string) => Promise<AdminLoginResult>;
   logout: () => Promise<void>;
+  /** Relit le profil courant (ex. après un changement de mot de passe, pour
+   * que must_change_password redescende à false dans le contexte sans avoir
+   * à recharger la page). No-op silencieux si non connecté. */
+  refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -71,6 +76,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<Profile | null>(null);
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  // Lu (pas écrit) par refreshUser — une ref plutôt que `accessToken` dans
+  // ses dépendances évite de recréer cette fonction à chaque renouvellement
+  // de token (accessToken change après chaque refresh silencieux).
+  const accessTokenRef = useRef<string | null>(null);
+  useEffect(() => {
+    accessTokenRef.current = accessToken;
+  }, [accessToken]);
 
   const applyToken = useCallback((token: string | null) => {
     setAccessToken(token);
@@ -169,8 +181,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
   }, [applyToken]);
 
+  const refreshUser = useCallback(async () => {
+    if (!accessTokenRef.current) return;
+    const profile = await fetchProfile(accessTokenRef.current);
+    if (profile) setUser(profile);
+  }, []);
+
   return (
-    <AuthContext.Provider value={{ user, accessToken, loading, login, confirmLogin, signup, adminLogin, logout }}>
+    <AuthContext.Provider
+      value={{ user, accessToken, loading, login, confirmLogin, signup, adminLogin, logout, refreshUser }}
+    >
       {children}
     </AuthContext.Provider>
   );

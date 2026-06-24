@@ -11,6 +11,7 @@ import {
   Package,
   LogOut,
   PanelLeft,
+  UserCircle,
 } from "lucide-react";
 import { BrandMark } from "@/components/ui/BrandMark";
 import { useAuth } from "@/lib/auth-client";
@@ -38,11 +39,14 @@ export function AdminSidebar({
 }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
   const { overview } = useAdminData();
 
   const failedPayouts = overview?.payouts_by_status.failed ?? 0;
   const openDisputes = overview?.open_disputes_count ?? 0;
+  const visibleNavItems =
+    user?.role === "dispute_manager" ? NAV_ITEMS.filter((item) => item.href === "/admin/disputes") : NAV_ITEMS;
+  const profileActive = pathname.startsWith("/admin/profile");
 
   const handleLogout = async () => {
     await logout();
@@ -66,7 +70,7 @@ export function AdminSidebar({
         </div>
 
         <nav className="admin-sidebar-nav" aria-label="Sections admin">
-          {NAV_ITEMS.map((item) => {
+          {visibleNavItems.map((item) => {
             const isActive = item.exact ? pathname === item.href : pathname.startsWith(item.href);
             const badgeCount = item.badge === "disputes" ? openDisputes : item.badge === "payouts" ? failedPayouts : 0;
             const Icon = item.icon;
@@ -92,6 +96,16 @@ export function AdminSidebar({
         </nav>
 
         <div className="admin-sidebar-footer">
+          <Link
+            href="/admin/profile"
+            onClick={onClose}
+            title="Mon profil"
+            className={`admin-sidebar-link ${profileActive ? "is-active" : ""}`}
+            aria-current={profileActive ? "page" : undefined}
+          >
+            <UserCircle size={18} aria-hidden="true" />
+            {!collapsed && <span>Mon profil</span>}
+          </Link>
           <button
             type="button"
             className="admin-sidebar-link admin-sidebar-logout"

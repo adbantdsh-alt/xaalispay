@@ -11,6 +11,8 @@ const PAGE_META: Record<string, [string, string]> = {
   "/admin/payouts": ["Retraits", "Suivi et relance des versements"],
   "/admin/sellers": ["Vendeurs", "Comptes et soldes des vendeurs"],
   "/admin/products": ["Produits", "Catalogue et modération"],
+  "/admin/profile": ["Mon profil", "Votre compte et l'équipe XaalisPay"],
+  "/admin/change-password": ["Changer mon mot de passe", "Étape obligatoire avant de continuer"],
 };
 
 function resolvePageMeta(pathname: string): [string, string] {
