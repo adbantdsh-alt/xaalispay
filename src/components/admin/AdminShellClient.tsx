@@ -9,9 +9,16 @@ import { AdminTopbar } from "./AdminTopbar";
 
 const COLLAPSE_STORAGE_KEY = "admin-sidebar-collapsed";
 
-// Préfixes de route autorisés par rôle — un rôle absent de cette map a accès
-// à tout (cas super_admin). "/admin/profile" doit rester atteignable par
-// tout rôle staff (Mon profil).
+// Rôles autorisés à entrer dans le portail admin, tout court — un compte
+// vendeur qui atterrit sur /admin (ex. ancien lien, manipulation d'URL) doit
+// être renvoyé vers son espace, jamais voir la coquille admin même sans
+// données réelles (celles-ci sont déjà bloquées côté backend, mais la
+// coquille elle-même ne doit jamais s'afficher pour un non-staff).
+const STAFF_ROLES = ["super_admin", "dispute_manager"];
+
+// Préfixes de route autorisés par rôle staff — un rôle staff absent de cette
+// map a accès à tout (cas super_admin). "/admin/profile" doit rester
+// atteignable par tout rôle staff (Mon profil).
 const ALLOWED_PATH_PREFIXES_BY_ROLE: Record<string, string[]> = {
   dispute_manager: ["/admin/disputes", "/admin/profile"],
 };
@@ -28,14 +35,24 @@ export function AdminShellClient({ children }: { children: React.ReactNode }) {
     if (localStorage.getItem(COLLAPSE_STORAGE_KEY) === "1") setCollapsed(true);
   }, []);
 
-  // Deux garde-fous, la première prioritaire sur la seconde : un mot de
-  // passe encore temporaire bloque tout sauf l'écran de changement, quel
-  // que soit le rôle ; une fois changé, le rôle détermine les sections
-  // accessibles. Toujours une redirection, jamais une déconnexion — ne pas
-  // confondre avec handleAdminAuthStatus, qui gère un 403 renvoyé par l'API.
+  // Plusieurs garde-fous, dans l'ordre de priorité : pas de session valide →
+  // login ; pas un rôle staff → renvoyé vers son espace (jamais la coquille
+  // admin, même sans données réelles) ; mot de passe encore temporaire →
+  // bloque tout sauf l'écran de changement ; sinon le rôle détermine les
+  // sections accessibles. Toujours une redirection, jamais une déconnexion —
+  // ne pas confondre avec handleAdminAuthStatus, qui gère un 403 renvoyé
+  // après coup par l'API (ce garde-fou-ci agit avant même le premier appel).
   useEffect(() => {
-    if (authLoading || !user) return;
+    if (authLoading) return;
 
+    if (!user) {
+      router.replace(`/admin/login?redirect=${encodeURIComponent(pathname)}`);
+      return;
+    }
+    if (!STAFF_ROLES.includes(user.role)) {
+      router.replace("/dashboard");
+      return;
+    }
     if (user.must_change_password) {
       if (pathname !== FORCE_CHANGE_PASSWORD_PATH) router.replace(FORCE_CHANGE_PASSWORD_PATH);
       return;
