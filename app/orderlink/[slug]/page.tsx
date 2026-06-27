@@ -74,10 +74,6 @@ export default function PayPage() {
   }, [fetchOrder, order?.isProductLink, trackingSlug]);
 
   const handlePay = async (method: string) => {
-    if (method !== "wave") {
-      setError("Orange Money n'est pas encore disponible — utilisez Wave pour le moment.");
-      return;
-    }
     if (
       !clientFirstName.trim() ||
       !clientLastName.trim() ||
@@ -97,6 +93,7 @@ export default function PayPage() {
         client_phone: clientPhone.trim(),
         client_address: clientAddress.trim(),
         delivery_zone_id: Number(selectedZoneId),
+        payment_method: method,
       }),
     });
     const data = await res.json();
