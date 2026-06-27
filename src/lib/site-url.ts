@@ -45,3 +45,13 @@ export function buildAuthCallbackUrl(next = "/dashboard"): string {
   const path = `/auth/callback?next=${encodeURIComponent(next)}`;
   return `${getSiteUrl()}${path}`;
 }
+
+/** Le XaalisTag double comme code d'affiliation — pas de route publique
+ * dédiée, juste `?ref=` sur la page d'inscription existante (voir app/auth/page.tsx). */
+export function buildReferralPath(username: string): string {
+  return `/auth?mode=signup&ref=${username}`;
+}
+
+export function buildReferralUrl(username: string): string {
+  return `${getSiteUrl()}${buildReferralPath(username)}`;
+}

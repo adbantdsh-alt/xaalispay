@@ -7,7 +7,7 @@ export const LANDING_FAQ: FaqItem[] = [
   },
   {
     q: "Combien coûte XaalisPay ?",
-    a: "Inscription et boutique gratuites. Acheteur : 1 % de protection séquestre (max 500 FCFA), affiché au checkout. Vendeur : 2 % prélevés uniquement à la libération. Retrait Wave/Orange : 1,5 % + 75 FCFA, montant net affiché avant confirmation. Aucun frais caché.",
+    a: "Inscription et boutique gratuites. Acheteur : 1 % de protection séquestre, affiché au checkout. Vendeur : 5 % prélevés uniquement à la libération des fonds — ce taux couvre la commission XaalisPay et le retrait, qui est 100 % gratuit. Aucun frais caché.",
   },
   {
     q: "Que se passe-t-il si le produit est défectueux ?",
@@ -23,7 +23,7 @@ export const LANDING_FAQ: FaqItem[] = [
   },
   {
     q: "Quand le vendeur reçoit-il son argent ?",
-    a: "Dès que vous confirmez la réception, ou automatiquement à l'issue du Séquestre Flash de 30 minutes si aucun litige n'est ouvert. La commission de 2 % est déduite à ce moment.",
+    a: "Dès que vous confirmez la réception, ou automatiquement à l'issue du Séquestre Flash de 30 minutes si aucun litige n'est ouvert. La commission de 5 % (qui couvre aussi le retrait, désormais gratuit) est déduite à ce moment.",
   },
   {
     q: "Comment ouvrir un litige ?",

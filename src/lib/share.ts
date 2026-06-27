@@ -14,6 +14,10 @@ export function buildPinShareMessage(pin: string, productName: string) {
   return `Mon code livraison XaalisPay pour "${productName}" : ${pin}\n\nÀ donner uniquement après vérification du colis.`;
 }
 
+export function buildAffiliateShareMessage(referralUrl: string) {
+  return `Rejoignez XaalisPay et encaissez vos ventes en toute sécurité :\n${referralUrl}\n\nInscrivez-vous avec ce lien — vous me soutenez sans rien payer de plus.`;
+}
+
 export async function copyToClipboard(text: string): Promise<boolean> {
   try {
     await navigator.clipboard.writeText(text);

@@ -107,7 +107,7 @@ export default function PayPage() {
     }
     setTrackingSlug(data.slug);
     router.replace(`/orderlink/${data.slug}`);
-    window.location.href = data.wave_launch_url;
+    window.location.href = data.payment_launch_url;
   };
 
   if (loading) {

@@ -106,7 +106,11 @@ function AuthForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { login, confirmLogin, signup } = useAuth();
-  const initialMode = searchParams.get("mode") === "signup" ? "signup-phone" : "login";
+  // Le XaalisTag d'un vendeur double comme code d'affiliation (voir
+  // src/lib/site-url.ts buildReferralUrl) — un lien d'affiliation amène
+  // toujours directement sur l'inscription, jamais sur l'onglet connexion.
+  const referralCode = searchParams.get("ref")?.trim() || undefined;
+  const initialMode = searchParams.get("mode") === "signup" || referralCode ? "signup-phone" : "login";
 
   const [step, setStep] = useState<Step>(initialMode);
   const [country, setCountry] = useState<CountryCode>("SN");
@@ -294,6 +298,7 @@ function AuthForm() {
         pin: pinValue,
         display_name: displayName,
         business_name: businessName,
+        referral_code: referralCode,
       });
       if (!result.ok) {
         setError(result.error || "Inscription échouée");

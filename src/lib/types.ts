@@ -126,9 +126,9 @@ export interface Order {
   refundedAt?: string;
   cancelledAt?: string;
   cancellationReason?: string;
-  /** Frais protection séquestre côté acheteur (1 %, plafond 500 F). */
+  /** Frais protection séquestre côté acheteur (1 %, sans plafond). */
   buyerProtectionFee?: number;
-  /** Commission vendeur prélevée à la libération (2 %). */
+  /** Commission vendeur prélevée à la libération (5 % — couvre aussi le retrait, gratuit). */
   sellerCommission?: number;
   /** URL image produit (enrichie côté API dashboard). */
   productImage?: string;
@@ -202,9 +202,9 @@ export interface Payout {
   id: string;
   sellerId: string;
   amount: number;
-  /** Montant envoyé sur Wave/Orange après frais de retrait. */
+  /** Montant envoyé sur Wave/Orange (égal à amount, le retrait est gratuit). */
   netAmount?: number;
-  /** Frais de retrait XaalisPay (1,5 % + 75 F). */
+  /** Frais de retrait XaalisPay — toujours 0 ; peut être >0 sur des retraits historiques antérieurs au passage au retrait gratuit. */
   fee?: number;
   method: "wave" | "orange";
   phone: string;

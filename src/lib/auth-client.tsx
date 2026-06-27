@@ -37,6 +37,7 @@ interface SignupPayload {
   display_name: string;
   business_name: string;
   email?: string;
+  referral_code?: string;
 }
 
 interface AdminLoginResult extends AuthResult {

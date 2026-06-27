@@ -133,6 +133,24 @@ export interface OrderSummaryRow {
   createdAt: string;
 }
 
+export interface ReferredBy {
+  username: string;
+  businessName: string;
+  createdAt: string;
+}
+
+export interface ReferralRow {
+  id: string;
+  username: string;
+  businessName: string;
+  displayName: string;
+  createdAt: string;
+  boostExpiresAt: string;
+  isBoosted: boolean;
+  lifetimeGmv: number;
+  commissionEarnedTotal: number;
+}
+
 export interface SellerDetail {
   profile: SellerRow & {
     role: string;
@@ -145,6 +163,8 @@ export interface SellerDetail {
   recentOrders: OrderSummaryRow[];
   recentPayouts: PayoutRow[];
   disputes: OrderSummaryRow[];
+  referredBy: ReferredBy | null;
+  referralsMade: ReferralRow[];
 }
 
 export interface ProductRow {

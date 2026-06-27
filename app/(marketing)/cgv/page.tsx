@@ -73,16 +73,16 @@ export default function CgvPage() {
           <ul>
             <li>
               <strong>Acheteur</strong> : {FEE_POLICY.buyer.shortLabel} au titre de la protection
-              séquestre (plafond {FEE_POLICY.buyer.capFcfa} FCFA), affiché au checkout avant
-              paiement Wave ou Orange Money.
+              séquestre, affiché au checkout avant paiement Wave ou Orange Money.
             </li>
             <li>
-              <strong>Vendeur</strong> : {FEE_POLICY.seller.shortLabel} de commission prélevée
-              uniquement à la libération des fonds (après livraison validée et Séquestre Flash).
+              <strong>Vendeur</strong> : {FEE_POLICY.seller.shortLabel} prélevés uniquement à la
+              libération des fonds (après livraison validée et Séquestre Flash) — ce taux couvre
+              la commission XaalisPay et le retrait vers Wave ou Orange Money.
             </li>
             <li>
-              <strong>Retrait</strong> : {FEE_POLICY.payout.shortLabel} lors d&apos;un virement
-              vers Wave ou Orange Money ; le montant net est affiché avant confirmation.
+              <strong>Retrait</strong> : gratuit, sans frais ni minimum, vers Wave ou Orange
+              Money.
             </li>
           </ul>
           <p>

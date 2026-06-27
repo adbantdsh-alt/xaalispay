@@ -1,9 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { computeWalletBreakdown } from "@/lib/wallet-breakdown";
-import { calculatePayoutFee, getPayoutNetAmount, FEE_POLICY } from "@/lib/fees";
 import { formatCurrency, formatSenegalPhoneDisplay, splitCurrency } from "@/lib/utils";
 import { WalletPayoutMethodPicker } from "@/components/seller/WalletPayoutMethodPicker";
 import { WalletPayoutHistory } from "@/components/seller/WalletPayoutHistory";
@@ -31,13 +30,6 @@ export default function WalletPage() {
   }, [data?.profile?.phone, phone, phoneTouched]);
 
   const parsedAmount = Number(amount) || 0;
-  const withdrawPreview = useMemo(() => {
-    if (parsedAmount <= 0) return null;
-    return {
-      fee: calculatePayoutFee(parsedAmount),
-      net: getPayoutNetAmount(parsedAmount),
-    };
-  }, [parsedAmount]);
 
   // Orange Money : intégration directe pas encore branchée côté backend
   // (voir le plan) — seul Wave fonctionne réellement pour l'instant,
@@ -129,7 +121,7 @@ export default function WalletPage() {
         <p className="section-label">Retrait</p>
         <h2 className="wallet-section-title">Retirer vers mobile money</h2>
         <p className="wallet-section-desc text-muted">
-          Frais transparents : {FEE_POLICY.payout.shortLabel}, déduits du montant.
+          Retrait 100 % gratuit, sans frais déduit.
         </p>
 
         <label className="field-block">
@@ -167,19 +159,11 @@ export default function WalletPage() {
           <WalletPayoutMethodPicker />
         </label>
 
-        {withdrawPreview && parsedAmount > 0 && (
+        {parsedAmount > 0 && (
           <div className="wallet-fee-preview">
-            <div className="wallet-fee-row">
-              <span>Montant</span>
-              <strong>{splitCurrency(parsedAmount)[0]} F</strong>
-            </div>
-            <div className="wallet-fee-row">
-              <span>Frais ({FEE_POLICY.payout.shortLabel})</span>
-              <strong>− {splitCurrency(withdrawPreview.fee)[0]} F</strong>
-            </div>
             <div className="wallet-fee-row wallet-fee-row-net">
               <span>Vous recevrez</span>
-              <strong>{splitCurrency(withdrawPreview.net)[0]} F</strong>
+              <strong>{splitCurrency(parsedAmount)[0]} F</strong>
             </div>
           </div>
         )}
