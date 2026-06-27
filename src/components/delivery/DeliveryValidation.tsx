@@ -62,7 +62,6 @@ export function DeliveryValidation({
   ];
 
   const pendingStartRef = useRef<number | null>(null);
-  const verifyCalledRef = useRef(false);
 
   /* ─── Chargement session ─── */
   const loadSession = useCallback(async () => {
@@ -76,29 +75,34 @@ export function DeliveryValidation({
       return;
     }
     pendingStartRef.current = null;
-    verifyCalledRef.current = false;
     setPendingPayment(false);
     setSession(session);
     setLoading(false);
   }, [orderSlug]);
 
-  /* Appel verify-payment une seule fois dès pending_payment — Wave n'a pas
-   * de webhook garanti, on réconcilie activement plutôt que d'attendre. */
+  /* Réconciliation active tant que le paiement est pending — Wave/Bictorys
+   * n'ont pas de webhook garanti à 100 %, donc un seul essai au premier
+   * rendu ne suffit pas si le paiement se finalise plus tard chez le PSP :
+   * on retente toutes les 5 s jusqu'à sortie de pending_payment. */
   useEffect(() => {
-    if (!pendingPayment || verifyCalledRef.current) return;
-    verifyCalledRef.current = true;
-    apiFetch(`/api/orders/${orderSlug}/verify-payment`, { method: "POST" })
-      .then((r) => r.json())
-      .then((raw) => {
-        const session = adaptDeliverySession(raw);
-        if (session.status !== "pending_payment") {
-          pendingStartRef.current = null;
-          setPendingPayment(false);
-          setSession(session);
-          setLoading(false);
-        }
-      })
-      .catch(() => undefined);
+    if (!pendingPayment) return;
+    const verify = () => {
+      apiFetch(`/api/orders/${orderSlug}/verify-payment`, { method: "POST" })
+        .then((r) => r.json())
+        .then((raw) => {
+          const session = adaptDeliverySession(raw);
+          if (session.status !== "pending_payment") {
+            pendingStartRef.current = null;
+            setPendingPayment(false);
+            setSession(session);
+            setLoading(false);
+          }
+        })
+        .catch(() => undefined);
+    };
+    verify();
+    const id = setInterval(verify, 5000);
+    return () => clearInterval(id);
   }, [pendingPayment, orderSlug]);
 
   /* Polling rapide (2 s) en mode pending, normal (5 s) sinon */

@@ -81,7 +81,7 @@ export function PayOrderSummary({
           <span className={s.priceValue}>{formatCurrency(buyerProtectionFee)}</span>
         </div>
         <p className={s.feeHint}>
-          {FEE_POLICY.buyer.shortLabel} — affiché avant paiement, sans frais cachés.
+          {FEE_POLICY.buyer.shortLabel} — sans frais cachés.
         </p>
         <div className={s.totalRow}>
           <span className={s.totalLabel}>Total à payer</span>
