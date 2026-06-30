@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { computeWalletBreakdown } from "@/lib/wallet-breakdown";
-import { formatCurrency, formatSenegalPhoneDisplay, splitCurrency } from "@/lib/utils";
+import { formatCurrency, formatSenegalPhoneDisplay, splitCurrency, toE164 } from "@/lib/utils";
 import { WalletPayoutMethodPicker } from "@/components/seller/WalletPayoutMethodPicker";
 import { WalletPayoutHistory } from "@/components/seller/WalletPayoutHistory";
 import { WalletTransactionHistory } from "@/components/seller/WalletTransactionHistory";
@@ -43,7 +43,10 @@ export default function WalletPage() {
       method: "POST",
       body: JSON.stringify({
         amount: Number(amount),
-        phone,
+        // Bictorys exige un format E.164 strict ("+221771234567", sans
+        // espace) — `phone` est en affichage local espacé ("77 123 45 67"),
+        // jamais le format brut attendu par leur API.
+        phone: toE164(phone),
       }),
     });
 

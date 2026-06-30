@@ -18,6 +18,7 @@ import {
 import { calculateBuyerProtectionFee } from "@/lib/fees";
 import type { OrderStatus } from "@/lib/types";
 import { apiFetch, extractApiError } from "@/lib/api-client";
+import { toE164 } from "@/lib/utils";
 import { adaptOrderToPayOrder, adaptPublicProductToPayOrder, type AdaptedPayOrder } from "@/lib/api-adapters";
 
 export default function PayPage() {
@@ -90,7 +91,9 @@ export default function PayPage() {
       body: JSON.stringify({
         client_name: `${clientFirstName.trim()} ${clientLastName.trim()}`.trim(),
         client_first_name: clientFirstName.trim(),
-        client_phone: clientPhone.trim(),
+        // Bictorys exige du E.164 strict ("+221771234567", sans espace) pour
+        // customerObject.phone — clientPhone est en saisie libre espacée.
+        client_phone: toE164(clientPhone.trim()),
         client_address: clientAddress.trim(),
         delivery_zone_id: Number(selectedZoneId),
         payment_method: method,
