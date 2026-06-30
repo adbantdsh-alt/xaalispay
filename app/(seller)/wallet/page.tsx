@@ -16,6 +16,7 @@ export default function WalletPage() {
   const { data, loading, refresh } = useSellerData();
   const [amount, setAmount] = useState("");
   const [phone, setPhone] = useState("");
+  const [method, setMethod] = useState<"wave" | "orange">("wave");
   const [phoneTouched, setPhoneTouched] = useState(false);
   const [withdrawing, setWithdrawing] = useState(false);
   const [error, setError] = useState("");
@@ -31,9 +32,6 @@ export default function WalletPage() {
 
   const parsedAmount = Number(amount) || 0;
 
-  // Orange Money : intégration directe pas encore branchée côté backend
-  // (voir le plan) — seul Wave fonctionne réellement pour l'instant,
-  // WalletPayoutMethodPicker ne propose donc que ce choix.
   const handleWithdraw = async () => {
     setError("");
     setSuccess("");
@@ -47,6 +45,7 @@ export default function WalletPage() {
         // espace) — `phone` est en affichage local espacé ("77 123 45 67"),
         // jamais le format brut attendu par leur API.
         phone: toE164(phone),
+        method,
       }),
     });
 
@@ -61,7 +60,7 @@ export default function WalletPage() {
     setSuccess(
       result.warning
         ? `Retrait enregistré — ${result.warning}`
-        : `Retrait enregistré. ${formatCurrency(result.net_amount ?? result.amount)} envoyés sur Wave.`
+        : `Retrait enregistré. ${formatCurrency(result.net_amount ?? result.amount)} envoyés sur ${method === "orange" ? "Orange Money" : "Wave"}.`
     );
     setAmount("");
     setPayoutRefreshKey((k) => k + 1);
@@ -159,7 +158,7 @@ export default function WalletPage() {
 
         <label className="field-block">
           <span className="field-block-label">Méthode</span>
-          <WalletPayoutMethodPicker />
+          <WalletPayoutMethodPicker value={method} onChange={setMethod} />
         </label>
 
         {parsedAmount > 0 && (
