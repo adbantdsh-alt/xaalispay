@@ -1,4 +1,13 @@
-import type { DisputeRow, PayoutRow, ProductRow, SellerRow, TeamMemberDetail, TeamMemberRow } from "./admin-types";
+import type {
+  AffiliateProgramSummary,
+  AffiliateRow,
+  DisputeRow,
+  PayoutRow,
+  ProductRow,
+  SellerRow,
+  TeamMemberDetail,
+  TeamMemberRow,
+} from "./admin-types";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function adaptDisputeRow(o: any): DisputeRow {
@@ -102,5 +111,32 @@ export function adaptTeamMemberDetail(m: any): TeamMemberDetail {
     ...adaptTeamMemberRow(m),
     mustChangePassword: m.must_change_password,
     tempPassword: m.temp_password ?? null,
+  };
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function adaptAffiliateRow(r: any): AffiliateRow {
+  return {
+    id: String(r.id),
+    referrerUsername: r.referrer_username,
+    referrerBusinessName: r.referrer_business_name,
+    username: r.username,
+    businessName: r.business_name,
+    displayName: r.display_name,
+    createdAt: r.created_at,
+    boostExpiresAt: r.boost_expires_at,
+    isBoosted: r.is_boosted,
+    lifetimeGmv: r.lifetime_gmv,
+    commissionEarnedTotal: r.commission_earned_total,
+  };
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function adaptAffiliateProgramSummary(s: any): AffiliateProgramSummary {
+  return {
+    totalReferrals: s.total_referrals,
+    boostedCount: s.boosted_count,
+    lifetimeCount: s.lifetime_count,
+    commissionsPaidTotal: s.commissions_paid_total,
   };
 }

@@ -57,9 +57,17 @@ async function fetchDisputeCountOnly(): Promise<OverviewData | null> {
     payouts_by_status: {},
     balances: { escrow_total: 0, available_total: 0, blocked_total: 0, paid_out_total: 0 },
     open_disputes_count: Array.isArray(rows) ? rows.length : 0,
-    revenue: { buyer_protection_fees_total: 0, seller_commissions_total: 0 },
+    revenue: {
+      buyer_protection_fees_total: 0,
+      seller_commissions_total: 0,
+      affiliate_commissions_total: 0,
+      bictorys_fees_estimated_total: 0,
+      net_profit: 0,
+    },
     paid_today_count: 0,
     gmv_today: 0,
+    gmv_total: 0,
+    payout_volume_total: 0,
   };
 }
 

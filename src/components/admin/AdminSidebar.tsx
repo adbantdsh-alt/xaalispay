@@ -5,6 +5,7 @@ import { useRouter, usePathname } from "next/navigation";
 import {
   LayoutDashboard,
   BarChart3,
+  Handshake,
   ShieldAlert,
   Banknote,
   Users,
@@ -20,6 +21,7 @@ import { useAdminData } from "./AdminDataProvider";
 const NAV_ITEMS = [
   { href: "/admin", label: "Vue d'ensemble", icon: LayoutDashboard, exact: true },
   { href: "/admin/analytics", label: "Analytics", icon: BarChart3 },
+  { href: "/admin/affiliation", label: "Affiliation", icon: Handshake },
   { href: "/admin/disputes", label: "Litiges", icon: ShieldAlert, badge: "disputes" as const },
   { href: "/admin/payouts", label: "Retraits", icon: Banknote, badge: "payouts" as const },
   { href: "/admin/sellers", label: "Vendeurs", icon: Users },

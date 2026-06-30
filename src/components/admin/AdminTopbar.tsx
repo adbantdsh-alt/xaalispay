@@ -6,7 +6,8 @@ import { useAdminData } from "./AdminDataProvider";
 
 const PAGE_META: Record<string, [string, string]> = {
   "/admin": ["Vue d'ensemble", "Surveillance de la plateforme en temps réel"],
-  "/admin/analytics": ["Analytics", "Tendances de volume, GMV et revenu"],
+  "/admin/analytics": ["Analytics", "Tendances de commandes, volume d'affaires et revenu"],
+  "/admin/affiliation": ["Affiliation", "Programme de parrainage et commissions versées"],
   "/admin/disputes": ["Litiges", "Arbitrage des conflits acheteur / vendeur"],
   "/admin/payouts": ["Retraits", "Suivi et relance des versements"],
   "/admin/sellers": ["Vendeurs", "Comptes et soldes des vendeurs"],

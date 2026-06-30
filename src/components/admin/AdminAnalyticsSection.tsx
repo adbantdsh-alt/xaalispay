@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Bar,
   BarChart,
@@ -15,10 +15,9 @@ import {
 } from "recharts";
 import { apiFetch } from "@/lib/api-client";
 import { formatCurrency } from "@/lib/utils";
+import { AdminDateRangePopover } from "./AdminDateRangePopover";
+import { CORAL, NAVY, NEGATIVE_RED, POSITIVE_GREEN } from "./admin-chart-colors";
 import type { AnalyticsDayPoint, AnalyticsSummaryData, AnalyticsWindowMetrics } from "./admin-types";
-
-const NAVY = "#1E3A5F";
-const CORAL = "#D4A373";
 
 function toDateInput(d: Date): string {
   return d.toISOString().slice(0, 10);
@@ -54,7 +53,7 @@ function tooltipCurrency(value: unknown) {
 
 function tooltipVolume(value: unknown, name: unknown): [string | number, string] {
   const label = String(name);
-  return [label === "GMV (FCFA)" ? formatCurrency(Number(value)) : Number(value), label];
+  return [label === "Volume d'affaires (FCFA)" ? formatCurrency(Number(value)) : Number(value), label];
 }
 
 function WindowCard({ title, metrics }: { title: string; metrics?: AnalyticsWindowMetrics }) {
@@ -108,7 +107,30 @@ export function AdminAnalyticsSection() {
   }, [dateFrom, dateTo]);
 
   const hasActivity = days.some(
-    (d) => d.orders_count > 0 || d.buyer_protection_fees > 0 || d.seller_commissions > 0 || d.new_sellers > 0
+    (d) =>
+      d.orders_count > 0 ||
+      d.buyer_protection_fees > 0 ||
+      d.seller_commissions > 0 ||
+      d.affiliate_commissions > 0 ||
+      d.payout_volume > 0 ||
+      d.new_sellers > 0
+  );
+
+  const isQuickRangeActive = QUICK_RANGES.some(
+    (range) => range.from() === dateFrom && daysAgo(0) === dateTo
+  );
+
+  // Affiliation/Bictorys sont des coûts — empilés en valeurs négatives dans
+  // le même stackId que les revenus positifs, recharts les place alors
+  // naturellement sous l'axe zéro.
+  const netProfitChartData = useMemo(
+    () =>
+      days.map((d) => ({
+        ...d,
+        affiliate_commissions_neg: -d.affiliate_commissions,
+        bictorys_fees_estimated_neg: -d.bictorys_fees_estimated,
+      })),
+    [days]
   );
 
   return (
@@ -118,7 +140,7 @@ export function AdminAnalyticsSection() {
           <button
             key={range.label}
             type="button"
-            className="admin-filter"
+            className={`admin-filter${range.from() === dateFrom && daysAgo(0) === dateTo ? " is-active" : ""}`}
             onClick={() => {
               setDateFrom(range.from());
               setDateTo(daysAgo(0));
@@ -127,21 +149,15 @@ export function AdminAnalyticsSection() {
             {range.label}
           </button>
         ))}
-        <input
-          type="date"
-          className="input-field input-compact admin-date-pill"
-          value={dateFrom}
-          max={dateTo}
-          onChange={(e) => setDateFrom(e.target.value)}
-        />
-        <span aria-hidden="true">→</span>
-        <input
-          type="date"
-          className="input-field input-compact admin-date-pill"
-          value={dateTo}
-          min={dateFrom}
-          max={daysAgo(0)}
-          onChange={(e) => setDateTo(e.target.value)}
+        <AdminDateRangePopover
+          dateFrom={dateFrom}
+          dateTo={dateTo}
+          isActive={!isQuickRangeActive}
+          maxDate={daysAgo(0)}
+          onApply={(from, to) => {
+            setDateFrom(from);
+            setDateTo(to);
+          }}
         />
       </div>
 
@@ -161,7 +177,7 @@ export function AdminAnalyticsSection() {
       ) : (
         <>
           <article className="admin-card admin-chart-card">
-            <h2 className="admin-card-title">Volume de commandes &amp; GMV</h2>
+            <h2 className="admin-card-title">Commandes &amp; volume d&apos;affaires</h2>
             <ResponsiveContainer width="100%" height={260}>
               <ComposedChart data={days}>
                 <CartesianGrid strokeDasharray="3 3" />
@@ -171,7 +187,7 @@ export function AdminAnalyticsSection() {
                 <Tooltip labelFormatter={tooltipLabel} formatter={tooltipVolume} />
                 <Legend wrapperStyle={{ fontSize: 11.5 }} iconType="square" />
                 <Bar yAxisId="left" dataKey="orders_count" name="Commandes" fill={NAVY} radius={[4, 4, 0, 0]} />
-                <Line yAxisId="right" dataKey="gmv" name="GMV (FCFA)" stroke={CORAL} strokeWidth={2} dot={false} />
+                <Line yAxisId="right" dataKey="gmv" name="Volume d'affaires (FCFA)" stroke={CORAL} strokeWidth={2} dot={false} />
               </ComposedChart>
             </ResponsiveContainer>
           </article>
@@ -193,6 +209,48 @@ export function AdminAnalyticsSection() {
                   fill={CORAL}
                   radius={[4, 4, 0, 0]}
                 />
+              </BarChart>
+            </ResponsiveContainer>
+          </article>
+
+          <article className="admin-card admin-chart-card">
+            <h2 className="admin-card-title">Bénéfice net XaalisPay</h2>
+            <ResponsiveContainer width="100%" height={260}>
+              <ComposedChart data={netProfitChartData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="date" tickFormatter={tickDate} tick={{ fontSize: 11 }} />
+                <YAxis tick={{ fontSize: 11 }} />
+                <Tooltip labelFormatter={tooltipLabel} formatter={tooltipCurrency} />
+                <Legend wrapperStyle={{ fontSize: 11.5 }} iconType="square" />
+                <Bar dataKey="buyer_protection_fees" name="Frais protection acheteur" stackId="net" fill={NAVY} />
+                <Bar dataKey="seller_commissions" name="Commissions vendeur" stackId="net" fill={CORAL} />
+                <Bar
+                  dataKey="affiliate_commissions_neg"
+                  name="Commissions affiliation"
+                  stackId="net"
+                  fill={NEGATIVE_RED}
+                />
+                <Bar
+                  dataKey="bictorys_fees_estimated_neg"
+                  name="Frais Bictorys (estimés)"
+                  stackId="net"
+                  fill="#8C8C8C"
+                  radius={[4, 4, 0, 0]}
+                />
+                <Line dataKey="net_profit" name="Bénéfice net" stroke={POSITIVE_GREEN} strokeWidth={2.5} dot={false} />
+              </ComposedChart>
+            </ResponsiveContainer>
+          </article>
+
+          <article className="admin-card admin-chart-card">
+            <h2 className="admin-card-title">Volume de retrait</h2>
+            <ResponsiveContainer width="100%" height={220}>
+              <BarChart data={days}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="date" tickFormatter={tickDate} tick={{ fontSize: 11 }} />
+                <YAxis tick={{ fontSize: 11 }} />
+                <Tooltip labelFormatter={tooltipLabel} formatter={tooltipCurrency} />
+                <Bar dataKey="payout_volume" name="Volume de retrait" fill={NAVY} radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </article>

@@ -19,9 +19,14 @@ export interface OverviewData {
   revenue: {
     buyer_protection_fees_total: number;
     seller_commissions_total: number;
+    affiliate_commissions_total: number;
+    bictorys_fees_estimated_total: number;
+    net_profit: number;
   };
   paid_today_count: number;
   gmv_today: number;
+  gmv_total: number;
+  payout_volume_total: number;
 }
 
 export interface PayoutRow {
@@ -71,6 +76,10 @@ export interface AnalyticsDayPoint {
   gmv: number;
   buyer_protection_fees: number;
   seller_commissions: number;
+  affiliate_commissions: number;
+  bictorys_fees_estimated: number;
+  net_profit: number;
+  payout_volume: number;
   new_sellers: number;
 }
 
@@ -83,6 +92,10 @@ export interface AnalyticsWindowMetrics {
   gmv: number;
   buyer_protection_fees: number;
   seller_commissions: number;
+  affiliate_commissions: number;
+  bictorys_fees_estimated: number;
+  net_profit: number;
+  payout_volume: number;
   new_sellers: number;
 }
 
@@ -149,6 +162,30 @@ export interface ReferralRow {
   isBoosted: boolean;
   lifetimeGmv: number;
   commissionEarnedTotal: number;
+}
+
+/** Page Affiliation (plateforme) — même forme que ReferralRow + l'identité
+ * du parrain, qui n'est plus implicite ici (contrairement à la fiche
+ * vendeur, scoped à un seul referrer). */
+export interface AffiliateRow {
+  id: string;
+  referrerUsername: string;
+  referrerBusinessName: string;
+  username: string;
+  businessName: string;
+  displayName: string;
+  createdAt: string;
+  boostExpiresAt: string;
+  isBoosted: boolean;
+  lifetimeGmv: number;
+  commissionEarnedTotal: number;
+}
+
+export interface AffiliateProgramSummary {
+  totalReferrals: number;
+  boostedCount: number;
+  lifetimeCount: number;
+  commissionsPaidTotal: number;
 }
 
 export interface SellerDetail {

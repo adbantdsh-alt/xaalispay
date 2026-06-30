@@ -4041,6 +4041,16 @@ input, button, textarea, select { font: inherit; color: var(--text); }
 }
 
 .sheet-panel {
+  /* Drawer.Content (vaul) est un frère de Drawer.Overlay dans le Portal —
+     jamais son enfant — donc le centrage flex de .sheet-overlay ne
+     s'applique pas ici : position fixe + left/right/margin:auto
+     reproduisent le même rendu, sans toucher `transform` (réservé à
+     l'animation de glissement gérée par vaul sur cet élément). */
+  position: fixed;
+  left: 1.25rem;
+  right: 1.25rem;
+  bottom: calc(5.5rem + env(safe-area-inset-bottom));
+  margin: 0 auto;
   width: 100%;
   max-width: 430px;
   max-height: min(78dvh, 560px);
@@ -4049,6 +4059,7 @@ input, button, textarea, select { font: inherit; color: var(--text); }
   background: var(--surface-seller);
   border: 1px solid var(--border-seller);
   box-shadow: none;
+  z-index: 101;
 }
 
 .sheet-panel-head {
@@ -5670,7 +5681,7 @@ input, button, textarea, select { font: inherit; color: var(--text); }
 
 .admin-hero-grid {
   display: grid;
-  grid-template-columns: 1.1fr 1.1fr 1fr;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
   gap: 1.25rem;
   margin-bottom: 1.5rem;
 }
@@ -6396,6 +6407,39 @@ input, button, textarea, select { font: inherit; color: var(--text); }
   background: #fdf8f2;
   border-radius: 12px;
   padding: 1rem;
+}
+
+.admin-daterange-popover-body {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding-bottom: 1rem;
+}
+
+.admin-daterange-popover-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--color-navy);
+}
+
+.admin-health-list-total {
+  border-top: 1px solid var(--color-gray-200);
+  padding-top: 0.75rem;
+  margin-top: 0.1rem;
+  font-weight: 700;
+}
+
+.admin-health-list-total strong {
+  color: var(--color-navy);
+  font-size: 1rem;
+}
+
+.admin-health-list li strong.admin-negative {
+  color: #b91c1c;
+  white-space: nowrap;
 }
 
 .admin-stat-grid {
