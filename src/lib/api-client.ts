@@ -17,30 +17,44 @@ export function getApiAccessToken(): string | null {
 
 /** Exporté pour qu'AuthProvider l'utilise aussi à son montage (tentative de
  * session silencieuse) — un seul point d'appel à /api/auth/refresh, jamais
- * deux appels concurrents. Avec ROTATE_REFRESH_TOKENS côté Django, un second
- * appel concurrent utiliserait un refresh token déjà mis en liste noire par
- * le premier et échouerait. */
+ * deux appels concurrents au sein d'un même onglet. Avec ROTATE_REFRESH_TOKENS
+ * côté Django, un second appel concurrent utiliserait un refresh token déjà
+ * mis en liste noire par le premier et échouerait. */
 export async function refreshAccessToken(): Promise<string | null> {
   if (!refreshPromise) {
-    refreshPromise = fetch("/api/auth/refresh", { method: "POST" })
-      .then(async (res) => {
-        if (!res.ok) {
-          currentAccessToken = null;
-          return null;
-        }
-        const data = await res.json();
-        currentAccessToken = data.access as string;
-        return currentAccessToken;
-      })
-      .catch(() => {
-        currentAccessToken = null;
-        return null;
-      })
-      .finally(() => {
-        refreshPromise = null;
-      });
+    refreshPromise = runRefresh().finally(() => {
+      refreshPromise = null;
+    });
   }
   return refreshPromise;
+}
+
+async function runRefresh(): Promise<string | null> {
+  const doFetch = async () => {
+    try {
+      const res = await fetch("/api/auth/refresh", { method: "POST" });
+      if (!res.ok) {
+        currentAccessToken = null;
+        return null;
+      }
+      const data = await res.json();
+      currentAccessToken = data.access as string;
+      return currentAccessToken;
+    } catch {
+      currentAccessToken = null;
+      return null;
+    }
+  };
+  // navigator.locks : sérialise l'appel /api/auth/refresh entre TOUS les
+  // onglets du même navigateur (ils partagent le cookie xp_refresh). Sans ce
+  // verrou, deux onglets qui rafraîchissent en même temps déclenchent une
+  // rotation Django (ROTATE_REFRESH_TOKENS) où le perdant reçoit un token
+  // déjà mis en liste noire (401) — ce qui supprime le cookie côté proxy et
+  // casse la session pour tous les onglets, même si l'autre a réussi.
+  if (typeof navigator !== "undefined" && navigator.locks) {
+    return navigator.locks.request("xaalispay-refresh-token", doFetch);
+  }
+  return doFetch();
 }
 
 /** Appelle directement l'API Django (jamais via un proxy Next.js, sauf
