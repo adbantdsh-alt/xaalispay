@@ -11,6 +11,11 @@ export async function redirectIfLoggedOut(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const hasSession = Boolean(request.cookies.get(REFRESH_COOKIE_NAME)?.value);
 
+  // Utilisateur déjà connecté sur la landing → dashboard
+  if (hasSession && pathname === "/") {
+    return NextResponse.redirect(new URL("/dashboard", request.url));
+  }
+
   // /admin/login doit toujours rester accessible sans session, sinon
   // isProtectedSellerPath (qui matche tout /admin*) créerait une boucle de
   // redirection infinie pour un visiteur non connecté.
