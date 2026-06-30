@@ -2583,61 +2583,67 @@ input, button, textarea, select { font: inherit; color: var(--text); }
 .order-detail-label-net { color: var(--text-seller); font-weight: 600; flex-shrink: 0; }
 .order-detail-value-net { color: var(--accent-blue); font-weight: 800; font-size: 0.9375rem; }
 
-/* Timeline horizontale */
-.order-timeline {
+/* Timeline avec cercles d'icônes */
+.order-tl {
   display: flex;
   list-style: none;
   margin: 0;
-  padding: 0.5rem 0.25rem 0;
+  padding: 0.25rem 0;
 }
-.order-timeline-step {
-  position: relative;
+.order-tl-step {
   flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.4rem;
-  text-align: center;
+  gap: 0.45rem;
+  position: relative;
 }
-.order-timeline-step::before {
+.order-tl-step::before {
   content: "";
   position: absolute;
-  top: 7px;
-  left: -50%;
-  width: 100%;
+  top: 18px; /* center of 36px circle */
+  left: calc(-50% + 18px);
+  width: calc(100% - 36px);
   height: 2px;
   background: var(--border-seller);
   z-index: 0;
 }
-.order-timeline-step:first-child::before { display: none; }
-.order-timeline-step.is-done::before,
-.order-timeline-step.is-active::before { background: var(--accent-blue); }
-.order-timeline-dot {
+.order-tl-step:first-child::before { display: none; }
+.order-tl-step.is-done::before,
+.order-tl-step.is-active::before { background: var(--accent-blue); }
+.order-tl-icon {
   position: relative;
   z-index: 1;
-  width: 16px;
-  height: 16px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
-  background: var(--surface-seller);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface-seller-elevated);
   border: 2px solid var(--border-seller);
+  color: var(--text-seller-muted);
 }
-.order-timeline-step.is-done .order-timeline-dot {
+.order-tl-step.is-done .order-tl-icon {
   background: var(--accent-blue);
   border-color: var(--accent-blue);
+  color: #fff;
 }
-.order-timeline-step.is-active .order-timeline-dot {
-  background: #e85d4a;
-  border-color: #e85d4a;
-  box-shadow: 0 0 0 3px rgba(232, 93, 74, 0.15);
+.order-tl-step.is-active .order-tl-icon {
+  background: rgba(212, 163, 115, 0.1);
+  border-color: var(--color-coral);
+  color: var(--color-coral);
+  box-shadow: 0 0 0 3px rgba(212, 163, 115, 0.15);
 }
-.order-timeline-label {
-  font-size: 0.6875rem;
+.order-tl-label {
+  font-size: 0.625rem;
   font-weight: 600;
   color: var(--text-seller-muted);
-  line-height: 1.2;
+  text-align: center;
+  line-height: 1.25;
 }
-.order-timeline-step.is-done .order-timeline-label { color: var(--text-seller); }
-.order-timeline-step.is-active .order-timeline-label { color: #e85d4a; font-weight: 800; }
+.order-tl-step.is-done .order-tl-label { color: var(--text-seller); }
+.order-tl-step.is-active .order-tl-label { color: var(--color-coral); font-weight: 800; }
 
 .order-sheet-commission-value { color: #e85d4a; font-weight: 600; }
 .order-sheet-value-right { text-align: right; max-width: 60%; }
@@ -4098,36 +4104,25 @@ input, button, textarea, select { font: inherit; color: var(--text); }
 }
 
 /* Floating sheets Ã¢â‚¬â€ profil & paramÃƒÂ¨tres */
-.sheet-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 100;
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  padding: 1rem 1.25rem calc(5.5rem + env(safe-area-inset-bottom));
-  background: rgba(255, 255, 255, 0.92);
-}
 
 .sheet-panel {
   /* Drawer.Content (vaul) est un frère de Drawer.Overlay dans le Portal —
-     jamais son enfant — donc le centrage flex de .sheet-overlay ne
-     s'applique pas ici : position fixe + left/right/margin:auto
-     reproduisent le même rendu, sans toucher `transform` (réservé à
-     l'animation de glissement gérée par vaul sur cet élément). */
+     jamais son enfant — position fixe indépendante. */
   position: fixed;
   left: 1.25rem;
   right: 1.25rem;
   bottom: calc(5.5rem + env(safe-area-inset-bottom));
   margin: 0 auto;
-  width: 100%;
+  width: calc(100% - 2.5rem);
   max-width: 430px;
-  max-height: min(78dvh, 560px);
-  overflow: auto;
+  max-height: min(82dvh, 82vh);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
   border-radius: var(--radius-xl);
-  background: var(--surface-seller);
-  border: 1px solid var(--border-seller);
-  box-shadow: none;
+  background: #ffffff;
+  border: 1px solid #e8edf5;
+  box-shadow: 0 -4px 28px rgba(15, 31, 102, 0.12);
   z-index: 101;
 }
 
@@ -4136,8 +4131,8 @@ input, button, textarea, select { font: inherit; color: var(--text); }
   top: 0;
   z-index: 1;
   padding: 0.75rem 1.25rem 0.5rem;
-  background: var(--surface-seller);
-  border-bottom: 1px solid var(--border-seller);
+  background: #ffffff;
+  border-bottom: 1px solid #e8edf5;
 }
 
 .sheet-handle {
@@ -4145,7 +4140,7 @@ input, button, textarea, select { font: inherit; color: var(--text); }
   height: 4px;
   margin: 0 auto 0.75rem;
   border-radius: 999px;
-  background: var(--border-seller);
+  background: #e8edf5;
 }
 
 .sheet-panel-title {
@@ -4175,6 +4170,10 @@ input, button, textarea, select { font: inherit; color: var(--text); }
 .sheet-close:focus-visible { outline: 2px solid var(--accent-blue); outline-offset: 2px; }
 
 .sheet-panel-body {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
   padding: 1.25rem;
   display: flex;
   flex-direction: column;

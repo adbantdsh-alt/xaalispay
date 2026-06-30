@@ -20,7 +20,6 @@ export function FloatingSheet({
   return (
     <Drawer.Root open={open} onOpenChange={(next) => !next && onClose()} shouldScaleBackground={false}>
       <Drawer.Portal>
-        <Drawer.Overlay className="sheet-overlay" />
         <Drawer.Content className="sheet-panel" aria-describedby={undefined}>
           <div className="sheet-panel-head">
             <Drawer.Handle className="sheet-handle" />
@@ -29,7 +28,7 @@ export function FloatingSheet({
               ×
             </Drawer.Close>
           </div>
-          <div className="sheet-panel-body">{children}</div>
+          <div className="sheet-panel-body" data-vaul-no-drag>{children}</div>
         </Drawer.Content>
       </Drawer.Portal>
     </Drawer.Root>

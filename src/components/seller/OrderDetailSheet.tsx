@@ -3,6 +3,8 @@
 import type { ReactNode } from "react";
 import { useState } from "react";
 import Image from "next/image";
+import { Package2, Truck, KeyRound, Wallet, AlertTriangle } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { FloatingSheet } from "@/components/ui/FloatingSheet";
 import { calculateSellerCommission } from "@/lib/fees";
 import { formatCurrency, getOrderTotal } from "@/lib/utils";
@@ -24,6 +26,13 @@ function formatDateTime(iso?: string): string {
     minute: "2-digit",
   });
 }
+
+const STEP_ICONS: Record<string, LucideIcon> = {
+  order: Package2,
+  ship: Truck,
+  pin: KeyRound,
+  paid: Wallet,
+};
 
 function paymentLabel(method?: string): string {
   if (!method) return "—";
@@ -118,17 +127,26 @@ export function OrderDetailSheet({
         </div>
 
         {/* Timeline */}
-        <ol className="order-timeline" aria-label="Progression de la commande">
-          {steps.map((step) => (
-            <li
-              key={step.id}
-              className={`order-timeline-step${step.done ? " is-done" : ""}${step.active ? " is-active" : ""}`}
-            >
-              <span className="order-timeline-dot" aria-hidden="true" />
-              <span className="order-timeline-label">{step.label}</span>
-            </li>
-          ))}
-        </ol>
+        <div className="order-tl" role="list" aria-label="Progression de la commande">
+          {steps.map((step) => {
+            const StepIcon =
+              step.id === "pin" && order.status === "dispute"
+                ? AlertTriangle
+                : (STEP_ICONS[step.id] ?? Package2);
+            return (
+              <div
+                key={step.id}
+                role="listitem"
+                className={`order-tl-step${step.done ? " is-done" : ""}${step.active ? " is-active" : ""}`}
+              >
+                <div className="order-tl-icon" aria-hidden="true">
+                  <StepIcon size={15} strokeWidth={1.75} />
+                </div>
+                <span className="order-tl-label">{step.label}</span>
+              </div>
+            );
+          })}
+        </div>
 
         {/* Client */}
         <div className="order-detail-section">
