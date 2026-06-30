@@ -20,9 +20,12 @@ export default function MentionsLegalesPage() {
         <section>
           <h2>Éditeur</h2>
           <p>
-            XaalisPay
+            XaalisPay est une marque de Adba Ecom X LLC.
             <br />
-            Dakar, Sénégal
+            1209 Mountain Road PL NE, STE R, Albuquerque, NM 87110, USA
+          </p>
+          <p>
+            Présence opérationnelle : Dakar, Sénégal
             <br />
             Email :{" "}
             <a href="mailto:contact@xaalispay.sn" className="content-link">
