@@ -5,8 +5,8 @@ import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { Order } from "@/lib/types";
+import { calculateSellerCommission } from "@/lib/fees";
 import { getOrderTotal, splitCurrency } from "@/lib/utils";
-import { filterOrders, type OrderFilterKey } from "@/lib/order-filters";
 import { computeWalletBreakdown } from "@/lib/wallet-breakdown";
 import { computeChargebackStats } from "@/lib/chargeback";
 import { SellerOnboarding } from "@/components/seller/SellerOnboarding";
@@ -15,7 +15,6 @@ import { DisputeAlertBanner } from "@/components/seller/DisputeAlertBanner";
 import { DashboardSkeleton } from "@/components/ui/Skeleton";
 import { WalletOverview } from "@/components/seller/WalletOverview";
 import { AssetRow } from "@/components/seller/AssetRow";
-import { OrderFilterTabs } from "@/components/seller/OrderFilterTabs";
 import { OrderDetailSheet } from "@/components/seller/OrderDetailSheet";
 import { buildShopUrl, formatPublicUrl } from "@/lib/site-url";
 import { useSellerData } from "@/components/seller/SellerDataProvider";
@@ -48,7 +47,6 @@ function DashboardContent() {
   const [error, setError] = useState("");
   const [pinErrorOrderId, setPinErrorOrderId] = useState<string | null>(null);
   const [expandedActionId, setExpandedActionId] = useState<string | null>(null);
-  const [orderFilter, setOrderFilter] = useState<OrderFilterKey>("all");
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [cancelWarning, setCancelWarning] = useState("");
   const [showWelcome, setShowWelcome] = useState(searchParams.get("welcome") === "1");
@@ -144,7 +142,6 @@ function DashboardContent() {
 
   const actionOrders = data.orders.filter((o) => o.status === "paid");
   const disputeOrders = data.orders.filter((o) => o.status === "dispute");
-  const filteredOrders = filterOrders(data.orders, orderFilter);
   const hasValidatedDelivery = data.orders.some(
     (o) => o.status === "protection" || o.status === "released"
   );
@@ -217,7 +214,7 @@ function DashboardContent() {
         </section>
       )}
 
-      <DisputeAlertBanner disputeOrders={disputeOrders} onClick={() => setOrderFilter("dispute")} />
+      <DisputeAlertBanner disputeOrders={disputeOrders} onClick={() => router.push("/dashboard/orders")} />
 
       {/* Alerte chargeback */}
       {cbStats.level !== "ok" && (
@@ -281,34 +278,42 @@ function DashboardContent() {
               <button
                 type="button"
                 className="dashboard-orders-see-all"
-                onClick={() => setOrderFilter("all")}
+                onClick={() => router.push("/dashboard/orders")}
               >
                 Tout voir <ChevronRight size={14} strokeWidth={1.5} />
               </button>
             )}
           </div>
 
-          {data.orders.length > 0 && (
-            <OrderFilterTabs filter={orderFilter} onFilterChange={setOrderFilter} />
-          )}
-
           <div className="asset-list">
             {data.orders.length === 0 ? (
               <p className="text-muted">Aucune commande</p>
-            ) : filteredOrders.length === 0 ? (
-              <p className="history-empty text-muted">Aucune commande dans cette catégorie.</p>
             ) : (
-              filteredOrders.map((order) => (
-                <AssetRow
-                  key={order.id}
-                  title={order.productName}
-                  subtitle={order.clientName || "Client"}
-                  amount={getOrderTotal(order)}
-                  status={order.status}
-                  imageUrl={order.productImage}
-                  onClick={() => setSelectedOrder(order)}
-                />
-              ))
+              <>
+                {data.orders.slice(0, 10).map((order) => {
+                  const gross = getOrderTotal(order);
+                  return (
+                    <AssetRow
+                      key={order.id}
+                      title={order.productName}
+                      subtitle={order.clientName || "Client"}
+                      amount={gross - calculateSellerCommission(gross)}
+                      status={order.status}
+                      imageUrl={order.productImage}
+                      onClick={() => setSelectedOrder(order)}
+                    />
+                  );
+                })}
+                {data.orders.length > 10 && (
+                  <button
+                    type="button"
+                    className="dashboard-orders-see-all dashboard-orders-see-more"
+                    onClick={() => router.push("/dashboard/orders")}
+                  >
+                    + {data.orders.length - 10} autres commandes · Tout voir
+                  </button>
+                )}
+              </>
             )}
           </div>
         </section>

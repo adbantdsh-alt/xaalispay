@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ArrowRight, BookmarkCheck, Clock } from "lucide-react";
+import { calculateSellerCommission } from "@/lib/fees";
 import { splitCurrency } from "@/lib/utils";
 import type { WalletBreakdown } from "@/lib/wallet-breakdown";
 import { ReleaseCountdown } from "@/components/ReleaseCountdown";
@@ -49,7 +50,7 @@ export function WalletOverview({
                 minutes={protectionMinutes}
                 onExpire={onCountdownExpire}
                 compact
-                compactAmount={splitCurrency(releasing.amount)[0]}
+                compactAmount={splitCurrency(releasing.amount - calculateSellerCommission(releasing.amount))[0]}
               />
             ) : (
               <span className="wallet-funds-value">—</span>

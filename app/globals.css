@@ -2413,6 +2413,13 @@ input, button, textarea, select { font: inherit; color: var(--text); }
   color: var(--text-seller-muted);
   cursor: pointer;
 }
+.dashboard-orders-see-more {
+  width: 100%;
+  justify-content: center;
+  padding: 0.625rem 0;
+  font-size: 0.8125rem;
+  color: var(--text-seller-muted);
+}
 .dashboard-orders .history-filters {
   margin-bottom: 0.75rem;
 }
@@ -2570,6 +2577,10 @@ input, button, textarea, select { font: inherit; color: var(--text); }
   background: var(--accent-blue-dim) !important;
   color: var(--text-seller);
 }
+.order-sheet-commission-divider { border: none; border-top: 1px solid var(--border-seller); margin: 0.25rem 0; }
+.order-sheet-commission-value { color: #e85d4a; font-weight: 600; }
+.order-sheet-row-net { font-weight: 800; }
+.order-sheet-row-net strong { color: var(--accent-blue); }
 .order-sheet-value-right { text-align: right; max-width: 60%; }
 .order-sheet-ref { font-variant-numeric: tabular-nums; font-weight: 700; letter-spacing: 0.02em; }
 .order-sheet-link { color: var(--accent-blue); font-weight: 600; }
@@ -4036,8 +4047,7 @@ input, button, textarea, select { font: inherit; color: var(--text); }
   align-items: flex-end;
   justify-content: center;
   padding: 1rem 1.25rem calc(5.5rem + env(safe-area-inset-bottom));
-  background: rgba(10, 22, 40, 0.45);
-  backdrop-filter: blur(4px);
+  background: rgba(255, 255, 255, 0.92);
 }
 
 .sheet-panel {

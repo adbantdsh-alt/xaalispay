@@ -1,3 +1,4 @@
+import { calculateSellerCommission } from "./fees";
 import type { OrderStatus } from "./types";
 
 export interface WalletSequesteredItem {
@@ -28,9 +29,9 @@ export function computeWalletBreakdown(wallet: WalletBreakdownInput): WalletBrea
   let blocked = 0;
 
   for (const item of wallet.sequestered) {
-    if (item.status === "dispute") blocked += item.amount;
-    else if (item.status === "protection") pendingRefund += item.amount;
-    else if (item.status === "paid") sequestered += item.amount;
+    if (item.status === "dispute") blocked += item.amount; // uncertain outcome — keep gross
+    else if (item.status === "protection") pendingRefund += item.amount - calculateSellerCommission(item.amount);
+    else if (item.status === "paid") sequestered += item.amount - calculateSellerCommission(item.amount);
   }
 
   return {
