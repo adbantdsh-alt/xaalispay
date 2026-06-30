@@ -416,6 +416,9 @@ function CreatePageContent() {
             <div className="shop-page-head-main">
               <h1 className="shop-page-title">Ma boutique</h1>
               <p className="shop-page-sub text-muted">Produits et liens de paiement</p>
+              <p className="shop-commission-notice text-muted">
+                XaalisPay prélève 5 % sur chaque vente libérée · Retrait gratuit
+              </p>
             </div>
           </header>
 

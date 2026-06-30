@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import { FloatingSheet } from "@/components/ui/FloatingSheet";
+import { calculateSellerCommission } from "@/lib/fees";
 import { formatCurrency, getOrderTotal } from "@/lib/utils";
 import { formatDeliveryWindow } from "@/lib/delivery-window";
 import { getSellerHumanStatus, getSellerTimeline } from "@/lib/order-timeline";
@@ -47,6 +48,8 @@ export function OrderDetailSheet({
   const visual = getOrderStatusVisual(order.status);
   const steps = getSellerTimeline(order.status);
   const total = getOrderTotal(order);
+  const sellerCommission = order.sellerCommission ?? calculateSellerCommission(total);
+  const sellerNet = total - sellerCommission;
   const clientName = order.clientName?.trim() || order.clientFirstName?.trim() || "Client";
   const canCancel = onCancel && (order.status === "pending_payment" || order.status === "paid");
 
@@ -74,7 +77,9 @@ export function OrderDetailSheet({
         <span className={`order-sheet-status order-sheet-status-${visual.tone}`}>
           {getSellerHumanStatus(order.status)}
         </span>
-        <p className="order-sheet-amount">{formatCurrency(total)}</p>
+        <p className="order-sheet-amount">
+          {formatCurrency(order.status === "released" ? sellerNet : total)}
+        </p>
         <p className="order-sheet-product">{order.productName}</p>
       </div>
 
@@ -134,8 +139,17 @@ export function OrderDetailSheet({
             <span>{order.deliveryCost ? formatCurrency(order.deliveryCost) : "Offerte"}</span>
           </div>
           <div className="profile-sheet-row order-sheet-row-total">
-            <span>Total</span>
+            <span>Total payé</span>
             <span>{formatCurrency(total)}</span>
+          </div>
+          <hr className="order-sheet-commission-divider" />
+          <div className="profile-sheet-row">
+            <span className="text-muted">Commission XaalisPay (5 %)</span>
+            <span className="order-sheet-commission-value">−{formatCurrency(sellerCommission)}</span>
+          </div>
+          <div className="profile-sheet-row order-sheet-row-net">
+            <span>Vous recevrez</span>
+            <strong>{formatCurrency(sellerNet)}</strong>
           </div>
         </div>
       </div>

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ImagePlus, ShieldCheck } from "lucide-react";
 import type { DeliveryZone, Product } from "@/lib/types";
 import { formatCurrency, splitCurrency } from "@/lib/utils";
+import { calculateSellerCommission } from "@/lib/fees";
 import { DELIVERY_DEADLINE_HOURS } from "@/lib/delivery-window";
 import { uploadProductImageFile, MAX_IMAGE_INPUT_MB } from "@/lib/product-form";
 import { useDeliveryZones } from "@/lib/use-delivery-zones";
@@ -165,6 +166,25 @@ export function ProductFields({
           min={1}
         />
       </label>
+
+      {(() => {
+        const parsedPrice = Number(form.price) || 0;
+        return (
+          <div className="delivery-policy-notice commission-notice">
+            <p className="delivery-policy-notice-text">
+              {parsedPrice > 0 ? (
+                <>
+                  Vous recevrez{" "}
+                  <strong>{formatCurrency(parsedPrice - calculateSellerCommission(parsedPrice))}</strong>
+                  {" · 5 % de commission XaalisPay déduits à la libération"}
+                </>
+              ) : (
+                "5 % de commission XaalisPay déduits à la libération · Retrait gratuit"
+              )}
+            </p>
+          </div>
+        );
+      })()}
 
       <div className="field-block">
         <span className="field-block-label">Zones de livraison</span>
