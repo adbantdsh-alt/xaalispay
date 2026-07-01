@@ -66,6 +66,14 @@ export function SellerOrderNotifier() {
     setToast({ message, detail });
     const timer = window.setTimeout(() => setToast(null), 8000);
 
+    try {
+      const audio = new Audio("/sounds/order-notification.mp3");
+      audio.volume = 0.7;
+      void audio.play();
+    } catch {
+      /* navigateur peut bloquer l'autoplay sans interaction utilisateur préalable */
+    }
+
     if (typeof Notification !== "undefined" && Notification.permission === "granted") {
       try {
         new Notification("XaalisPay", {
