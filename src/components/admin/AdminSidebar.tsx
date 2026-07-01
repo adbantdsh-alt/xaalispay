@@ -60,7 +60,7 @@ export function AdminSidebar({
       {open && <div className="admin-sidebar-backdrop" onClick={onClose} aria-hidden="true" />}
       <aside className={`admin-sidebar ${open ? "is-open" : ""} ${collapsed ? "is-collapsed" : ""}`}>
         <div className="admin-sidebar-header">
-          <BrandMark size="md" href="/admin" variant={collapsed ? "icon" : "full"} />
+          <BrandMark size="md" href="/admin" variant={collapsed ? "icon" : "full"} light />
           <button
             type="button"
             className="admin-sidebar-toggle"

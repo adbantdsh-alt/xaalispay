@@ -1,15 +1,15 @@
-const ICON_SRC = "/branding/xaalis-mark.png";
-
 export function XaalisIcon({
   size = 32,
   className = "brand-icon-img",
+  light = false,
 }: {
   size?: number;
   className?: string;
+  light?: boolean;
 }) {
   return (
     <img
-      src={ICON_SRC}
+      src={light ? "/branding/xaalis-mark-light.png" : "/branding/xaalis-mark.png"}
       alt=""
       width={size}
       height={size}

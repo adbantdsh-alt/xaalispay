@@ -5,11 +5,14 @@ export function BrandMark({
   size = "md",
   variant = "full",
   href = "/",
+  light = false,
 }: {
   size?: "sm" | "md" | "lg";
   variant?: "full" | "icon";
   /** Lien accueil — `null` pour désactiver */
   href?: string | null;
+  /** Variante claire (blanc+coral) pour fonds sombres (ex: sidebar admin) */
+  light?: boolean;
 }) {
   const sizes = { sm: "brand-sm", md: "brand-md", lg: "brand-lg" };
   const iconSizes = { sm: 24, md: 32, lg: 40 };
@@ -17,12 +20,12 @@ export function BrandMark({
   const inner =
     variant === "icon" ? (
       <span className="brand-icon" aria-hidden="true">
-        <XaalisIcon size={iconSizes[size]} />
+        <XaalisIcon size={iconSizes[size]} light={light} />
       </span>
     ) : (
       <>
         <span className="brand-icon" aria-hidden="true">
-          <XaalisIcon size={iconSizes[size]} />
+          <XaalisIcon size={iconSizes[size]} light={light} />
         </span>
         <span className="brand-name">
           <span className="brand-name-light">Xaalis</span><span className="brand-name-strong">Pay</span>
