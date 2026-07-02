@@ -269,6 +269,23 @@ function AuthForm() {
   const handleResend = async () => {
     if (resend.remaining > 0) return;
     resetMessages();
+    if (otpPurpose.current === "login") {
+      // L'OTP login ne peut être déclenché que par LoginView (PIN requis) —
+      // on re-soumet la connexion plutôt que d'appeler requestOtp directement.
+      setLoading(true);
+      try {
+        const result = await login(toE164(phone, country), pin);
+        if (!result.ok) {
+          setError(result.error || "Échec du renvoi du code");
+          return;
+        }
+        resend.start();
+        setInfo("Nouveau code envoyé.");
+      } finally {
+        setLoading(false);
+      }
+      return;
+    }
     const result = await requestOtp(toE164(phone, country), otpPurpose.current as "signup" | "pin_reset");
     if (!result.ok) {
       setError(result.error || "Échec de l'envoi du code");
