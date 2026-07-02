@@ -1,25 +1,24 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Search } from "lucide-react";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { formatCurrency } from "@/lib/utils";
 import { NAVY } from "./admin-chart-colors";
-import { formatAdminDate, type AffiliateProgramSummary, type AffiliateRow } from "./admin-types";
+import { formatAdminDate, type AffiliateProgramSummary, type ReferrerGroupRow } from "./admin-types";
 
 const ORDERING_OPTIONS = [
-  { value: "-created_at", label: "Plus récents" },
-  { value: "-lifetime_gmv", label: "CA filleul le plus élevé" },
-  { value: "-commission_earned_total", label: "Commission la plus élevée" },
-  { value: "-boost_expires_at", label: "Boost expirant le plus tard" },
+  { value: "-total_commission", label: "Commission la plus élevée" },
+  { value: "-referral_count", label: "Plus de filleuls" },
+  { value: "-latest_boost_expires_at", label: "Boost expirant le plus tard" },
 ] as const;
 
 function ExtendBoostCell({
-  referral,
-  onExtendBoost,
+  referrerId,
+  onExtendAllBoost,
 }: {
-  referral: AffiliateRow;
-  onExtendBoost: (referralId: string, days: number) => Promise<boolean>;
+  referrerId: number;
+  onExtendAllBoost: (referrerId: number, days: number) => Promise<boolean>;
 }) {
   const [days, setDays] = useState("");
   const [extending, setExtending] = useState(false);
@@ -33,13 +32,13 @@ function ExtendBoostCell({
     }
     setError("");
     setExtending(true);
-    const ok = await onExtendBoost(referral.id, parsed);
+    const ok = await onExtendAllBoost(referrerId, parsed);
     setExtending(false);
     if (ok) setDays("");
   };
 
   return (
-    <div>
+    <div onClick={(e) => e.stopPropagation()}>
       <div style={{ display: "flex", gap: "0.4rem", alignItems: "center" }}>
         <input
           type="number"
@@ -60,18 +59,20 @@ function ExtendBoostCell({
 }
 
 export function AdminAffiliationSection({
-  referrals,
+  referrers,
   summary,
   onSearch,
-  onExtendBoost,
+  onExtendAllBoost,
+  onOpenDetail,
 }: {
-  referrals: AffiliateRow[];
+  referrers: ReferrerGroupRow[];
   summary: AffiliateProgramSummary | null;
   onSearch: (params: { search?: string; ordering?: string }) => void;
-  onExtendBoost: (referralId: string, days: number) => Promise<boolean>;
+  onExtendAllBoost: (referrerId: number, days: number) => Promise<boolean>;
+  onOpenDetail: (referrerId: number, businessName: string) => void;
 }) {
   const [search, setSearch] = useState("");
-  const [ordering, setOrdering] = useState("-created_at");
+  const [ordering, setOrdering] = useState("-total_commission");
 
   useEffect(() => {
     const id = setTimeout(() => onSearch({ search, ordering }), 300);
@@ -79,14 +80,10 @@ export function AdminAffiliationSection({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search, ordering]);
 
-  const topReferrers = useMemo(() => {
-    const byReferrer = new Map<string, { name: string; total: number }>();
-    for (const r of referrals) {
-      const prev = byReferrer.get(r.referrerUsername)?.total ?? 0;
-      byReferrer.set(r.referrerUsername, { name: r.referrerBusinessName, total: prev + r.commissionEarnedTotal });
-    }
-    return [...byReferrer.values()].sort((a, b) => b.total - a.total).slice(0, 10);
-  }, [referrals]);
+  const topReferrers = [...referrers]
+    .sort((a, b) => b.totalCommission - a.totalCommission)
+    .slice(0, 10)
+    .map((r) => ({ name: r.referrerBusinessName, total: r.totalCommission }));
 
   return (
     <section className="admin-section">
@@ -114,7 +111,7 @@ export function AdminAffiliationSection({
           <Search size={16} aria-hidden="true" />
           <input
             className="input-field input-compact"
-            placeholder="Rechercher (parrain ou filleul)…"
+            placeholder="Rechercher un parrain…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
@@ -128,42 +125,50 @@ export function AdminAffiliationSection({
         </select>
       </div>
 
-      {referrals.length === 0 ? (
-        <p className="admin-empty">Aucun parrainage trouvé.</p>
+      {referrers.length === 0 ? (
+        <p className="admin-empty">Aucun parrain trouvé.</p>
       ) : (
         <div className="admin-table-wrap">
           <table className="admin-table">
             <thead>
               <tr>
                 <th>Parrain</th>
-                <th>Filleul</th>
-                <th>CA filleul</th>
-                <th>Commission gagnée</th>
+                <th>Filleuls</th>
+                <th>CA global</th>
+                <th>Commission totale</th>
                 <th>Palier</th>
                 <th>Prolonger le palier 1 %</th>
               </tr>
             </thead>
             <tbody>
-              {referrals.map((r) => (
-                <tr key={r.id}>
+              {referrers.map((r) => (
+                <tr
+                  key={r.referrerId}
+                  style={{ cursor: "pointer" }}
+                  onClick={() => onOpenDetail(r.referrerId, r.referrerBusinessName)}
+                >
                   <td>
                     <strong>{r.referrerBusinessName}</strong>
                     <span className="admin-cell-sub admin-mono">@{r.referrerUsername}</span>
                   </td>
                   <td>
-                    <strong>{r.businessName}</strong>
-                    <span className="admin-cell-sub admin-mono">@{r.username}</span>
-                  </td>
-                  <td className="admin-mono">{formatCurrency(r.lifetimeGmv)}</td>
-                  <td className="admin-mono">{formatCurrency(r.commissionEarnedTotal)}</td>
-                  <td>
-                    <span className={`admin-badge ${r.isBoosted ? "good" : "neutral"}`}>
-                      {r.isBoosted ? "1 %" : "0,25 %"}
+                    <span className={`admin-badge ${r.boostedCount > 0 ? "good" : "neutral"}`}>
+                      {r.boostedCount} boostés
                     </span>
-                    <span className="admin-cell-sub">jusqu&apos;au {formatAdminDate(r.boostExpiresAt)}</span>
+                    <span className="admin-cell-sub">/ {r.referralCount} au total</span>
+                  </td>
+                  <td className="admin-mono">{formatCurrency(r.totalLifetimeGmv)}</td>
+                  <td className="admin-mono">{formatCurrency(r.totalCommission)}</td>
+                  <td>
+                    <span className={`admin-badge ${r.boostedCount > 0 ? "good" : "neutral"}`}>
+                      {r.boostedCount > 0 ? "1 %" : "0,25 %"}
+                    </span>
+                    <span className="admin-cell-sub">
+                      jusqu&apos;au {formatAdminDate(r.latestBoostExpiresAt)}
+                    </span>
                   </td>
                   <td>
-                    <ExtendBoostCell referral={r} onExtendBoost={onExtendBoost} />
+                    <ExtendBoostCell referrerId={r.referrerId} onExtendAllBoost={onExtendAllBoost} />
                   </td>
                 </tr>
               ))}

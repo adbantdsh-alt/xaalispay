@@ -1,11 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Copy, Check, Share2 } from "lucide-react";
 import { apiFetch } from "@/lib/api-client";
-import { buildAffiliateShareMessage, buildWhatsAppUrl } from "@/lib/share";
+import { buildAffiliateShareMessage, buildWhatsAppUrl, copyToClipboard } from "@/lib/share";
 import { buildReferralUrl, formatPublicUrl } from "@/lib/site-url";
 import { formatCurrency } from "@/lib/utils";
-import { CopyButton } from "@/components/ui/CopyButton";
 
 interface ReferralRow {
   id: string;
@@ -35,6 +35,31 @@ function adaptReferral(r: any): ReferralRow {
 export function AffiliatesManager({ username }: { username: string }) {
   const [referrals, setReferrals] = useState<ReferralRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async (url: string) => {
+    const ok = await copyToClipboard(url);
+    if (ok) {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  const handleShare = async (url: string) => {
+    if (typeof navigator !== "undefined" && navigator.share) {
+      try {
+        await navigator.share({
+          title: "Rejoignez XaalisPay",
+          text: buildAffiliateShareMessage(url),
+          url,
+        });
+        return;
+      } catch {
+        // user cancelled or API not available — fall through
+      }
+    }
+    window.open(buildWhatsAppUrl(buildAffiliateShareMessage(url)), "_blank", "noopener,noreferrer");
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -65,21 +90,28 @@ export function AffiliatesManager({ username }: { username: string }) {
           Gagnez 1% sur les ventes de chaque vendeur que vous parrainez pendant 3 mois, puis 0,25% à vie —
           sans rien changer pour lui.
         </p>
-        <div className="settings-info-row" style={{ borderBottom: "none", padding: "0.75rem 0" }}>
-          <span className="settings-phone-value" style={{ wordBreak: "break-all", fontSize: "0.8125rem" }}>
+        <div className="affiliate-link-strip">
+          <span className="affiliate-link-url" title={formatPublicUrl(referralUrl)}>
             {formatPublicUrl(referralUrl)}
           </span>
-        </div>
-        <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
-          <CopyButton text={referralUrl} label="Copier le lien" className="btn-secondary" />
-          <a
-            href={buildWhatsAppUrl(buildAffiliateShareMessage(referralUrl))}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="btn-seller-primary"
+          <button
+            type="button"
+            className={`affiliate-link-action${copied ? " is-copied" : ""}`}
+            onClick={() => handleCopy(referralUrl)}
+            aria-label="Copier le lien"
+            title="Copier le lien"
           >
-            Partager sur WhatsApp
-          </a>
+            {copied ? <Check size={15} strokeWidth={2} /> : <Copy size={15} strokeWidth={1.75} />}
+          </button>
+          <button
+            type="button"
+            className="affiliate-link-action"
+            onClick={() => handleShare(referralUrl)}
+            aria-label="Partager"
+            title="Partager"
+          >
+            <Share2 size={15} strokeWidth={1.75} />
+          </button>
         </div>
       </section>
 

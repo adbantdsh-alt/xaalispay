@@ -4,6 +4,7 @@ import type {
   DisputeRow,
   PayoutRow,
   ProductRow,
+  ReferrerGroupRow,
   SellerRow,
   TeamMemberDetail,
   TeamMemberRow,
@@ -128,6 +129,20 @@ export function adaptAffiliateRow(r: any): AffiliateRow {
     isBoosted: r.is_boosted,
     lifetimeGmv: r.lifetime_gmv,
     commissionEarnedTotal: r.commission_earned_total,
+  };
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function adaptReferrerGroupRow(r: any): ReferrerGroupRow {
+  return {
+    referrerId:             r.referrer_id,
+    referrerUsername:       r.referrer_username,
+    referrerBusinessName:   r.referrer_business_name,
+    referralCount:          r.referral_count,
+    boostedCount:           r.boosted_count,
+    totalCommission:        r.total_commission,
+    totalLifetimeGmv:       r.total_lifetime_gmv,
+    latestBoostExpiresAt:   r.latest_boost_expires_at,
   };
 }
 

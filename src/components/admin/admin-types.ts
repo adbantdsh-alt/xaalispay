@@ -164,9 +164,21 @@ export interface ReferralRow {
   commissionEarnedTotal: number;
 }
 
-/** Page Affiliation (plateforme) — même forme que ReferralRow + l'identité
- * du parrain, qui n'est plus implicite ici (contrairement à la fiche
- * vendeur, scoped à un seul referrer). */
+/** Page Affiliation admin — une ligne par parrain avec agrégats de tous ses
+ * filleuls (GET /api/admin/affiliates/referrers). */
+export interface ReferrerGroupRow {
+  referrerId: number;
+  referrerUsername: string;
+  referrerBusinessName: string;
+  referralCount: number;
+  boostedCount: number;
+  totalCommission: number;
+  totalLifetimeGmv: number;
+  latestBoostExpiresAt: string;
+}
+
+/** Détail filleul par filleul dans le modal — même forme que ReferralRow +
+ * identité du parrain (GET /api/admin/affiliates?referrer_id=X). */
 export interface AffiliateRow {
   id: string;
   referrerUsername: string;
