@@ -7,61 +7,14 @@ import { formatCurrency } from "@/lib/utils";
 import { adaptAffiliateRow } from "./admin-adapters";
 import { formatAdminDate, type AffiliateRow } from "./admin-types";
 
-function ExtendBoostCell({
-  referral,
-  onExtendBoost,
-}: {
-  referral: AffiliateRow;
-  onExtendBoost: (referralId: string, days: number) => Promise<boolean>;
-}) {
-  const [days, setDays] = useState("");
-  const [extending, setExtending] = useState(false);
-  const [error, setError] = useState("");
-
-  const handleExtend = async () => {
-    const parsed = Number(days);
-    if (!Number.isInteger(parsed) || parsed <= 0) {
-      setError("Jours invalides.");
-      return;
-    }
-    setError("");
-    setExtending(true);
-    const ok = await onExtendBoost(referral.id, parsed);
-    setExtending(false);
-    if (ok) setDays("");
-  };
-
-  return (
-    <div>
-      <div style={{ display: "flex", gap: "0.4rem", alignItems: "center" }}>
-        <input
-          type="number"
-          min={1}
-          placeholder="Jours"
-          className="input-field input-compact"
-          style={{ width: "5.5rem" }}
-          value={days}
-          onChange={(e) => setDays(e.target.value)}
-        />
-        <button type="button" className="btn-secondary" disabled={extending} onClick={handleExtend}>
-          {extending ? "…" : "Prolonger"}
-        </button>
-      </div>
-      {error && <span className="admin-cell-sub admin-health-bad">{error}</span>}
-    </div>
-  );
-}
-
 export function AdminAffiliateDetailModal({
   referrerId,
   referrerName,
   onClose,
-  onExtendBoost,
 }: {
   referrerId: number | null;
   referrerName: string;
   onClose: () => void;
-  onExtendBoost: (referralId: string, days: number) => Promise<boolean>;
 }) {
   const [referrals, setReferrals] = useState<AffiliateRow[]>([]);
   const [loading, setLoading] = useState(false);
@@ -96,9 +49,7 @@ export function AdminAffiliateDetailModal({
         onClick={(e) => e.stopPropagation()}
       >
         <header className="admin-modal-head">
-          <div className="admin-modal-head-title">
-            Filleuls de {referrerName}
-          </div>
+          <div className="admin-modal-head-title">Filleuls de {referrerName}</div>
           <button type="button" className="admin-modal-close" onClick={onClose} aria-label="Fermer">
             <X size={18} />
           </button>
@@ -118,7 +69,6 @@ export function AdminAffiliateDetailModal({
                   <th>CA</th>
                   <th>Commission gagnée</th>
                   <th>Palier</th>
-                  <th>Prolonger le palier 1 %</th>
                 </tr>
               </thead>
               <tbody>
@@ -137,9 +87,6 @@ export function AdminAffiliateDetailModal({
                       <span className="admin-cell-sub">
                         jusqu&apos;au {formatAdminDate(r.boostExpiresAt)}
                       </span>
-                    </td>
-                    <td>
-                      <ExtendBoostCell referral={r} onExtendBoost={onExtendBoost} />
                     </td>
                   </tr>
                 ))}

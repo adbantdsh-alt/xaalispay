@@ -3,11 +3,11 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { apiFetch, extractApiError } from "@/lib/api-client";
-import { adaptAffiliateProgramSummary, adaptAffiliateRow, adaptReferrerGroupRow } from "./admin-adapters";
+import { adaptAffiliateProgramSummary, adaptReferrerGroupRow } from "./admin-adapters";
 import { AdminAffiliationSection } from "./AdminAffiliationSection";
 import { AdminAffiliateDetailModal } from "./AdminAffiliateDetailModal";
 import { handleAdminAuthStatus } from "./AdminDataProvider";
-import type { AffiliateProgramSummary, AffiliateRow, ReferrerGroupRow } from "./admin-types";
+import type { AffiliateProgramSummary, ReferrerGroupRow } from "./admin-types";
 
 const AUTO_REFRESH_MS = 15_000;
 
@@ -72,20 +72,6 @@ export function AdminAffiliationPage() {
     return true;
   };
 
-  const extendBoost = async (referralId: string, days: number) => {
-    const res = await apiFetch(`/api/admin/affiliates/${referralId}/extend`, {
-      method: "POST",
-      body: JSON.stringify({ days }),
-    });
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok) {
-      setError(extractApiError(data, "Prolongation impossible"));
-      return false;
-    }
-    setError("");
-    return true;
-  };
-
   const openDetail = (referrerId: number, businessName: string) => {
     setDetailReferrerId(referrerId);
     setDetailReferrerName(businessName);
@@ -118,7 +104,6 @@ export function AdminAffiliationPage() {
         referrerId={detailReferrerId}
         referrerName={detailReferrerName}
         onClose={closeDetail}
-        onExtendBoost={extendBoost}
       />
     </>
   );
