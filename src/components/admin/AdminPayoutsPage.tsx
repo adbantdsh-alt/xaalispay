@@ -17,10 +17,11 @@ export function AdminPayoutsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [retryingId, setRetryingId] = useState<string | null>(null);
+  const [forcingId, setForcingId] = useState<string | null>(null);
   const busyRef = useRef(false);
   useEffect(() => {
-    busyRef.current = retryingId !== null;
-  }, [retryingId]);
+    busyRef.current = retryingId !== null || forcingId !== null;
+  }, [retryingId, forcingId]);
 
   const showError = (msg: string) => {
     setError(msg);
@@ -68,10 +69,31 @@ export function AdminPayoutsPage() {
     );
   }
 
+  const forceSucceedPayout = async (payoutId: string) => {
+    if (!confirm("Marquer ce retrait comme réussi sans vérification PSP ? À faire uniquement si Bictorys confirme que le virement est arrivé.")) return;
+    setForcingId(payoutId);
+    setError("");
+    const res = await apiFetch(`/api/admin/payouts/${payoutId}/force-succeed`, { method: "POST" });
+    const data = await res.json();
+    setForcingId(null);
+    if (!res.ok) {
+      showError(extractApiError(data, "Impossible de forcer le statut"));
+      return;
+    }
+    await fetchPayouts(true);
+    refreshOverview({ silent: true });
+  };
+
   return (
     <>
       {error && <p className="admin-error">{error}</p>}
-      <AdminPayoutsSection payouts={payouts} retryingId={retryingId} onRetry={retryPayout} />
+      <AdminPayoutsSection
+        payouts={payouts}
+        retryingId={retryingId}
+        onRetry={retryPayout}
+        forcingId={forcingId}
+        onForceSucceed={forceSucceedPayout}
+      />
     </>
   );
 }

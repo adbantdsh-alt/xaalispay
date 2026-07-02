@@ -6640,6 +6640,10 @@ input, button, textarea, select { font: inherit; color: var(--text); }
   opacity: 0.6;
 }
 
+.admin-action-btn--warn {
+  background: var(--color-coral);
+}
+
 .admin-search-wrap {
   position: relative;
   flex: 1 1 240px;
