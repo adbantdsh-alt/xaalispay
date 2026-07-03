@@ -47,9 +47,14 @@ function adaptReferral(r: any): ReferralRow {
   };
 }
 
-function AffiliateLinkEnabled({ username }: { username: string }) {
-  const [referrals, setReferrals] = useState<ReferralRow[]>([]);
-  const [loading, setLoading] = useState(true);
+function AffiliateLinkEnabled({
+  username,
+  prefetchedReferrals,
+}: {
+  username: string;
+  prefetchedReferrals: ReferralRow[];
+}) {
+  const [referrals] = useState<ReferralRow[]>(prefetchedReferrals);
   const [copied, setCopied] = useState(false);
 
   const referralUrl = buildReferralUrl(username);
@@ -77,22 +82,6 @@ function AffiliateLinkEnabled({ username }: { username: string }) {
     }
     window.open(buildWhatsAppUrl(buildAffiliateShareMessage(referralUrl)), "_blank", "noopener,noreferrer");
   };
-
-  useEffect(() => {
-    let cancelled = false;
-    apiFetch("/api/affiliates/me/referrals")
-      .then(async (res) => {
-        if (cancelled || !res.ok) return;
-        const data = await res.json();
-        setReferrals((data as unknown[]).map(adaptReferral));
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
 
   const totalEarned = referrals.reduce((sum, r) => sum + r.commissionEarnedTotal, 0);
 
@@ -135,14 +124,12 @@ function AffiliateLinkEnabled({ username }: { username: string }) {
         <p className="settings-section-label">
           Mes affiliés {referrals.length > 0 && `(${referrals.length})`}
         </p>
-        {!loading && referrals.length > 0 && (
+        {referrals.length > 0 && (
           <p className="text-muted" style={{ fontSize: "0.8125rem", padding: "0 0.25rem" }}>
             Total déjà gagné : <strong>{formatCurrency(totalEarned)}</strong>
           </p>
         )}
-        {loading ? (
-          <p className="text-muted">Chargement…</p>
-        ) : referrals.length === 0 ? (
+        {referrals.length === 0 ? (
           <p className="text-muted">
             Aucun affilié pour l&apos;instant — partagez votre lien pour commencer à gagner des commissions.
           </p>
@@ -261,18 +248,23 @@ function AffiliateGate({ application }: { application: AffiliateApplication | nu
 
 export function AffiliatesManager({ username }: { username: string }) {
   const [status, setStatus] = useState<AffiliateStatus | null>(null);
+  const [referrals, setReferrals] = useState<ReferralRow[] | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let cancelled = false;
-    apiFetch("/api/affiliates/me/status")
-      .then(async (res) => {
-        if (cancelled || !res.ok) return;
-        setStatus(await res.json());
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
+    // Fetch status and referrals in parallel — avoids a sequential waterfall
+    // for enabled sellers (which was the common case and caused 2× load time).
+    Promise.all([
+      apiFetch("/api/affiliates/me/status").then((r) => (r.ok ? r.json() : null)),
+      apiFetch("/api/affiliates/me/referrals").then((r) => (r.ok ? r.json() : [])),
+    ]).then(([st, refs]) => {
+      if (cancelled) return;
+      setStatus(st);
+      setReferrals((refs as unknown[]).map(adaptReferral));
+    }).finally(() => {
+      if (!cancelled) setLoading(false);
+    });
     return () => {
       cancelled = true;
     };
@@ -281,7 +273,7 @@ export function AffiliatesManager({ username }: { username: string }) {
   if (loading) return <p className="text-muted">Chargement…</p>;
 
   if (status?.affiliate_enabled) {
-    return <AffiliateLinkEnabled username={username} />;
+    return <AffiliateLinkEnabled username={username} prefetchedReferrals={referrals ?? []} />;
   }
 
   return <AffiliateGate application={status?.application ?? null} />;
