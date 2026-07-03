@@ -1,4 +1,5 @@
 import type {
+  AffiliateApplicationRow,
   AffiliateProgramSummary,
   AffiliateRow,
   DisputeRow,
@@ -143,6 +144,20 @@ export function adaptReferrerGroupRow(r: any): ReferrerGroupRow {
     totalCommission:        r.total_commission,
     totalLifetimeGmv:       r.total_lifetime_gmv,
     latestBoostExpiresAt:   r.latest_boost_expires_at,
+  };
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function adaptAffiliateApplicationRow(r: any): AffiliateApplicationRow {
+  return {
+    id:                  r.id,
+    sellerUsername:      r.seller_username,
+    sellerBusinessName:  r.seller_business_name,
+    motivation:          r.motivation,
+    channel:             r.channel,
+    status:              r.status,
+    adminNote:           r.admin_note,
+    createdAt:           r.created_at,
   };
 }
 

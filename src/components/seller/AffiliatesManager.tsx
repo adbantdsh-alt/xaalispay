@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Copy, Check, Share2 } from "lucide-react";
 import { apiFetch } from "@/lib/api-client";
 import { buildAffiliateShareMessage, buildWhatsAppUrl, copyToClipboard } from "@/lib/share";
@@ -18,6 +19,20 @@ interface ReferralRow {
   commissionEarnedTotal: number;
 }
 
+interface AffiliateApplication {
+  id: number;
+  status: "pending" | "approved" | "rejected";
+  motivation: string;
+  channel: string;
+  admin_note: string;
+  created_at: string;
+}
+
+interface AffiliateStatus {
+  affiliate_enabled: boolean;
+  application: AffiliateApplication | null;
+}
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function adaptReferral(r: any): ReferralRow {
   return {
@@ -32,33 +47,35 @@ function adaptReferral(r: any): ReferralRow {
   };
 }
 
-export function AffiliatesManager({ username }: { username: string }) {
+function AffiliateLinkEnabled({ username }: { username: string }) {
   const [referrals, setReferrals] = useState<ReferralRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
 
-  const handleCopy = async (url: string) => {
-    const ok = await copyToClipboard(url);
+  const referralUrl = buildReferralUrl(username);
+
+  const handleCopy = async () => {
+    const ok = await copyToClipboard(referralUrl);
     if (ok) {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     }
   };
 
-  const handleShare = async (url: string) => {
+  const handleShare = async () => {
     if (typeof navigator !== "undefined" && navigator.share) {
       try {
         await navigator.share({
           title: "Rejoignez XaalisPay",
-          text: buildAffiliateShareMessage(url),
-          url,
+          text: buildAffiliateShareMessage(referralUrl),
+          url: referralUrl,
         });
         return;
       } catch {
         // user cancelled or API not available — fall through
       }
     }
-    window.open(buildWhatsAppUrl(buildAffiliateShareMessage(url)), "_blank", "noopener,noreferrer");
+    window.open(buildWhatsAppUrl(buildAffiliateShareMessage(referralUrl)), "_blank", "noopener,noreferrer");
   };
 
   useEffect(() => {
@@ -77,7 +94,6 @@ export function AffiliatesManager({ username }: { username: string }) {
     };
   }, []);
 
-  const referralUrl = buildReferralUrl(username);
   const totalEarned = referrals.reduce((sum, r) => sum + r.commissionEarnedTotal, 0);
 
   return (
@@ -97,7 +113,7 @@ export function AffiliatesManager({ username }: { username: string }) {
           <button
             type="button"
             className={`affiliate-link-action${copied ? " is-copied" : ""}`}
-            onClick={() => handleCopy(referralUrl)}
+            onClick={handleCopy}
             aria-label="Copier le lien"
             title="Copier le lien"
           >
@@ -106,7 +122,7 @@ export function AffiliatesManager({ username }: { username: string }) {
           <button
             type="button"
             className="affiliate-link-action"
-            onClick={() => handleShare(referralUrl)}
+            onClick={handleShare}
             aria-label="Partager"
             title="Partager"
           >
@@ -162,4 +178,111 @@ export function AffiliatesManager({ username }: { username: string }) {
       </section>
     </div>
   );
+}
+
+function AffiliateGate({ application }: { application: AffiliateApplication | null }) {
+  const router = useRouter();
+
+  if (application?.status === "pending") {
+    return (
+      <div className="field-block" style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
+        <section className="settings-profile-card">
+          <p className="settings-section-label" style={{ padding: 0 }}>Programme d&apos;affiliation</p>
+          <div className="affiliate-gate-status" style={{ textAlign: "center", padding: "1.5rem 0" }}>
+            <div style={{ fontSize: "2rem", marginBottom: "0.75rem" }}>⏳</div>
+            <p style={{ fontWeight: 700, fontSize: "0.9375rem", margin: "0 0 0.5rem" }}>
+              Demande en cours d&apos;examen
+            </p>
+            <p className="text-muted" style={{ fontSize: "0.8125rem", margin: 0 }}>
+              Notre équipe examine votre demande. Vous serez notifié dès qu&apos;une décision est prise.
+            </p>
+          </div>
+        </section>
+      </div>
+    );
+  }
+
+  if (application?.status === "rejected") {
+    return (
+      <div className="field-block" style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
+        <section className="settings-profile-card">
+          <p className="settings-section-label" style={{ padding: 0 }}>Programme d&apos;affiliation</p>
+          <div style={{ padding: "1rem 0" }}>
+            <p style={{ fontWeight: 700, fontSize: "0.9375rem", margin: "0 0 0.5rem" }}>
+              Demande non retenue
+            </p>
+            {application.admin_note && (
+              <p className="text-muted" style={{ fontSize: "0.8125rem", margin: "0 0 1rem" }}>
+                {application.admin_note}
+              </p>
+            )}
+            <button
+              type="button"
+              className="btn-seller-primary"
+              style={{ width: "100%" }}
+              onClick={() => router.push("/settings/affiliates/apply")}
+            >
+              Soumettre une nouvelle demande
+            </button>
+          </div>
+        </section>
+      </div>
+    );
+  }
+
+  return (
+    <div className="field-block" style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
+      <section className="settings-profile-card">
+        <p className="settings-section-label" style={{ padding: 0 }}>Programme d&apos;affiliation</p>
+        <p className="text-muted" style={{ fontSize: "0.8125rem", margin: 0 }}>
+          Rejoignez le programme et gagnez <strong>1%</strong> sur les ventes de chaque vendeur que vous
+          parrainez pendant 3 mois, puis <strong>0,25% à vie</strong> — sans rien changer pour lui.
+        </p>
+        <ul
+          className="text-muted"
+          style={{ fontSize: "0.8125rem", margin: "0.5rem 0 0", paddingLeft: "1.25rem", lineHeight: 1.6 }}
+        >
+          <li>Partagez votre lien unique avec d&apos;autres vendeurs</li>
+          <li>Touchez une commission automatique sur chaque vente</li>
+          <li>Suivez vos gains en temps réel</li>
+        </ul>
+        <button
+          type="button"
+          className="btn-seller-primary"
+          style={{ width: "100%", marginTop: "0.25rem" }}
+          onClick={() => router.push("/settings/affiliates/apply")}
+        >
+          Demander mon lien d&apos;affiliation
+        </button>
+      </section>
+    </div>
+  );
+}
+
+export function AffiliatesManager({ username }: { username: string }) {
+  const [status, setStatus] = useState<AffiliateStatus | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    apiFetch("/api/affiliates/me/status")
+      .then(async (res) => {
+        if (cancelled || !res.ok) return;
+        setStatus(await res.json());
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  if (loading) return <p className="text-muted">Chargement…</p>;
+
+  if (status?.affiliate_enabled) {
+    return <AffiliateLinkEnabled username={username} />;
+  }
+
+  return <AffiliateGate application={status?.application ?? null} />;
 }

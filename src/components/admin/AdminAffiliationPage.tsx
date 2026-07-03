@@ -3,17 +3,19 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { apiFetch, extractApiError } from "@/lib/api-client";
-import { adaptAffiliateProgramSummary, adaptReferrerGroupRow } from "./admin-adapters";
+import { adaptAffiliateApplicationRow, adaptAffiliateProgramSummary, adaptReferrerGroupRow } from "./admin-adapters";
 import { AdminAffiliationSection } from "./AdminAffiliationSection";
 import { AdminAffiliateDetailModal } from "./AdminAffiliateDetailModal";
+import { AdminAffiliateApplicationsPanel } from "./AdminAffiliateApplicationsPanel";
 import { handleAdminAuthStatus } from "./AdminDataProvider";
-import type { AffiliateProgramSummary, ReferrerGroupRow } from "./admin-types";
+import type { AffiliateApplicationRow, AffiliateProgramSummary, ReferrerGroupRow } from "./admin-types";
 
 const AUTO_REFRESH_MS = 15_000;
 
 export function AdminAffiliationPage() {
   const router = useRouter();
   const [referrers, setReferrers] = useState<ReferrerGroupRow[]>([]);
+  const [applications, setApplications] = useState<AffiliateApplicationRow[]>([]);
   const [summary, setSummary] = useState<AffiliateProgramSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -22,6 +24,11 @@ export function AdminAffiliationPage() {
   // Modal state
   const [detailReferrerId, setDetailReferrerId] = useState<number | null>(null);
   const [detailReferrerName, setDetailReferrerName] = useState("");
+
+  const fetchApplications = useCallback(async () => {
+    const res = await apiFetch("/api/admin/affiliates/applications?status=pending");
+    if (res.ok) setApplications((await res.json()).map(adaptAffiliateApplicationRow));
+  }, []);
 
   const fetchSummary = useCallback(async () => {
     const res = await apiFetch("/api/admin/affiliates/summary");
@@ -45,17 +52,46 @@ export function AdminAffiliationPage() {
   );
 
   useEffect(() => {
+    fetchApplications();
     fetchSummary();
     fetchReferrers();
-  }, [fetchSummary, fetchReferrers]);
+  }, [fetchApplications, fetchSummary, fetchReferrers]);
 
   useEffect(() => {
     const id = setInterval(() => {
+      fetchApplications();
       fetchReferrers(undefined, true);
       fetchSummary();
     }, AUTO_REFRESH_MS);
     return () => clearInterval(id);
-  }, [fetchReferrers, fetchSummary]);
+  }, [fetchApplications, fetchReferrers, fetchSummary]);
+
+  const approveApplication = async (id: number) => {
+    const res = await apiFetch(`/api/admin/affiliates/applications/${id}/approve`, { method: "POST" });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      setError(extractApiError(data, "Approbation impossible"));
+      return false;
+    }
+    setError("");
+    await fetchApplications();
+    return true;
+  };
+
+  const rejectApplication = async (id: number, adminNote: string) => {
+    const res = await apiFetch(`/api/admin/affiliates/applications/${id}/reject`, {
+      method: "POST",
+      body: JSON.stringify({ admin_note: adminNote }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      setError(extractApiError(data, "Rejet impossible"));
+      return false;
+    }
+    setError("");
+    await fetchApplications();
+    return true;
+  };
 
   const extendAllBoost = async (referrerId: number, days: number) => {
     const res = await apiFetch(`/api/admin/affiliates/referrers/${referrerId}/extend-all`, {
@@ -93,6 +129,13 @@ export function AdminAffiliationPage() {
   return (
     <>
       {error && <p className="admin-error">{error}</p>}
+      {applications.length > 0 && (
+        <AdminAffiliateApplicationsPanel
+          applications={applications}
+          onApprove={approveApplication}
+          onReject={rejectApplication}
+        />
+      )}
       <AdminAffiliationSection
         referrers={referrers}
         summary={summary}

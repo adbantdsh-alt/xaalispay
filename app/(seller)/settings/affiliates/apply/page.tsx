@@ -1,14 +1,10 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useSellerData } from "@/components/seller/SellerDataProvider";
-import { AffiliatesManager } from "@/components/seller/AffiliatesManager";
-import { DashboardSkeleton } from "@/components/ui/Skeleton";
+import { AffiliateApplyForm } from "@/components/seller/AffiliateApplyForm";
 
-export default function AffiliatesSettingsPage() {
+export default function AffiliateApplyPage() {
   const router = useRouter();
-  const { data, loading } = useSellerData();
-  const profile = data?.profile ?? null;
 
   return (
     <div className="settings-page animate-settings-slide">
@@ -23,16 +19,10 @@ export default function AffiliatesSettingsPage() {
             <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
           </svg>
         </button>
-        <h1 className="settings-page-title">Affiliation</h1>
+        <h1 className="settings-page-title">Demande d&apos;affiliation</h1>
       </header>
 
-      {loading && !profile ? (
-        <DashboardSkeleton />
-      ) : profile ? (
-        <AffiliatesManager username={profile.username} />
-      ) : (
-        <p className="text-muted">Profil introuvable</p>
-      )}
+      <AffiliateApplyForm />
     </div>
   );
 }

@@ -193,6 +193,17 @@ export interface AffiliateRow {
   commissionEarnedTotal: number;
 }
 
+export interface AffiliateApplicationRow {
+  id: number;
+  sellerUsername: string;
+  sellerBusinessName: string;
+  motivation: string;
+  channel: string;
+  status: "pending" | "approved" | "rejected";
+  adminNote: string;
+  createdAt: string;
+}
+
 export interface AffiliateProgramSummary {
   totalReferrals: number;
   boostedCount: number;

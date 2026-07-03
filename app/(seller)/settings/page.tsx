@@ -16,7 +16,7 @@ const ACCOUNT_LINKS = [
   { href: "/create?tab=tag", label: "Mon XaalisTag", desc: "Modifier votre identifiant public" },
   { href: "/create", label: "Mes produits", desc: "Gérer produits et liens de paiement" },
   { href: "/settings/delivery-zones", label: "Zones de livraison", desc: "Gérer vos zones et tarifs de livraison" },
-  { href: "/settings/affiliates", label: "Mes affiliés", desc: "Votre lien d'affiliation et vos gains" },
+  { href: "/settings/affiliates", label: "Affiliation", desc: "Programme de parrainage XaalisPay" },
 ] as const;
 
 const HELP_LINKS = [
