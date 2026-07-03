@@ -8,7 +8,7 @@ import { AdminSellersSection } from "./AdminSellersSection";
 import { handleAdminAuthStatus } from "./AdminDataProvider";
 import type { SellerRow } from "./admin-types";
 
-const AUTO_REFRESH_MS = 15_000;
+const AUTO_REFRESH_MS = 30_000;
 
 export function AdminSellersPage() {
   const router = useRouter();

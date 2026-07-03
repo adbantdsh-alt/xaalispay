@@ -8,7 +8,7 @@ import { AdminPayoutsSection } from "./AdminPayoutsSection";
 import { handleAdminAuthStatus, useAdminData } from "./AdminDataProvider";
 import type { PayoutRow } from "./admin-types";
 
-const AUTO_REFRESH_MS = 15_000;
+const AUTO_REFRESH_MS = 30_000;
 
 export function AdminPayoutsPage() {
   const router = useRouter();

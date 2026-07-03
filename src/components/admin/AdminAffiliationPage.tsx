@@ -10,7 +10,7 @@ import { AdminAffiliateApplicationsPanel } from "./AdminAffiliateApplicationsPan
 import { handleAdminAuthStatus } from "./AdminDataProvider";
 import type { AffiliateApplicationRow, AffiliateProgramSummary, ReferrerGroupRow } from "./admin-types";
 
-const AUTO_REFRESH_MS = 15_000;
+const AUTO_REFRESH_MS = 30_000;
 
 export function AdminAffiliationPage() {
   const router = useRouter();

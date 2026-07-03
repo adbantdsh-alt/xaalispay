@@ -8,7 +8,7 @@ import { AdminProductsSection } from "./AdminProductsSection";
 import { handleAdminAuthStatus } from "./AdminDataProvider";
 import type { ProductRow } from "./admin-types";
 
-const AUTO_REFRESH_MS = 15_000;
+const AUTO_REFRESH_MS = 30_000;
 
 export function AdminProductsPage() {
   const router = useRouter();

@@ -110,7 +110,7 @@ export function AdminDataProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const interval = window.setInterval(() => {
       if (document.visibilityState === "visible") refresh({ silent: true });
-    }, 20_000);
+    }, 60_000);
     return () => window.clearInterval(interval);
   }, [refresh]);
 

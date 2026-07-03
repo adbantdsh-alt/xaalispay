@@ -8,7 +8,7 @@ import { AdminDisputesSection } from "./AdminDisputesSection";
 import { handleAdminAuthStatus, useAdminData } from "./AdminDataProvider";
 import type { DisputeRow } from "./admin-types";
 
-const AUTO_REFRESH_MS = 15_000;
+const AUTO_REFRESH_MS = 30_000;
 
 export function AdminDisputesPage() {
   const router = useRouter();
