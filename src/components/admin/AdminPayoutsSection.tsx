@@ -7,14 +7,10 @@ export function AdminPayoutsSection({
   payouts,
   retryingId,
   onRetry,
-  forcingId,
-  onForceSucceed,
 }: {
   payouts: PayoutRow[];
   retryingId: string | null;
   onRetry: (payoutId: string) => void;
-  forcingId: string | null;
-  onForceSucceed: (payoutId: string) => void;
 }) {
   const failedCount = payouts.filter((p) => p.status === "failed").length;
   const pendingCount = payouts.filter(
@@ -82,15 +78,6 @@ export function AdminPayoutsSection({
                         onClick={() => onRetry(payout.id)}
                       >
                         {retryingId === payout.id ? "…" : "Relancer"}
-                      </button>
-                    ) : payout.status === "processing" ? (
-                      <button
-                        type="button"
-                        className="admin-action-btn admin-action-btn--warn"
-                        disabled={forcingId === payout.id}
-                        onClick={() => onForceSucceed(payout.id)}
-                      >
-                        {forcingId === payout.id ? "…" : "Forcer réussi"}
                       </button>
                     ) : (
                       "—"
