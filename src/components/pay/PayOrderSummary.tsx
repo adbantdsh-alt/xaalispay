@@ -1,4 +1,4 @@
-/** Bloc résumé commande (image gauche / infos droite) — design validé, ne pas modifier. */
+/** Bloc résumé commande — image hero pleine largeur, nom/vendeur dessous. */
 "use client";
 
 import { formatCurrency } from "@/lib/utils";
@@ -29,39 +29,37 @@ export function PayOrderSummary({
 
   return (
     <article className={s.card}>
-      <div className={s.head}>
-        <div className={s.media}>
-          {productImage ? (
-            <ProductImage
-              src={productImage}
-              alt={productName}
-              className={s.img}
-              placeholderClassName={s.imgEmpty}
-              iconSize={22}
-              width={56}
-              height={56}
-            />
-          ) : (
-            <div className={s.imgEmpty} aria-hidden="true">
-              <IconPackage size={22} />
-            </div>
-          )}
-        </div>
-
-        <div className={s.headInfo}>
-          <h1 className={s.name}>{productName}</h1>
-          <div className={s.vendorInline}>
-            <span className={s.vendorAvatar}>{initial}</span>
-            <span className={s.vendorName}>{seller.displayName}</span>
-            <span className={s.badge}>
-              <IconCheck size={11} /> Vérifié
-            </span>
-            {seller.phone ? (
-              <a href={phoneDigits ? `tel:+221${phoneDigits}` : undefined} className={s.phone}>
-                {seller.phone}
-              </a>
-            ) : null}
+      <div className={s.media}>
+        {productImage ? (
+          <ProductImage
+            src={productImage}
+            alt={productName}
+            className={s.img}
+            placeholderClassName={s.imgEmpty}
+            iconSize={32}
+            width={430}
+            height={180}
+          />
+        ) : (
+          <div className={s.imgEmpty} aria-hidden="true">
+            <IconPackage size={32} />
           </div>
+        )}
+      </div>
+
+      <div className={s.headInfo}>
+        <h1 className={s.name}>{productName}</h1>
+        <div className={s.vendorInline}>
+          <span className={s.vendorAvatar}>{initial}</span>
+          <span className={s.vendorName}>{seller.displayName}</span>
+          <span className={s.badge}>
+            <IconCheck size={11} /> Vérifié
+          </span>
+          {seller.phone ? (
+            <a href={phoneDigits ? `tel:+221${phoneDigits}` : undefined} className={s.phone}>
+              {seller.phone}
+            </a>
+          ) : null}
         </div>
       </div>
 
