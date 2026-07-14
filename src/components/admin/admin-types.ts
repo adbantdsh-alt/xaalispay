@@ -127,6 +127,38 @@ export interface SellerRow {
   balance: SellerBalanceSummary;
 }
 
+/** Page Commandes admin (GET /api/admin/orders, toutes commandes tous
+ * vendeurs) — contrairement à OrderSummaryRow (embarquée dans la fiche
+ * vendeur, où l'identité du vendeur est déjà connue par le contexte), cette
+ * ligne inclut l'identité du vendeur. Contrairement à DisputeRow, le litige
+ * (dispute) est optionnel : la plupart des commandes n'en ont pas. */
+export interface OrderRow {
+  id: string;
+  orderNumber: string;
+  slug: string;
+  sellerUsername: string;
+  sellerBusinessName: string;
+  sellerPhone: string | null;
+  productName: string;
+  clientName: string;
+  clientPhone: string;
+  clientAddress: string | null;
+  status: OrderStatus;
+  total: number;
+  buyerProtectionFee: number;
+  sellerCommission: number | null;
+  paymentMethod?: string;
+  paidAt?: string;
+  deliveryValidatedAt?: string;
+  protectionEndsAt?: string;
+  createdAt: string;
+  dispute?: {
+    disputeTypeLabel: string;
+    reason: string;
+    openedAt?: string;
+  };
+}
+
 /** Forme allégée d'une commande dans la fiche détail vendeur — contrairement
  * à DisputeRow, le litige (dispute*) est optionnel : la plupart des
  * commandes récentes n'en ont pas. */

@@ -10,6 +10,7 @@ import {
   Banknote,
   Users,
   Package,
+  ClipboardList,
   LogOut,
   PanelLeft,
   UserCircle,
@@ -20,6 +21,7 @@ import { useAdminData } from "./AdminDataProvider";
 
 const NAV_ITEMS = [
   { href: "/admin", label: "Vue d'ensemble", icon: LayoutDashboard, exact: true },
+  { href: "/admin/orders", label: "Commandes", icon: ClipboardList },
   { href: "/admin/analytics", label: "Analytics", icon: BarChart3 },
   { href: "/admin/affiliation", label: "Affiliation", icon: Handshake },
   { href: "/admin/disputes", label: "Litiges", icon: ShieldAlert, badge: "disputes" as const },

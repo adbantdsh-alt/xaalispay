@@ -3,8 +3,10 @@
 import { useEffect, useRef, useState } from "react";
 import type { FormEvent, ReactNode } from "react";
 import Link from "next/link";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, toE164 } from "@/lib/utils";
 import { apiFetch, extractApiError } from "@/lib/api-client";
+
+const ORDER_LOOKUP_GENERIC_ERROR = "Commande introuvable. Vérifiez la référence et le numéro de téléphone.";
 
 interface PublicDisputeOrder {
   orderNumber: string;
@@ -52,7 +54,9 @@ function readMedia(file: File): Promise<EvidenceMedia> {
   });
 }
 
-export function DisputeDialog({ orderSlug, initialPin = "" }: { orderSlug?: string; initialPin?: string }) {
+export function DisputeDialog({ orderSlug: orderSlugProp, initialPin = "" }: { orderSlug?: string; initialPin?: string }) {
+  const [resolvedSlug, setResolvedSlug] = useState<string | undefined>(undefined);
+  const orderSlug = orderSlugProp || resolvedSlug;
   const [pin, setPin] = useState(initialPin.replace(/\D/g, "").slice(0, 4));
   const [order, setOrder] = useState<PublicDisputeOrder | null>(null);
   const [disputeType, setDisputeType] = useState("");
@@ -64,6 +68,35 @@ export function DisputeDialog({ orderSlug, initialPin = "" }: { orderSlug?: stri
   const [loading, setLoading] = useState(!!orderSlug);
   const [submitting, setSubmitting] = useState(false);
   const [alreadyOpen, setAlreadyOpen] = useState(false);
+
+  const [lookupOrderNumber, setLookupOrderNumber] = useState("");
+  const [lookupPhone, setLookupPhone] = useState("");
+  const [lookupError, setLookupError] = useState("");
+  const [lookupSubmitting, setLookupSubmitting] = useState(false);
+
+  const submitLookup = async (e: FormEvent) => {
+    e.preventDefault();
+    setLookupError("");
+    if (!lookupOrderNumber.trim() || !lookupPhone.trim()) return;
+
+    setLookupSubmitting(true);
+    try {
+      const res = await apiFetch("/api/orders/lookup", {
+        method: "POST",
+        body: JSON.stringify({
+          order_number: lookupOrderNumber.trim(),
+          phone: toE164(lookupPhone.trim()),
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(extractApiError(data, ORDER_LOOKUP_GENERIC_ERROR));
+      setResolvedSlug(data.slug);
+    } catch (err) {
+      setLookupError(err instanceof Error ? err.message : ORDER_LOOKUP_GENERIC_ERROR);
+    } finally {
+      setLookupSubmitting(false);
+    }
+  };
 
   // Retrouve la commande par son slug (capability token de la commande,
   // jamais par PIN seul -- c'est exactement la faille d'énumération trouvée
@@ -199,8 +232,40 @@ export function DisputeDialog({ orderSlug, initialPin = "" }: { orderSlug?: stri
               <CardHeader
                 eyebrow="Commande"
                 title="Retrouvez votre commande"
-                description="Pour ouvrir un litige en toute sécurité, utilisez le lien reçu par WhatsApp ou SMS après votre paiement — il pointe directement vers votre commande."
+                description="Renseignez la référence de votre commande (ex. XP-000128, reçue par WhatsApp après paiement) et le numéro de téléphone utilisé lors de la commande."
               />
+              <form onSubmit={submitLookup} className="mt-6 space-y-6">
+                <Field label="Référence de commande" required hint="ex. XP-000128">
+                  <input
+                    value={lookupOrderNumber}
+                    onChange={(e) => setLookupOrderNumber(e.target.value)}
+                    placeholder="XP-000128"
+                    aria-label="Référence de commande"
+                    className="w-full rounded-2xl border border-[#1E3A5F]/15 bg-white px-4 py-3 text-[14px] text-[#1E3A5F] focus:outline-none focus:border-[#B8895A] focus:ring-4 focus:ring-[#B8895A]/10 transition"
+                  />
+                </Field>
+
+                <Field label="Numéro de téléphone" required hint="celui utilisé à la commande">
+                  <input
+                    value={lookupPhone}
+                    onChange={(e) => setLookupPhone(e.target.value)}
+                    type="tel"
+                    placeholder="77 000 00 01"
+                    aria-label="Numéro de téléphone"
+                    className="w-full rounded-2xl border border-[#1E3A5F]/15 bg-white px-4 py-3 text-[14px] text-[#1E3A5F] focus:outline-none focus:border-[#B8895A] focus:ring-4 focus:ring-[#B8895A]/10 transition"
+                  />
+                </Field>
+
+                {lookupError && <p className="text-[13px] text-red-600">{lookupError}</p>}
+
+                <button
+                  type="submit"
+                  disabled={!lookupOrderNumber.trim() || !lookupPhone.trim() || lookupSubmitting}
+                  className="lp-btn lp-btn-primary w-full !py-3.5 !text-[14px] justify-center disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  {lookupSubmitting ? "Recherche…" : "Retrouver ma commande"}
+                </button>
+              </form>
               <p className="mt-6 text-[14px] text-[#1E3A5F]/75 leading-relaxed">
                 Vous pouvez aussi ouvrir un litige directement depuis la page de paiement de votre
                 commande, ou{" "}

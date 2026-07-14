@@ -3,6 +3,7 @@ import type {
   AffiliateProgramSummary,
   AffiliateRow,
   DisputeRow,
+  OrderRow,
   PayoutRow,
   ProductRow,
   ReferrerGroupRow,
@@ -41,6 +42,39 @@ export function adaptDisputeRow(o: any): DisputeRow {
     disputeMedia: dispute.media || [],
     createdAt: o.created_at,
     updatedAt: o.created_at,
+  };
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function adaptOrderRow(o: any): OrderRow {
+  const dispute = o.dispute || null;
+  return {
+    id: String(o.id),
+    orderNumber: o.order_number,
+    slug: o.slug,
+    sellerUsername: o.seller_username,
+    sellerBusinessName: o.seller_business_name,
+    sellerPhone: o.seller_phone || null,
+    productName: o.product_name,
+    clientName: o.client_name,
+    clientPhone: o.client_phone,
+    clientAddress: o.client_address || null,
+    status: o.status,
+    total: o.total_amount,
+    buyerProtectionFee: o.buyer_protection_fee || 0,
+    sellerCommission: o.seller_commission ?? null,
+    paymentMethod: o.payment_method,
+    paidAt: o.paid_at || undefined,
+    deliveryValidatedAt: o.delivery_validated_at || undefined,
+    protectionEndsAt: o.protection_ends_at || undefined,
+    createdAt: o.created_at,
+    dispute: dispute
+      ? {
+          disputeTypeLabel: dispute.dispute_type_display || "",
+          reason: dispute.reason || "",
+          openedAt: dispute.opened_at || undefined,
+        }
+      : undefined,
   };
 }
 
