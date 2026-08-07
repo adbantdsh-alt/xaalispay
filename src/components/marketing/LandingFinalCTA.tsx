@@ -53,7 +53,9 @@ export function LandingFinalCTA() {
               </div>
             </a>
             <a
-              href="#"
+              href="https://play.google.com/store/apps/details?id=com.xaalispay.seller"
+              target="_blank"
+              rel="noopener noreferrer"
               className="inline-flex items-center gap-3 bg-[#1E3A5F] lp-text-white rounded-xl px-5 py-3 hover:bg-[#15294a] transition-colors"
             >
               <svg viewBox="0 0 24 24" className="h-6 w-6" fill="currentColor">
