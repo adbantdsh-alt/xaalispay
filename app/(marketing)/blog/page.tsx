@@ -4,9 +4,9 @@ import { getAllBlogPosts } from "@/content/blog/posts";
 import { buildPageMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = buildPageMetadata({
-  title: "Blog — Conseils paiement sécurisé au Sénégal",
+  title: "Blog — Conseils paiement sécurisé en Afrique de l'Ouest",
   description:
-    "Guides, astuces anti-arnaque et actualités XaalisPay pour acheteurs et vendeurs du Sénégal.",
+    "Guides, astuces anti-arnaque et actualités XaalisPay pour acheteurs et vendeurs.",
   path: "/blog",
   keywords: [
     "blog paiement Sénégal",
@@ -33,7 +33,7 @@ export default function BlogPage() {
         <h1 className="content-title serif">
           Acheter et vendre en sécurité
           <br />
-          au Sénégal
+          en Afrique de l'Ouest
         </h1>
         <p className="content-lead">
           Guides pratiques, conseils anti-arnaque et bonnes pratiques pour le commerce en ligne

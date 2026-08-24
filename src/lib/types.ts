@@ -15,10 +15,14 @@ export interface Profile {
   // Identifiant de connexion (E.164, +221XXXXXXXXX) — toujours présent,
   // immuable après l'inscription (vérifié par OTP, voir apps.accounts).
   phone: string;
+  // Pays de règlement (Profile.country côté backend) — immuable après
+  // l'inscription comme phone. Détermine les opérateurs mobile money
+  // proposés (voir src/lib/payment-methods.ts).
+  country: string;
   email?: string | null;
   role?: "super_admin" | "seller";
   usernameChangedAt?: string;
-  payoutMethod?: "wave" | "orange";
+  payoutMethod?: "wave" | "orange" | "mtn" | "moov" | "togocell" | "mobicash" | "maxit";
   payoutPhone?: string;
   autoPayoutEnabled?: boolean;
   autoPayoutMode?: "full_balance" | "fixed_amount";

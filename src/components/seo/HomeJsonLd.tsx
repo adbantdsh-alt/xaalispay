@@ -16,7 +16,13 @@ export function HomeJsonLd() {
       addressLocality: "Dakar",
       addressCountry: "SN",
     },
-    areaServed: { "@type": "Country", name: "Sénégal" },
+    areaServed: [
+      { "@type": "Country", name: "Sénégal" },
+      { "@type": "Country", name: "Côte d'Ivoire" },
+      { "@type": "Country", name: "Mali" },
+      { "@type": "Country", name: "Bénin" },
+      { "@type": "Country", name: "Togo" },
+    ],
     sameAs: [],
   };
 
@@ -51,7 +57,7 @@ export function HomeJsonLd() {
     description: SITE_DESCRIPTION,
     slogan: SITE_TAGLINE,
     provider: { "@type": "Organization", name: SITE_NAME },
-    areaServed: "SN",
+    areaServed: ["SN", "CI", "ML", "BJ", "TG"],
   };
 
   return <JsonLd data={[organization, website, faqPage, product]} />;

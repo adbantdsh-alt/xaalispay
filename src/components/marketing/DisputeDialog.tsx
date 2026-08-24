@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { FormEvent, ReactNode } from "react";
 import Link from "next/link";
-import { formatCurrency, toE164 } from "@/lib/utils";
+import { formatCurrency } from "@/lib/utils";
 import { apiFetch, extractApiError } from "@/lib/api-client";
 
 const ORDER_LOOKUP_GENERIC_ERROR = "Commande introuvable. Vérifiez la référence et le numéro de téléphone.";
@@ -85,7 +85,13 @@ export function DisputeDialog({ orderSlug: orderSlugProp, initialPin = "" }: { o
         method: "POST",
         body: JSON.stringify({
           order_number: lookupOrderNumber.trim(),
-          phone: toE164(lookupPhone.trim()),
+          // Pas de toE164() ici : le pays de l'acheteur n'est pas connu à ce
+          // stade (recherche par order_number + téléphone, avant toute
+          // résolution de commande) — le forcer à une région fixe casserait
+          // la résolution multi-pays déjà faite côté backend
+          // (find_order_by_number_and_phone essaie les 5 pays supportés sur
+          // un numéro local, mais pas sur un numéro déjà mal préfixé).
+          phone: lookupPhone.trim(),
         }),
       });
       const data = await res.json();

@@ -7,11 +7,11 @@ import { LANDING_FAQ } from "@/lib/faq";
 const EXTRA_FAQ = [
   {
     q: "Dans quels pays XaalisPay fonctionne-t-il ?",
-    a: "XaalisPay est actuellement disponible au Sénégal, avec un déploiement progressif prévu dans le reste de l'Afrique de l'Ouest.",
+    a: "XaalisPay est disponible au Sénégal, en Côte d'Ivoire, au Mali, au Bénin et au Togo, avec un déploiement progressif prévu dans le reste de l'Afrique de l'Ouest.",
   },
   {
     q: "Quels moyens de paiement sont acceptés ?",
-    a: "Wave, Orange Money et Free Money. D'autres moyens de paiement pourront être ajoutés à l'avenir.",
+    a: "Wave, Orange Money, MTN Money, Moov Money et d'autres opérateurs mobile money selon votre pays. D'autres moyens de paiement pourront être ajoutés à l'avenir.",
   },
 ];
 

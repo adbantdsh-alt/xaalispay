@@ -4,7 +4,7 @@ import { buildPageMetadata } from "@/lib/seo";
 export const metadata: Metadata = buildPageMetadata({
   title: "Ouvrir un litige",
   description:
-    "Signalez un problème avec votre commande XaalisPay : colis non conforme, non livré. Séquestre Flash et remboursement au Sénégal.",
+    "Signalez un problème avec votre commande XaalisPay : colis non conforme, non livré. Séquestre Flash et remboursement.",
   path: "/litige",
 });
 

@@ -4,9 +4,9 @@ import { getSiteUrl } from "./site-url";
 export const SITE_NAME = "XaalisPay";
 export const SITE_TAGLINE = "Payez les yeux fermés";
 export const SITE_DESCRIPTION =
-  "Paiement sécurisé par séquestre pour les achats en ligne au Sénégal. Wave, Orange Money, protection anti-arnaque.";
+  "Paiement sécurisé par séquestre pour les achats en ligne en Afrique de l'Ouest (Sénégal, Côte d'Ivoire, Mali, Bénin, Togo). Wave, Orange Money, protection anti-arnaque.";
 export const SITE_KEYWORDS = [
-  "paiement sécurisé Sénégal",
+  "paiement sécurisé Afrique de l'Ouest",
   "séquestre paiement",
   "achat en ligne Dakar",
   "Wave Orange Money",
@@ -14,6 +14,7 @@ export const SITE_KEYWORDS = [
   "tiers de confiance",
   "XaalisPay",
   "e-commerce Sénégal",
+  "e-commerce Côte d'Ivoire",
   "paiement mobile money",
   "vendre sur WhatsApp",
 ];

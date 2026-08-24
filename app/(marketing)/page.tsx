@@ -11,9 +11,9 @@ import { LandingFAQ } from "@/components/marketing/LandingFAQ";
 import { LandingFinalCTA } from "@/components/marketing/LandingFinalCTA";
 
 export const metadata: Metadata = buildPageMetadata({
-  title: "Paiement sécurisé au Sénégal — Payez les yeux fermés",
+  title: "Paiement sécurisé en Afrique de l'Ouest — Payez les yeux fermés",
   description:
-    "XaalisPay sécurise vos achats en ligne au Sénégal avec séquestre, Wave, Orange Money et protection anti-arnaque. Zéro arnaque sur Instagram et WhatsApp.",
+    "XaalisPay sécurise vos achats en ligne au Sénégal, en Côte d'Ivoire, au Mali, au Bénin et au Togo avec séquestre, Wave, Orange Money et protection anti-arnaque. Zéro arnaque sur Instagram et WhatsApp.",
   path: "/",
 });
 

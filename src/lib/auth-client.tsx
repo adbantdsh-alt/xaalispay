@@ -7,6 +7,7 @@ import { refreshAccessToken, setApiAccessToken, extractApiError } from "./api-cl
 export interface Profile {
   id: number;
   phone: string;
+  country: string;
   email?: string | null;
   username: string;
   display_name: string;
@@ -38,6 +39,7 @@ interface SignupPayload {
   business_name: string;
   email?: string;
   referral_code?: string;
+  country?: string;
 }
 
 interface AdminLoginResult extends AuthResult {

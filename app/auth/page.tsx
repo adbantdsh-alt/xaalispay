@@ -9,7 +9,7 @@ import { BrandMark } from "@/components/ui/BrandMark";
 import { OtpInput, emptyDigits } from "@/components/ui/OtpInput";
 import { useAuth } from "@/lib/auth-client";
 import { requestOtp, verifyOtp, resetPin } from "@/lib/otp-client";
-import { isValidMobilePhone, normalizeSenegalPhoneLocal, slugifyUsername, toE164 } from "@/lib/utils";
+import { COUNTRIES, formatPhoneDisplay, isValidMobilePhone, slugifyUsername, toE164 } from "@/lib/utils";
 
 type Step =
   | "login"
@@ -23,13 +23,6 @@ type Step =
 
 const RESEND_COOLDOWN_SECONDS = 60;
 
-// Un seul pays pour l'instant — ajouter une entrée ici suffit pour ouvrir le
-// sélecteur à un nouveau marché, le reste (isValidMobilePhone/toE164) suit
-// déjà via le paramètre `region`.
-const COUNTRIES: { code: CountryCode; dial: string; flag: string }[] = [
-  { code: "SN", dial: "+221", flag: "🇸🇳" },
-];
-
 function useResendCooldown() {
   const [remaining, setRemaining] = useState(0);
   useEffect(() => {
@@ -40,12 +33,15 @@ function useResendCooldown() {
   return { remaining, start: () => setRemaining(RESEND_COOLDOWN_SECONDS) };
 }
 
-/** "+221 77 •• •• 71" — masque les deux groupes du milieu, garde les
- * extrémités pour que l'utilisateur reconnaisse son propre numéro. */
-function maskPhoneForDisplay(raw: string, dial: string): string {
-  const local = normalizeSenegalPhoneLocal(raw);
-  if (local.length !== 9) return `${dial} ${raw}`;
-  return `${dial} ${local.slice(0, 2)} •• •• ${local.slice(7)}`;
+/** "+221 77 •• •• 71" — masque les groupes du milieu (format national réel
+ * du pays via libphonenumber, pas un découpage à 9 chiffres codé pour le
+ * Sénégal), garde les extrémités pour que l'utilisateur reconnaisse son
+ * propre numéro. */
+function maskPhoneForDisplay(raw: string, dial: string, region: CountryCode): string {
+  const groups = formatPhoneDisplay(raw, region).split(" ");
+  if (groups.length < 3) return `${dial} ${raw}`;
+  const masked = groups.map((g, i) => (i === 0 || i === groups.length - 1 ? g : "•".repeat(g.length)));
+  return `${dial} ${masked.join(" ")}`;
 }
 
 function CountrySelect({ value, onChange }: { value: CountryCode; onChange: (c: CountryCode) => void }) {
@@ -316,6 +312,7 @@ function AuthForm() {
         display_name: displayName,
         business_name: businessName,
         referral_code: referralCode,
+        country,
       });
       if (!result.ok) {
         setError(result.error || "Inscription échouée");
@@ -463,7 +460,7 @@ function AuthForm() {
               <span className="auth-otp-banner-icon">
                 <MessageCircle size={16} />
               </span>
-              <span className="auth-otp-banner-text">Code envoyé au {maskPhoneForDisplay(phone, dial)}</span>
+              <span className="auth-otp-banner-text">Code envoyé au {maskPhoneForDisplay(phone, dial, country)}</span>
               <button type="button" className="auth-otp-banner-edit" onClick={handleEditPhone}>
                 Modifier
               </button>

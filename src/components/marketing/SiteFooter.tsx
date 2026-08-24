@@ -48,7 +48,7 @@ export function SiteFooter() {
             Xaalis<b>Pay</b>
           </p>
           <p className="lp-footer-tag">
-            Le tiers de confiance qui sécurise vos paiements au Sénégal. Payez les yeux
+            Le tiers de confiance qui sécurise vos paiements en Afrique de l'Ouest. Payez les yeux
             fermés, ouvrez-les à la réception.
           </p>
           <span className="lp-footer-loc">

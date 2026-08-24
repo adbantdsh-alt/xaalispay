@@ -2,11 +2,13 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import type { CountryCode } from "libphonenumber-js/max";
 import { computeWalletBreakdown } from "@/lib/wallet-breakdown";
-import { formatCurrency, formatSenegalPhoneDisplay, splitCurrency, toE164 } from "@/lib/utils";
+import { dialCodeFor, formatCurrency, formatPhoneDisplay, splitCurrency, toE164 } from "@/lib/utils";
 import { WalletPayoutMethodPicker } from "@/components/seller/WalletPayoutMethodPicker";
 import { WalletPayoutHistory } from "@/components/seller/WalletPayoutHistory";
 import { WalletTransactionHistory } from "@/components/seller/WalletTransactionHistory";
+import { MOBILE_MONEY_LABELS, mobileMoneyMethodsForCountry, type MobileMoneyMethod } from "@/lib/payment-methods";
 import type { Order } from "@/lib/types";
 import { DashboardSkeleton } from "@/components/ui/Skeleton";
 import { useSellerData } from "@/components/seller/SellerDataProvider";
@@ -14,9 +16,13 @@ import { apiFetch } from "@/lib/api-client";
 
 export default function WalletPage() {
   const { data, loading, refresh } = useSellerData();
+  // Le pays du vendeur (Profile.country, immuable) — cast car le backend le
+  // contraint déjà à un des codes réellement supportés (Country.choices).
+  const country = (data?.profile?.country || "SN") as CountryCode;
   const [amount, setAmount] = useState("");
   const [phone, setPhone] = useState("");
-  const [method, setMethod] = useState<"wave" | "orange">("wave");
+  const [method, setMethod] = useState<MobileMoneyMethod>("wave");
+  const [methodTouched, setMethodTouched] = useState(false);
   const [phoneTouched, setPhoneTouched] = useState(false);
   const [withdrawing, setWithdrawing] = useState(false);
   const [error, setError] = useState("");
@@ -26,9 +32,18 @@ export default function WalletPage() {
 
   useEffect(() => {
     if (data?.profile?.phone && !phoneTouched && !phone) {
-      setPhone(formatSenegalPhoneDisplay(data.profile.phone));
+      setPhone(formatPhoneDisplay(data.profile.phone, country));
     }
-  }, [data?.profile?.phone, phone, phoneTouched]);
+  }, [data?.profile?.phone, phone, phoneTouched, country]);
+
+  // Le premier opérateur valide pour le pays du vendeur — évite qu'un
+  // vendeur malien se retrouve avec "wave" présélectionné (pas activé au
+  // Mali) tant qu'il n'a pas touché le sélecteur lui-même.
+  useEffect(() => {
+    if (methodTouched) return;
+    const first = mobileMoneyMethodsForCountry(country)[0];
+    if (first && first !== method) setMethod(first);
+  }, [country, method, methodTouched]);
 
   const parsedAmount = Number(amount) || 0;
 
@@ -44,7 +59,7 @@ export default function WalletPage() {
         // Bictorys exige un format E.164 strict ("+221771234567", sans
         // espace) — `phone` est en affichage local espacé ("77 123 45 67"),
         // jamais le format brut attendu par leur API.
-        phone: toE164(phone),
+        phone: toE164(phone, country),
         method,
       }),
     });
@@ -60,7 +75,7 @@ export default function WalletPage() {
     setSuccess(
       result.warning
         ? `Retrait enregistré — ${result.warning}`
-        : `Retrait enregistré. ${formatCurrency(result.net_amount ?? result.amount)} envoyés sur ${method === "orange" ? "Orange Money" : "Wave"}.`
+        : `Retrait enregistré. ${formatCurrency(result.net_amount ?? result.amount)} envoyés sur ${MOBILE_MONEY_LABELS[method]}.`
     );
     setAmount("");
     setPayoutRefreshKey((k) => k + 1);
@@ -142,7 +157,7 @@ export default function WalletPage() {
         <label className="field-block">
           <span className="field-block-label">Numéro de réception</span>
           <div className="phone-input-row">
-            <span className="phone-prefix">+221</span>
+            <span className="phone-prefix">{dialCodeFor(country)}</span>
             <input
               className="input-field phone-input"
               type="tel"
@@ -158,7 +173,14 @@ export default function WalletPage() {
 
         <label className="field-block">
           <span className="field-block-label">Méthode</span>
-          <WalletPayoutMethodPicker value={method} onChange={setMethod} />
+          <WalletPayoutMethodPicker
+            value={method}
+            country={country}
+            onChange={(m) => {
+              setMethodTouched(true);
+              setMethod(m);
+            }}
+          />
         </label>
 
         {parsedAmount > 0 && (

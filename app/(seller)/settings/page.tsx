@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import type { ReactNode } from "react";
+import type { CountryCode } from "libphonenumber-js/max";
 import { Eye, Lock, LogOut } from "lucide-react";
 import { buildShopPath } from "@/lib/site-url";
-import { formatSenegalPhoneDisplay } from "@/lib/utils";
+import { COUNTRIES, dialCodeFor, formatPhoneDisplay } from "@/lib/utils";
 import { IconCheck } from "@/components/ui/AppIcon";
 import { DashboardSkeleton } from "@/components/ui/Skeleton";
 import { SettingsProfileEditor } from "@/components/seller/SettingsProfileEditor";
@@ -118,14 +119,16 @@ export default function SettingsPage() {
             <span className="settings-phone-label">Téléphone</span>
             <div className="settings-phone-value-wrap">
               <span className="settings-phone-value">
-                +221 {formatSenegalPhoneDisplay(profile.phone)}
+                {dialCodeFor(profile.country)} {formatPhoneDisplay(profile.phone, profile.country as CountryCode)}
               </span>
               <Lock size={14} strokeWidth={1.75} className="settings-row-lock" aria-label="Non modifiable" />
             </div>
           </div>
           <div className="settings-info-row">
             <span className="settings-phone-label">Pays &amp; devise</span>
-            <span className="settings-phone-value">Sénégal · FCFA</span>
+            <span className="settings-phone-value">
+              {COUNTRIES.find((c) => c.code === profile.country)?.label || "Sénégal"} · FCFA
+            </span>
           </div>
         </div>
       </section>

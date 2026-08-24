@@ -25,3 +25,36 @@ export function OrangeFavicon({ className = "" }: { className?: string }) {
     />
   );
 }
+
+/** Pas de logo officiel disponible pour ces opérateurs (MTN/Moov/Togocell/
+ * Mobicash/MaxIt) — badge générique (initiale + couleur de marque) plutôt
+ * que d'inventer une image de marque. À remplacer par un vrai logo si/quand
+ * fourni. */
+export function OperatorMonogram({
+  label,
+  color,
+  className = "",
+}: {
+  label: string;
+  color: string;
+  className?: string;
+}) {
+  return (
+    <span
+      className={className}
+      aria-hidden="true"
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        justifyContent: "center",
+        borderRadius: "999px",
+        backgroundColor: color,
+        color: "#fff",
+        fontWeight: 700,
+        fontSize: "0.7em",
+      }}
+    >
+      {label.slice(0, 2).toUpperCase()}
+    </span>
+  );
+}

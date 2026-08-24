@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
+import type { CountryCode } from "libphonenumber-js/max";
 import { getBuyerTimeline } from "@/lib/order-timeline";
 import { MoneyTimeline } from "@/components/ui/MoneyTimeline";
 import { BrandMark } from "@/components/ui/BrandMark";
@@ -74,7 +75,7 @@ export default function PayPage() {
     return () => clearInterval(interval);
   }, [fetchOrder, order?.isProductLink, trackingSlug]);
 
-  const handlePay = async (method: string) => {
+  const handlePay = async (method: string, otp?: string) => {
     if (
       !clientFirstName.trim() ||
       !clientLastName.trim() ||
@@ -93,10 +94,14 @@ export default function PayPage() {
         client_first_name: clientFirstName.trim(),
         // Bictorys exige du E.164 strict ("+221771234567", sans espace) pour
         // customerObject.phone — clientPhone est en saisie libre espacée.
-        client_phone: toE164(clientPhone.trim()),
+        // Région = pays du vendeur (order.country), pas un défaut Sénégal.
+        client_phone: toE164(clientPhone.trim(), (order?.country || "SN") as CountryCode),
         client_address: clientAddress.trim(),
         delivery_zone_id: Number(selectedZoneId),
         payment_method: method,
+        // Uniquement rempli pour Orange Money Côte d'Ivoire (voir
+        // PayMethodButtons) — ignoré par le backend pour tout autre cas.
+        otp: otp || "",
       }),
     });
     const data = await res.json();
@@ -281,7 +286,7 @@ export default function PayPage() {
           />
         </PayCheckoutSection>
 
-        <PayMethodButtons onPay={handlePay} paying={paying} />
+        <PayMethodButtons country={order.country} onPay={handlePay} paying={paying} />
 
         {error && <p className="alert-danger" role="alert">{error}</p>}
       </div>

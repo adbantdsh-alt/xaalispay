@@ -3,7 +3,7 @@ import { buildPageMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = buildPageMetadata({
   title: "Connexion vendeur",
-  description: "Connectez-vous ou créez votre boutique XaalisPay pour vendre en sécurité au Sénégal.",
+  description: "Connectez-vous ou créez votre boutique XaalisPay pour vendre en sécurité en Afrique de l'Ouest.",
   path: "/auth",
   noIndex: true,
 });

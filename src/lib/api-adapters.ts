@@ -3,6 +3,7 @@
  * attend le camelCase de src/lib/types.ts. Ces fonctions isolent la
  * conversion en un seul endroit plutôt que de réécrire ces composants. */
 import type { DeliveryZone, Dispute, DisputeMedia, Order, Product, Profile } from "./types";
+import type { MobileMoneyMethod } from "./payment-methods";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Json = Record<string, any>;
@@ -23,6 +24,7 @@ export function adaptProfile(p: Json): Profile {
     displayName: p.display_name,
     businessName: p.business_name,
     phone: p.phone,
+    country: p.country || "SN",
     email: p.email || undefined,
     role: p.role,
     usernameChangedAt: p.username_changed_at || undefined,
@@ -179,7 +181,7 @@ export interface AdaptedPayout {
   amount: number;
   netAmount?: number;
   fee?: number;
-  method: "wave" | "orange";
+  method: MobileMoneyMethod;
   phone: string;
   status: "pending" | "processing" | "success" | "failed";
   failureReason?: string;
@@ -270,6 +272,10 @@ export function adaptDeliverySession(o: Json): AdaptedDeliverySession {
 }
 
 export interface AdaptedPayOrder {
+  /** Pays du vendeur (Product.seller.country / Order.country) — détermine la
+   * région de validation du téléphone acheteur et les opérateurs mobile
+   * money proposés (voir src/lib/payment-methods.ts). */
+  country: string;
   productName: string;
   productPrice: number;
   deliveryCost: number;
@@ -296,6 +302,7 @@ export interface AdaptedPayOrder {
  * n'est pas encore connu, il dépend de la zone que l'acheteur va choisir. */
 export function adaptPublicProductToPayOrder(p: Json): AdaptedPayOrder {
   return {
+    country: p.country || "SN",
     productName: p.name,
     productPrice: p.price,
     deliveryCost: 0,
@@ -313,6 +320,7 @@ export function adaptPublicProductToPayOrder(p: Json): AdaptedPayOrder {
 /** Après création de la commande (OrderPublicSerializer) — suivi du statut. */
 export function adaptOrderToPayOrder(o: Json): AdaptedPayOrder {
   return {
+    country: o.country || "SN",
     productName: o.product_name,
     productPrice: o.product_price,
     deliveryCost: o.delivery_cost || 0,

@@ -5,12 +5,14 @@ import { getApiBaseUrl } from "@/lib/site-url";
 import { SellerShopClient } from "@/components/shop/SellerShopClient";
 import { BrandMark } from "@/components/ui/BrandMark";
 import { buildPageMetadata } from "@/lib/seo";
+import { COUNTRIES, countryLocative } from "@/lib/utils";
 
 interface PublicProfile {
   username: string;
   display_name: string;
   business_name: string;
   phone?: string;
+  country?: string;
 }
 
 interface PublicProduct {
@@ -82,11 +84,15 @@ export async function generateMetadata({
     });
   }
 
+  // Pays dérivé du vendeur réel, jamais codé en dur — XaalisPay opère
+  // maintenant dans 5 pays (voir COUNTRIES), pas seulement le Sénégal.
+  const countryLabel = COUNTRIES.find((c) => c.code === profile.country)?.label || "Sénégal";
+
   return buildPageMetadata({
     title: `Boutique ${profile.display_name} (@${profile.username})`,
-    description: `Achetez en sécurité chez ${profile.display_name} sur XaalisPay. Paiement séquestre Wave et Orange Money au Sénégal.`,
+    description: `Achetez en sécurité chez ${profile.display_name} sur XaalisPay. Paiement séquestre Wave et Orange Money ${countryLocative(profile.country || "SN")}.`,
     path: `/seller/${username}`,
-    keywords: [profile.display_name, profile.username, "boutique XaalisPay", "achat sécurisé Sénégal"],
+    keywords: [profile.display_name, profile.username, "boutique XaalisPay", `achat sécurisé ${countryLabel}`],
   });
 }
 

@@ -4,7 +4,7 @@ import { buildPageMetadata } from "@/lib/seo";
 export const metadata: Metadata = buildPageMetadata({
   title: "Contact",
   description:
-    "Contactez l'équipe XaalisPay pour le support, les litiges ou l'ouverture de boutique au Sénégal.",
+    "Contactez l'équipe XaalisPay pour le support, les litiges ou l'ouverture de boutique.",
   path: "/contact",
 });
 

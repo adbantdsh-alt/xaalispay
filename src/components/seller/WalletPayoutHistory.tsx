@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { formatCurrency } from "@/lib/utils";
 import { apiFetch } from "@/lib/api-client";
 import { adaptPayout, type AdaptedPayout } from "@/lib/api-adapters";
+import { MOBILE_MONEY_LABELS } from "@/lib/payment-methods";
 
 type PayoutItem = AdaptedPayout;
 
@@ -12,11 +13,6 @@ const STATUS_LABELS: Record<PayoutItem["status"], string> = {
   processing: "En cours",
   success: "Reçu",
   failed: "Échoué",
-};
-
-const METHOD_LABELS = {
-  wave: "Wave",
-  orange: "Orange Money",
 };
 
 function fmtDate(iso: string) {
@@ -81,7 +77,7 @@ export function WalletPayoutHistory({ refreshKey = 0 }: { refreshKey?: number })
                 {formatCurrency(payout.netAmount ?? payout.amount)}
               </p>
               <p className="wallet-payout-item-meta text-muted">
-                {METHOD_LABELS[payout.method]} · +221 {payout.phone}
+                {MOBILE_MONEY_LABELS[payout.method] || payout.method} · {payout.phone}
               </p>
               <p className="wallet-payout-item-date text-muted">{fmtDate(payout.createdAt)}</p>
             </div>
