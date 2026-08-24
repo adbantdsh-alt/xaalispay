@@ -1,5 +1,6 @@
 import { customAlphabet } from "nanoid";
-import { parsePhoneNumberFromString, type CountryCode } from "libphonenumber-js/max";
+import { getExampleNumber, parsePhoneNumberFromString, type CountryCode } from "libphonenumber-js/max";
+import examplePhoneNumbers from "libphonenumber-js/examples.mobile.json";
 import type { Order } from "./types";
 
 // Région par défaut quand aucun contexte pays n'est disponible (rare, voir
@@ -120,6 +121,26 @@ export function dialCodeFor(region: CountryCode | string): string {
 
 export function countryLocative(region: CountryCode | string): string {
   return COUNTRIES.find((c) => c.code === region)?.locative ?? "au Sénégal";
+}
+
+// Un placeholder unique ("77 123 45 67") n'a de sens que pour le Sénégal —
+// la Côte d'Ivoire est passée à 10 chiffres en 2021, le Bénin à 10 chiffres
+// aussi, etc. On utilise le vrai numéro d'exemple mobile de libphonenumber
+// (metadata Google, pas une devinette) plutôt que de coder chaque format à
+// la main. Mise en cache car getExampleNumber recalcule à chaque appel.
+const phonePlaceholderCache = new Map<string, string>();
+
+export function phonePlaceholderFor(region: CountryCode | string): string {
+  const cached = phonePlaceholderCache.get(region);
+  if (cached) return cached;
+  try {
+    const example = getExampleNumber(region as CountryCode, examplePhoneNumbers);
+    const placeholder = example?.formatNational() ?? "77 123 45 67";
+    phonePlaceholderCache.set(region, placeholder);
+    return placeholder;
+  } catch {
+    return "77 123 45 67";
+  }
 }
 
 /** Format E.164 attendu par le backend (Profile.phone, identifiant de

@@ -283,6 +283,7 @@ export default function PayPage() {
             }}
             zones={order.deliveryZones || []}
             totalToPay={checkoutTotal}
+            country={order.country}
           />
         </PayCheckoutSection>
 

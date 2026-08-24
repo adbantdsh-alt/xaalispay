@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import type { CountryCode } from "libphonenumber-js/max";
 import { computeWalletBreakdown } from "@/lib/wallet-breakdown";
-import { dialCodeFor, formatCurrency, formatPhoneDisplay, splitCurrency, toE164 } from "@/lib/utils";
+import { dialCodeFor, formatCurrency, formatPhoneDisplay, phonePlaceholderFor, splitCurrency, toE164 } from "@/lib/utils";
 import { WalletPayoutMethodPicker } from "@/components/seller/WalletPayoutMethodPicker";
 import { WalletPayoutHistory } from "@/components/seller/WalletPayoutHistory";
 import { WalletTransactionHistory } from "@/components/seller/WalletTransactionHistory";
@@ -161,7 +161,7 @@ export default function WalletPage() {
             <input
               className="input-field phone-input"
               type="tel"
-              placeholder="77 123 45 67"
+              placeholder={phonePlaceholderFor(country)}
               value={phone}
               onChange={(e) => {
                 setPhoneTouched(true);

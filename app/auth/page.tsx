@@ -9,7 +9,7 @@ import { BrandMark } from "@/components/ui/BrandMark";
 import { OtpInput, emptyDigits } from "@/components/ui/OtpInput";
 import { useAuth } from "@/lib/auth-client";
 import { requestOtp, verifyOtp, resetPin } from "@/lib/otp-client";
-import { COUNTRIES, formatPhoneDisplay, isValidMobilePhone, slugifyUsername, toE164 } from "@/lib/utils";
+import { COUNTRIES, formatPhoneDisplay, isValidMobilePhone, phonePlaceholderFor, slugifyUsername, toE164 } from "@/lib/utils";
 
 type Step =
   | "login"
@@ -81,7 +81,7 @@ function PhoneField({
           value={value}
           onChange={(e) => onChange(e.target.value)}
           required
-          placeholder="77 123 45 67"
+          placeholder={phonePlaceholderFor(country)}
           autoFocus
         />
       </div>

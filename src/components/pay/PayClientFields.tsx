@@ -3,7 +3,7 @@
  * inchangée par rapport au design validé. */
 "use client";
 
-import { splitCurrency } from "@/lib/utils";
+import { dialCodeFor, phonePlaceholderFor, splitCurrency } from "@/lib/utils";
 import s from "./PayClientFields.module.css";
 
 export interface PayClientFieldsValues {
@@ -21,9 +21,12 @@ interface PayClientFieldsProps {
   /** Total à payer recalculé pour la zone sélectionnée — affiché en rappel
    * juste sous le choix de zone, pour éviter de remonter voir le résumé. */
   totalToPay?: number;
+  /** Pays du vendeur (order.country) — détermine l'indicatif et le format
+   * d'exemple affichés, jamais codés en dur sur le Sénégal. */
+  country?: string;
 }
 
-export function PayClientFields({ values, onChange, zones, totalToPay }: PayClientFieldsProps) {
+export function PayClientFields({ values, onChange, zones, totalToPay, country = "SN" }: PayClientFieldsProps) {
   const set = (key: keyof PayClientFieldsValues, value: string) => {
     onChange({ ...values, [key]: value });
   };
@@ -64,12 +67,12 @@ export function PayClientFields({ values, onChange, zones, totalToPay }: PayClie
           Numéro de téléphone
         </label>
         <div className={s.phoneRow}>
-          <span className={s.prefix}>+221</span>
+          <span className={s.prefix}>{dialCodeFor(country)}</span>
           <input
             id="pay-phone"
             className={`${s.input} ${s.phoneInput}`}
             type="tel"
-            placeholder="77 123 45 67"
+            placeholder={phonePlaceholderFor(country)}
             value={values.phone}
             onChange={(e) => set("phone", e.target.value)}
             autoComplete="tel"
