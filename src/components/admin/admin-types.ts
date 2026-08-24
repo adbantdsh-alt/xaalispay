@@ -270,6 +270,110 @@ export interface ProductRow {
   createdAt: string;
 }
 
+/** XaalisPay Connect (GET /api/admin/connect/*) — plateformes tierces
+ * intégrées (CopyX…), toujours affiché séparément du revenu natif
+ * (OverviewData/AnalyticsDayPoint ci-dessus) : xaalispay_fee_total est une
+ * commission perçue sur des transactions Connect, jamais buyer_protection_fee
+ * ni seller_commission de l'app mobile/web. */
+export interface ConnectOverviewData {
+  platforms_count: number;
+  active_platforms_count: number;
+  transactions_count: number;
+  transactions_by_status: Record<string, number>;
+  balances: {
+    escrow_total: number;
+    available_total: number;
+    blocked_total: number;
+    paid_out_total: number;
+  };
+  revenue: {
+    xaalispay_fee_total: number;
+    treasury_available_balance: number;
+  };
+  gmv_total: number;
+}
+
+export interface ConnectAnalyticsDayPoint {
+  date: string; // YYYY-MM-DD
+  transactions_count: number;
+  gmv: number;
+  xaalispay_fee_revenue: number;
+}
+
+export interface ConnectAnalyticsWindowMetrics {
+  transactions_count: number;
+  gmv: number;
+  xaalispay_fee_revenue: number;
+}
+
+export interface ConnectAnalyticsSummaryData {
+  today: ConnectAnalyticsWindowMetrics;
+  last_7_days: ConnectAnalyticsWindowMetrics;
+  last_30_days: ConnectAnalyticsWindowMetrics;
+  all_time: ConnectAnalyticsWindowMetrics;
+}
+
+export interface ConnectPlatformRow {
+  id: string;
+  name: string;
+  slug: string;
+  country: string;
+  currency: string;
+  xaalispayFeePercent: string;
+  isActive: boolean;
+  transactionsCount: number;
+  revenueTotal: number;
+  createdAt: string;
+}
+
+export interface ConnectTransactionRow {
+  id: string;
+  platformName: string;
+  externalRef: string | null;
+  amount: number;
+  currency: string;
+  status: string;
+  applicationFee: number;
+  xaalispayFee: number;
+  createdAt: string;
+  releasedAt?: string;
+}
+
+export interface ConnectPlatformDetail {
+  platform: {
+    id: string;
+    name: string;
+    slug: string;
+    country: string;
+    currency: string;
+    xaalispayFeePercent: string;
+    isActive: boolean;
+    createdAt: string;
+  };
+  balances: {
+    escrow_total: number;
+    available_total: number;
+    blocked_total: number;
+    paid_out_total: number;
+  };
+  revenueTotal: number;
+  accountsCount: number;
+  recentTransactions: ConnectTransactionRow[];
+}
+
+export function connectTransactionStatusLabel(status: string): string {
+  const labels: Record<string, string> = {
+    pending_payment: "En attente de paiement",
+    funded: "Financée",
+    partially_released: "Partiellement libérée",
+    released: "Libérée",
+    refunded: "Remboursée",
+    disputed: "En litige",
+    cancelled: "Annulée",
+  };
+  return labels[status] ?? status;
+}
+
 export type StaffRole = "super_admin" | "dispute_manager";
 
 export const TEAM_ROLE_LABELS: Record<StaffRole, string> = {

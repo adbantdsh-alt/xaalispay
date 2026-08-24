@@ -30,5 +30,7 @@ export const config = {
     "/history/:path*",
     "/admin",
     "/admin/:path*",
+    "/connect/portal",
+    "/connect/portal/:path*",
   ],
 };

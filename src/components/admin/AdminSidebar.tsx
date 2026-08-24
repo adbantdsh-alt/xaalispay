@@ -6,6 +6,7 @@ import {
   LayoutDashboard,
   BarChart3,
   Handshake,
+  Link2,
   ShieldAlert,
   Banknote,
   Users,
@@ -28,6 +29,7 @@ const NAV_ITEMS = [
   { href: "/admin/payouts", label: "Retraits", icon: Banknote, badge: "payouts" as const },
   { href: "/admin/sellers", label: "Vendeurs", icon: Users },
   { href: "/admin/products", label: "Produits", icon: Package },
+  { href: "/admin/connect", label: "Connect", icon: Link2 },
 ];
 
 export function AdminSidebar({

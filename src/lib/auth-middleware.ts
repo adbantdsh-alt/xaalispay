@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { REFRESH_COOKIE_NAME } from "@/lib/auth-cookies";
+import { CONNECT_PORTAL_REFRESH_COOKIE_NAME, REFRESH_COOKIE_NAME } from "@/lib/auth-cookies";
 import { isProtectedSellerPath } from "@/lib/demo-account";
 
 /** Vérification "molle" : la présence du cookie refresh httpOnly suffit pour
@@ -20,6 +20,24 @@ export async function redirectIfLoggedOut(request: NextRequest) {
   // isProtectedSellerPath (qui matche tout /admin*) créerait une boucle de
   // redirection infinie pour un visiteur non connecté.
   if (pathname === "/admin/login") {
+    return NextResponse.next();
+  }
+
+  // Portail Connect : cookie DISTINCT (xp_connect_portal_refresh), jamais
+  // REFRESH_COOKIE_NAME — une session vendeur/admin ne doit jamais donner
+  // accès au portail, et réciproquement. Même garde-fou anti-boucle que
+  // /admin/login ci-dessus pour /connect/portal/login.
+  if (pathname === "/connect/portal/login") {
+    return NextResponse.next();
+  }
+  if (pathname.startsWith("/connect/portal")) {
+    const hasPortalSession = Boolean(request.cookies.get(CONNECT_PORTAL_REFRESH_COOKIE_NAME)?.value);
+    if (!hasPortalSession) {
+      const redirect = request.nextUrl.clone();
+      redirect.pathname = "/connect/portal/login";
+      redirect.searchParams.set("redirect", pathname);
+      return NextResponse.redirect(redirect);
+    }
     return NextResponse.next();
   }
 

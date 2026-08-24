@@ -2,6 +2,8 @@ import type {
   AffiliateApplicationRow,
   AffiliateProgramSummary,
   AffiliateRow,
+  ConnectPlatformRow,
+  ConnectTransactionRow,
   DisputeRow,
   OrderRow,
   PayoutRow,
@@ -202,5 +204,37 @@ export function adaptAffiliateProgramSummary(s: any): AffiliateProgramSummary {
     boostedCount: s.boosted_count,
     lifetimeCount: s.lifetime_count,
     commissionsPaidTotal: s.commissions_paid_total,
+  };
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function adaptConnectPlatformRow(p: any): ConnectPlatformRow {
+  return {
+    id: String(p.id),
+    name: p.name,
+    slug: p.slug,
+    country: p.country,
+    currency: p.currency,
+    xaalispayFeePercent: p.xaalispay_fee_percent,
+    isActive: p.is_active,
+    transactionsCount: p.transactions_count,
+    revenueTotal: p.revenue_total,
+    createdAt: p.created_at,
+  };
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function adaptConnectTransactionRow(t: any): ConnectTransactionRow {
+  return {
+    id: String(t.id),
+    platformName: t.platform_name,
+    externalRef: t.external_ref || null,
+    amount: t.amount,
+    currency: t.currency,
+    status: t.status,
+    applicationFee: t.application_fee,
+    xaalispayFee: t.xaalispay_fee,
+    createdAt: t.created_at,
+    releasedAt: t.released_at || undefined,
   };
 }
