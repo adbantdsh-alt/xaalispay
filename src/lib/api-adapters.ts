@@ -81,6 +81,7 @@ export function adaptOrder(o: Json): Order {
     clientNote: "",
     productName: o.product_name,
     productPrice: o.product_price,
+    productImage: o.product_image || undefined,
     deliveryCost: o.delivery_cost || 0,
     deliveryHours: o.delivery_hours || 0,
     deliveryZoneLabel: o.delivery_zone_label || undefined,
