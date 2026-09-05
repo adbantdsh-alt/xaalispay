@@ -129,8 +129,8 @@ export default function ConfidentialitePage() {
           </ul>
           <p>
             Pour exercer ces droits, contactez-nous à{" "}
-            <a href="mailto:contact@xaalispay.sn" className="content-link">
-              contact@xaalispay.sn
+            <a href="mailto:conctact@xaalispay.com" className="content-link">
+              conctact@xaalispay.com
             </a>
             . Nous répondons dans un délai de 30 jours.
           </p>
@@ -141,8 +141,8 @@ export default function ConfidentialitePage() {
           <p>
             Vous pouvez demander la suppression de votre compte depuis l&apos;application (Paramètres →
             Supprimer mon compte) ou en écrivant à{" "}
-            <a href="mailto:contact@xaalispay.sn" className="content-link">
-              contact@xaalispay.sn
+            <a href="mailto:conctact@xaalispay.com" className="content-link">
+              conctact@xaalispay.com
             </a>
             . Les données de transaction requises par la loi seront conservées sous forme anonymisée.
           </p>
@@ -170,8 +170,8 @@ export default function ConfidentialitePage() {
           <h2>12. Contact</h2>
           <p>
             Pour toute question relative à la protection de vos données personnelles :{" "}
-            <a href="mailto:contact@xaalispay.sn" className="content-link">
-              contact@xaalispay.sn
+            <a href="mailto:conctact@xaalispay.com" className="content-link">
+              conctact@xaalispay.com
             </a>
           </p>
         </section>

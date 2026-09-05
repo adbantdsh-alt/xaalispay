@@ -1,8 +1,7 @@
 "use client";
 
-import Link from "next/link";
-import { IconArrowRight } from "@/components/icons";
 import { Reveal } from "@/components/marketing/Reveal";
+import { StoreBadges } from "@/components/marketing/StoreBadges";
 
 export function LandingHero() {
   return (
@@ -22,7 +21,9 @@ export function LandingHero() {
           className="text-center mx-auto max-w-5xl"
           style={{ fontSize: "clamp(2.4rem, 6.5vw, 5.5rem)", lineHeight: 1, letterSpacing: "-0.035em" }}
         >
-          <span className="block text-[#1E3A5F] font-bold lp-text-3d">Vendez avant de livrer.</span>
+          <span className="block text-[#1E3A5F] font-bold lp-text-3d">
+            Vendez avant<br className="sm:hidden" /> de livrer.
+          </span>
           <span className="italic font-normal text-[#D4A373]">Achetez sans risquer.</span>
         </h1>
 
@@ -32,19 +33,8 @@ export function LandingHero() {
           remboursé si quelque chose ne va pas. <br/> Fini les arnaques, fini le stress.
         </p>
 
-        <Reveal className="mt-8 flex flex-row items-center justify-center gap-2 sm:gap-3">
-          <a
-            href="#telecharger"
-            className="lp-btn lp-btn-primary !py-2.5 sm:!py-3 !px-4 sm:!px-6 !text-[13px] sm:!text-[14px] shrink-0"
-          >
-            Télécharger l&apos;app <IconArrowRight size={14} />
-          </a>
-          <Link
-            href="/auth"
-            className="inline-flex items-center justify-center gap-2 rounded-full border border-[#1E3A5F]/15 bg-white text-[#1E3A5F]/80 font-medium text-[13px] sm:text-[14px] py-2.5 sm:py-3 px-4 sm:px-6 hover:border-[#1E3A5F]/30 hover:text-[#1E3A5F] transition-colors shrink-0"
-          >
-            Se connecter
-          </Link>
+        <Reveal className="mt-8">
+          <StoreBadges />
         </Reveal>
       </div>
     </section>

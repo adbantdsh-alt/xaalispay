@@ -19,7 +19,7 @@ export const SITE_KEYWORDS = [
   "vendre sur WhatsApp",
 ];
 export const SITE_LOCALE = "fr_SN";
-export const SITE_EMAIL = "contact@xaalispay.sn";
+export const SITE_EMAIL = "conctact@xaalispay.com";
 export const OG_IMAGE_PATH = "/opengraph-image";
 
 type PageMetaInput = {

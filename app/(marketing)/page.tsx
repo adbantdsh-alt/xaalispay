@@ -6,7 +6,6 @@ import { LandingHero } from "@/components/marketing/LandingHero";
 import { LandingProblem } from "@/components/marketing/LandingProblem";
 import { LandingHowItWorks } from "@/components/marketing/LandingHowItWorks";
 import { LandingInteractiveDemo } from "@/components/marketing/LandingInteractiveDemo";
-import { LandingStory } from "@/components/marketing/LandingStory";
 import { LandingFAQ } from "@/components/marketing/LandingFAQ";
 import { LandingFinalCTA } from "@/components/marketing/LandingFinalCTA";
 
@@ -26,7 +25,6 @@ export default function LandingPage() {
       <LandingProblem />
       <LandingHowItWorks />
       <LandingInteractiveDemo />
-      <LandingStory />
       <LandingFAQ />
       <LandingFinalCTA />
     </>

@@ -28,8 +28,8 @@ export default function MentionsLegalesPage() {
             Présence opérationnelle : Dakar, Sénégal
             <br />
             Email :{" "}
-            <a href="mailto:contact@xaalispay.sn" className="content-link">
-              contact@xaalispay.sn
+            <a href="mailto:conctact@xaalispay.com" className="content-link">
+              conctact@xaalispay.com
             </a>
           </p>
         </section>

@@ -12,7 +12,7 @@ export default function ContactPage() {
       `Nom: ${form.name}\nEmail: ${form.email}\n\n${form.message}`
     );
     const subject = encodeURIComponent(`[XaalisPay] ${form.subject || "Contact"}`);
-    window.location.href = `mailto:contact@xaalispay.sn?subject=${subject}&body=${body}`;
+    window.location.href = `mailto:conctact@xaalispay.com?subject=${subject}&body=${body}`;
     setSent(true);
   };
 
@@ -31,8 +31,8 @@ export default function ContactPage() {
         <aside className="content-aside">
           <div className="lp-card-flat content-aside-block">
             <p className="section-label">Email</p>
-            <a href="mailto:contact@xaalispay.sn" className="content-link">
-              contact@xaalispay.sn
+            <a href="mailto:conctact@xaalispay.com" className="content-link">
+              conctact@xaalispay.com
             </a>
           </div>
           <div className="lp-card-flat content-aside-block">

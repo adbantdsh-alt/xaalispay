@@ -37,8 +37,8 @@ export default function CarrieresPage() {
         <p className="content-chapter-body" style={{ whiteSpace: "normal" }}>
           Nous n&apos;avons pas de poste ouvert publié pour le moment, mais nous sommes toujours
           curieux de rencontrer des personnes qui partagent notre mission. Écrivez-nous à{" "}
-          <a className="content-link" href="mailto:contact@xaalispay.sn?subject=Candidature%20spontan%C3%A9e">
-            contact@xaalispay.sn
+          <a className="content-link" href="mailto:conctact@xaalispay.com?subject=Candidature%20spontan%C3%A9e">
+            conctact@xaalispay.com
           </a>{" "}
           avec votre CV et quelques mots sur ce qui vous anime.
         </p>

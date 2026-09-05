@@ -111,8 +111,8 @@ export default function CgvPage() {
           <h2>9. Contact</h2>
           <p>
             Pour toute question :{" "}
-            <a href="mailto:contact@xaalispay.sn" className="content-link">
-              contact@xaalispay.sn
+            <a href="mailto:conctact@xaalispay.com" className="content-link">
+              conctact@xaalispay.com
             </a>
           </p>
         </section>
