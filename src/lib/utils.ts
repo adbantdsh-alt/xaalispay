@@ -113,6 +113,7 @@ export const COUNTRIES: { code: CountryCode; dial: string; flag: string; label: 
   { code: "ML", dial: "+223", flag: "🇲🇱", label: "Mali", locative: "au Mali" },
   { code: "BJ", dial: "+229", flag: "🇧🇯", label: "Bénin", locative: "au Bénin" },
   { code: "TG", dial: "+228", flag: "🇹🇬", label: "Togo", locative: "au Togo" },
+  { code: "BF", dial: "+226", flag: "🇧🇫", label: "Burkina Faso", locative: "au Burkina Faso" },
 ];
 
 export function dialCodeFor(region: CountryCode | string): string {

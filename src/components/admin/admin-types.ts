@@ -320,6 +320,7 @@ export interface ConnectPlatformRow {
   country: string;
   currency: string;
   xaalispayFeePercent: string;
+  xaalispayPayoutFeePercent: string;
   isActive: boolean;
   transactionsCount: number;
   revenueTotal: number;
@@ -347,6 +348,7 @@ export interface ConnectPlatformDetail {
     country: string;
     currency: string;
     xaalispayFeePercent: string;
+    xaalispayPayoutFeePercent: string;
     isActive: boolean;
     createdAt: string;
   };

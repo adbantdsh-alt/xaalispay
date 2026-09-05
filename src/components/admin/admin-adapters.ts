@@ -216,6 +216,7 @@ export function adaptConnectPlatformRow(p: any): ConnectPlatformRow {
     country: p.country,
     currency: p.currency,
     xaalispayFeePercent: p.xaalispay_fee_percent,
+    xaalispayPayoutFeePercent: p.xaalispay_payout_fee_percent,
     isActive: p.is_active,
     transactionsCount: p.transactions_count,
     revenueTotal: p.revenue_total,

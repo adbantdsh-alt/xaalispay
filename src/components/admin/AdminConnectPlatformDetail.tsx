@@ -16,6 +16,7 @@ function adaptDetail(data: any): ConnectPlatformDetail {
       country: data.platform.country,
       currency: data.platform.currency,
       xaalispayFeePercent: data.platform.xaalispay_fee_percent,
+      xaalispayPayoutFeePercent: data.platform.xaalispay_payout_fee_percent,
       isActive: data.platform.is_active,
       createdAt: data.platform.created_at,
     },
@@ -84,7 +85,11 @@ export function AdminConnectPlatformDetail({ platformId, onClose }: { platformId
               <span style={{ color: "#6b7280" }}>Inscrite le {formatAdminDate(detail.platform.createdAt)}</span>
               <span style={{ color: "#9aa3ad" }}>·</span>
               <span style={{ color: "#6b7280" }}>
-                Commission XaalisPay {(Number(detail.platform.xaalispayFeePercent) * 100).toFixed(2)} %
+                Commission payin {(Number(detail.platform.xaalispayFeePercent) * 100).toFixed(2)} %
+              </span>
+              <span style={{ color: "#9aa3ad" }}>·</span>
+              <span style={{ color: "#6b7280" }}>
+                Commission payout {(Number(detail.platform.xaalispayPayoutFeePercent) * 100).toFixed(2)} %
               </span>
               <span style={{ color: "#9aa3ad" }}>·</span>
               <span style={{ color: "#6b7280" }}>{detail.accountsCount} compte(s) connecté(s)</span>

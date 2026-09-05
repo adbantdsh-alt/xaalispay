@@ -241,7 +241,8 @@ export function AdminConnectSection({
                 <tr>
                   <th>Plateforme</th>
                   <th>Pays</th>
-                  <th>Commission XaalisPay</th>
+                  <th>Commission payin</th>
+                  <th>Commission payout</th>
                   <th>Transactions</th>
                   <th>Revenu généré</th>
                   <th>Connectée le</th>
@@ -257,6 +258,7 @@ export function AdminConnectSection({
                     </td>
                     <td className="admin-mono">{p.country}</td>
                     <td className="admin-mono">{(Number(p.xaalispayFeePercent) * 100).toFixed(2)} %</td>
+                    <td className="admin-mono">{(Number(p.xaalispayPayoutFeePercent) * 100).toFixed(2)} %</td>
                     <td className="admin-mono">{p.transactionsCount}</td>
                     <td className="admin-mono">{formatCurrency(p.revenueTotal)}</td>
                     <td>{formatAdminDate(p.createdAt)}</td>
