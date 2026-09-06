@@ -7041,6 +7041,17 @@ input, button, textarea, select { font: inherit; color: var(--text); }
   align-items: center;
   margin-bottom: 0.75rem;
 }
+.admin-local-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+.admin-local-tabs .admin-filter {
+  text-decoration: none;
+  display: inline-block;
+}
 .admin-dispute-section {
   padding: 0.85rem 1rem;
   border-top: 1px solid rgba(30, 58, 95, 0.07);

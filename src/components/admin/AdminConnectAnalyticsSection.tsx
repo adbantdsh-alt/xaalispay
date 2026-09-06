@@ -1,13 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Search } from "lucide-react";
 import { Bar, BarChart, CartesianGrid, ComposedChart, Legend, Line, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { apiFetch } from "@/lib/api-client";
 import { formatCurrency } from "@/lib/utils";
 import { AdminDateRangePopover } from "./AdminDateRangePopover";
 import { CORAL, NAVY } from "./admin-chart-colors";
-import { activeStatusClass, formatAdminDate, type ConnectAnalyticsDayPoint, type ConnectAnalyticsSummaryData, type ConnectAnalyticsWindowMetrics, type ConnectOverviewData, type ConnectPlatformRow } from "./admin-types";
+import type { ConnectAnalyticsDayPoint, ConnectAnalyticsSummaryData, ConnectAnalyticsWindowMetrics } from "./admin-types";
 
 function toDateInput(d: Date): string {
   return d.toISOString().slice(0, 10);
@@ -48,31 +47,12 @@ function WindowCard({ title, metrics }: { title: string; metrics?: ConnectAnalyt
   );
 }
 
-const ORDERING_OPTIONS = [
-  { value: "-created_at", label: "Plus récentes" },
-  { value: "-transactions_count", label: "Plus de transactions" },
-  { value: "name", label: "Nom (A→Z)" },
-] as const;
-
-export function AdminConnectSection({
-  overview,
-  platforms,
-  onSearchPlatforms,
-  onSelectPlatform,
-}: {
-  overview: ConnectOverviewData | null;
-  platforms: ConnectPlatformRow[];
-  onSearchPlatforms: (params: { search?: string; ordering?: string }) => void;
-  onSelectPlatform: (platformId: string) => void;
-}) {
+export function AdminConnectAnalyticsSection() {
   const [summary, setSummary] = useState<ConnectAnalyticsSummaryData | null>(null);
   const [days, setDays] = useState<ConnectAnalyticsDayPoint[]>([]);
   const [dateFrom, setDateFrom] = useState(daysAgo(29));
   const [dateTo, setDateTo] = useState(daysAgo(0));
   const [chartLoading, setChartLoading] = useState(true);
-
-  const [search, setSearch] = useState("");
-  const [ordering, setOrdering] = useState("-created_at");
 
   useEffect(() => {
     apiFetch("/api/admin/connect/analytics/summary").then(async (res) => {
@@ -96,51 +76,11 @@ export function AdminConnectSection({
     };
   }, [dateFrom, dateTo]);
 
-  useEffect(() => {
-    const id = setTimeout(() => onSearchPlatforms({ search, ordering }), 300);
-    return () => clearTimeout(id);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [search, ordering]);
-
   const isQuickRangeActive = QUICK_RANGES.some((range) => range.from() === dateFrom && daysAgo(0) === dateTo);
   const hasActivity = days.some((d) => d.transactions_count > 0 || d.xaalispay_fee_revenue > 0);
 
   return (
     <section className="admin-section">
-      <div className="admin-hint-banner">
-        <span className="admin-hint-dot" aria-hidden="true" />
-        <span className="admin-hint-strong">Revenu XaalisPay Connect</span>
-        <span className="admin-hint-muted">
-          — commissions perçues via les plateformes tierces intégrées, distinct du revenu natif de l&apos;app
-          mobile/web (jamais additionné avec celui-ci).
-        </span>
-      </div>
-
-      <div className="admin-kpi-grid">
-        <article className="admin-kpi">
-          <p className="admin-kpi-label">Revenu Connect total</p>
-          <p className="admin-kpi-value">{overview ? formatCurrency(overview.revenue.xaalispay_fee_total) : "—"}</p>
-          <p className="admin-kpi-sub">{overview ? `${overview.transactions_count} transaction(s)` : ""}</p>
-        </article>
-        <article className="admin-kpi">
-          <p className="admin-kpi-label">Solde trésorerie XaalisPay</p>
-          <p className="admin-kpi-value">
-            {overview ? formatCurrency(overview.revenue.treasury_available_balance) : "—"}
-          </p>
-          <p className="admin-kpi-sub">Disponible pour retrait</p>
-        </article>
-        <article className="admin-kpi">
-          <p className="admin-kpi-label">Plateformes actives</p>
-          <p className="admin-kpi-value">{overview ? overview.active_platforms_count : "—"}</p>
-          <p className="admin-kpi-sub">{overview ? `${overview.platforms_count} au total` : ""}</p>
-        </article>
-        <article className="admin-kpi">
-          <p className="admin-kpi-label">Volume Connect (GMV)</p>
-          <p className="admin-kpi-value">{overview ? formatCurrency(overview.gmv_total) : "—"}</p>
-          <p className="admin-kpi-sub">Toutes transactions confondues</p>
-        </article>
-      </div>
-
       <div className="admin-kpi-grid">
         <WindowCard title="Aujourd'hui" metrics={summary?.today} />
         <WindowCard title="7 derniers jours" metrics={summary?.last_7_days} />
@@ -210,70 +150,6 @@ export function AdminConnectSection({
           </article>
         </>
       )}
-
-      <article className="admin-card">
-        <h2 className="admin-card-title">Plateformes connectées</h2>
-        <div className="admin-filters">
-          <div className="admin-search-wrap">
-            <Search size={16} aria-hidden="true" />
-            <input
-              className="input-field input-compact"
-              placeholder="Rechercher une plateforme…"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-          </div>
-          <select className="input-field input-compact" value={ordering} onChange={(e) => setOrdering(e.target.value)}>
-            {ORDERING_OPTIONS.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {platforms.length === 0 ? (
-          <p className="admin-empty">Aucune plateforme connectée.</p>
-        ) : (
-          <div className="admin-table-wrap">
-            <table className="admin-table">
-              <thead>
-                <tr>
-                  <th>Plateforme</th>
-                  <th>Pays</th>
-                  <th>Commission payin</th>
-                  <th>Commission payout</th>
-                  <th>Transactions</th>
-                  <th>Revenu généré</th>
-                  <th>Connectée le</th>
-                  <th>Statut</th>
-                </tr>
-              </thead>
-              <tbody>
-                {platforms.map((p) => (
-                  <tr key={p.id} className="admin-row-click" onClick={() => onSelectPlatform(p.id)}>
-                    <td>
-                      <strong>{p.name}</strong>
-                      <span className="admin-cell-sub admin-mono">{p.slug}</span>
-                    </td>
-                    <td className="admin-mono">{p.country}</td>
-                    <td className="admin-mono">{(Number(p.xaalispayFeePercent) * 100).toFixed(2)} %</td>
-                    <td className="admin-mono">{(Number(p.xaalispayPayoutFeePercent) * 100).toFixed(2)} %</td>
-                    <td className="admin-mono">{p.transactionsCount}</td>
-                    <td className="admin-mono">{formatCurrency(p.revenueTotal)}</td>
-                    <td>{formatAdminDate(p.createdAt)}</td>
-                    <td>
-                      <span className={`admin-badge ${activeStatusClass(p.isActive)}`}>
-                        {p.isActive ? "Active" : "Inactive"}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </article>
     </section>
   );
 }

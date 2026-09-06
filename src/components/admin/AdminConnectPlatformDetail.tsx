@@ -3,8 +3,38 @@
 import { useEffect, useState } from "react";
 import { apiFetch } from "@/lib/api-client";
 import { formatCurrency } from "@/lib/utils";
-import { adaptConnectTransactionRow } from "./admin-adapters";
-import { adminStatusClass, connectTransactionStatusLabel, formatAdminDate, type ConnectPlatformDetail } from "./admin-types";
+import { adaptConnectPayoutRow, adaptConnectTransactionRow } from "./admin-adapters";
+import {
+  adminStatusClass,
+  connectPayoutStatusLabel,
+  connectTransactionStatusLabel,
+  formatAdminDate,
+  type ConnectBalanceSummary,
+  type ConnectPlatformDetail,
+} from "./admin-types";
+
+function BalanceGroup({ balances }: { balances: ConnectBalanceSummary }) {
+  return (
+    <div className="admin-stat-grid">
+      <div className="admin-stat-box">
+        <div className="admin-stat-box-label">En séquestre</div>
+        <div className="admin-stat-box-value">{formatCurrency(balances.escrow_total)}</div>
+      </div>
+      <div className="admin-stat-box">
+        <div className="admin-stat-box-label">Disponible</div>
+        <div className="admin-stat-box-value">{formatCurrency(balances.available_total)}</div>
+      </div>
+      <div className="admin-stat-box">
+        <div className="admin-stat-box-label">Bloqué (litiges)</div>
+        <div className="admin-stat-box-value">{formatCurrency(balances.blocked_total)}</div>
+      </div>
+      <div className="admin-stat-box">
+        <div className="admin-stat-box-label">Déjà versé</div>
+        <div className="admin-stat-box-value">{formatCurrency(balances.paid_out_total)}</div>
+      </div>
+    </div>
+  );
+}
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function adaptDetail(data: any): ConnectPlatformDetail {
@@ -24,6 +54,7 @@ function adaptDetail(data: any): ConnectPlatformDetail {
     revenueTotal: data.revenue_total,
     accountsCount: data.accounts_count,
     recentTransactions: data.recent_transactions.map(adaptConnectTransactionRow),
+    recentPayouts: data.recent_payouts.map(adaptConnectPayoutRow),
   };
 }
 
@@ -93,6 +124,8 @@ export function AdminConnectPlatformDetail({ platformId, onClose }: { platformId
               </span>
               <span style={{ color: "#9aa3ad" }}>·</span>
               <span style={{ color: "#6b7280" }}>{detail.accountsCount} compte(s) connecté(s)</span>
+              <span style={{ color: "#9aa3ad" }}>·</span>
+              <span style={{ color: "#6b7280" }}>Devise {detail.platform.currency}</span>
             </div>
 
             <div className="admin-dispute-section">
@@ -106,27 +139,20 @@ export function AdminConnectPlatformDetail({ platformId, onClose }: { platformId
             </div>
 
             <div className="admin-dispute-section">
-              <h3 className="admin-dispute-section-title">Soldes des comptes de cette plateforme</h3>
-              <div className="admin-stat-grid">
-                <div className="admin-stat-box">
-                  <div className="admin-stat-box-label">En séquestre</div>
-                  <div className="admin-stat-box-value">{formatCurrency(detail.balances.escrow_total)}</div>
-                </div>
-                <div className="admin-stat-box">
-                  <div className="admin-stat-box-label">Disponible</div>
-                  <div className="admin-stat-box-value">{formatCurrency(detail.balances.available_total)}</div>
-                </div>
-                <div className="admin-stat-box">
-                  <div className="admin-stat-box-label">Déjà versé</div>
-                  <div className="admin-stat-box-value">{formatCurrency(detail.balances.paid_out_total)}</div>
-                </div>
+              <h3 className="admin-dispute-section-title">Solde propre de la plateforme (commission Connect)</h3>
+              <div className="admin-hint-banner">
+                <span className="admin-hint-dot" aria-hidden="true" />
+                <span className="admin-hint-muted">
+                  Uniquement sa commission perçue via les transactions Connect — pas son revenu total (elle peut
+                  avoir d&apos;autres revenus hors Connect, ex. abonnements, invisibles ici).
+                </span>
               </div>
-              <div className="admin-stat-grid" style={{ marginTop: "0.75rem" }}>
-                <div className="admin-stat-box">
-                  <div className="admin-stat-box-label">Bloqué (litiges)</div>
-                  <div className="admin-stat-box-value">{formatCurrency(detail.balances.blocked_total)}</div>
-                </div>
-              </div>
+              <BalanceGroup balances={detail.balances.platform_own} />
+            </div>
+
+            <div className="admin-dispute-section">
+              <h3 className="admin-dispute-section-title">Solde de ses marchands / bénéficiaires (séquestre)</h3>
+              <BalanceGroup balances={detail.balances.merchants} />
             </div>
 
             <div className="admin-dispute-section">
@@ -140,9 +166,12 @@ export function AdminConnectPlatformDetail({ platformId, onClose }: { platformId
                       <tr>
                         <th>Référence</th>
                         <th>Montant</th>
+                        <th>Devise</th>
                         <th>Statut</th>
                         <th>Frais XaalisPay</th>
-                        <th>Date</th>
+                        <th>Commission plateforme</th>
+                        <th>Créée le</th>
+                        <th>Libérée le</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -150,13 +179,62 @@ export function AdminConnectPlatformDetail({ platformId, onClose }: { platformId
                         <tr key={t.id}>
                           <td className="admin-mono">{t.externalRef || t.id.slice(0, 8)}</td>
                           <td className="admin-mono">{formatCurrency(t.amount)}</td>
+                          <td className="admin-mono">{t.currency}</td>
                           <td>
                             <span className={`admin-badge ${adminStatusClass(t.status)}`}>
                               {connectTransactionStatusLabel(t.status)}
                             </span>
                           </td>
                           <td className="admin-mono">{formatCurrency(t.xaalispayFee)}</td>
+                          <td className="admin-mono">{formatCurrency(t.applicationFee)}</td>
                           <td>{formatAdminDate(t.createdAt)}</td>
+                          <td>{formatAdminDate(t.releasedAt)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+
+            <div className="admin-dispute-section">
+              <h3 className="admin-dispute-section-title">Retraits récents</h3>
+              {detail.recentPayouts.length === 0 ? (
+                <p className="admin-empty">Aucun retrait.</p>
+              ) : (
+                <div className="admin-table-wrap">
+                  <table className="admin-table">
+                    <thead>
+                      <tr>
+                        <th>Compte</th>
+                        <th>Montant</th>
+                        <th>Frais XaalisPay</th>
+                        <th>Net envoyé</th>
+                        <th>Méthode</th>
+                        <th>Téléphone</th>
+                        <th>Pays</th>
+                        <th>Statut</th>
+                        <th>Raison d&apos;échec</th>
+                        <th>Date</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {detail.recentPayouts.map((p) => (
+                        <tr key={p.id}>
+                          <td className="admin-mono">{p.account.slice(0, 8)}</td>
+                          <td className="admin-mono">{formatCurrency(p.amount)}</td>
+                          <td className="admin-mono">{formatCurrency(p.xaalispayFee)}</td>
+                          <td className="admin-mono">{formatCurrency(p.netAmount)}</td>
+                          <td>{p.method}</td>
+                          <td className="admin-mono">{p.phone}</td>
+                          <td className="admin-mono">{p.country}</td>
+                          <td>
+                            <span className={`admin-badge ${adminStatusClass(p.status)}`}>
+                              {connectPayoutStatusLabel(p.status)}
+                            </span>
+                          </td>
+                          <td>{p.failureReason || "—"}</td>
+                          <td>{formatAdminDate(p.createdAt)}</td>
                         </tr>
                       ))}
                     </tbody>

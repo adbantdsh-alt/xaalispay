@@ -1,5 +1,5 @@
-import { AdminConnectPage } from "@/components/admin/AdminConnectPage";
+import { AdminConnectOverviewSection } from "@/components/admin/AdminConnectOverviewSection";
 
 export default function AdminConnectRoute() {
-  return <AdminConnectPage />;
+  return <AdminConnectOverviewSection />;
 }

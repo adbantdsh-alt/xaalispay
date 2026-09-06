@@ -270,6 +270,23 @@ export interface ProductRow {
   createdAt: string;
 }
 
+export interface ConnectBalanceSummary {
+  escrow_total: number;
+  available_total: number;
+  blocked_total: number;
+  paid_out_total: number;
+}
+
+/** Jamais fusionné : `platform_own` est la commission Connect d'une
+ * plateforme (son compte PLATFORM_REVENUE) — PAS son revenu total, une
+ * plateforme peut avoir d'autres revenus hors Connect (abonnements…)
+ * structurellement invisibles ici. `merchants` est l'argent de tiers
+ * (marchands/bénéficiaires) en séquestre chez elle, jamais le sien. */
+export interface ConnectSplitBalances {
+  platform_own: ConnectBalanceSummary;
+  merchants: ConnectBalanceSummary;
+}
+
 /** XaalisPay Connect (GET /api/admin/connect/*) — plateformes tierces
  * intégrées (CopyX…), toujours affiché séparément du revenu natif
  * (OverviewData/AnalyticsDayPoint ci-dessus) : xaalispay_fee_total est une
@@ -280,15 +297,13 @@ export interface ConnectOverviewData {
   active_platforms_count: number;
   transactions_count: number;
   transactions_by_status: Record<string, number>;
-  balances: {
-    escrow_total: number;
-    available_total: number;
-    blocked_total: number;
-    paid_out_total: number;
-  };
+  platform_balances: ConnectSplitBalances;
   revenue: {
     xaalispay_fee_total: number;
     treasury_available_balance: number;
+    treasury_paid_out_balance: number;
+    treasury_escrow_balance: number;
+    treasury_blocked_balance: number;
   };
   gmv_total: number;
 }
@@ -324,6 +339,8 @@ export interface ConnectPlatformRow {
   isActive: boolean;
   transactionsCount: number;
   revenueTotal: number;
+  ownAvailableBalance: number;
+  merchantAvailableBalance: number;
   createdAt: string;
 }
 
@@ -340,6 +357,20 @@ export interface ConnectTransactionRow {
   releasedAt?: string;
 }
 
+export interface ConnectPayoutRow {
+  id: string;
+  account: string;
+  amount: number;
+  netAmount: number;
+  xaalispayFee: number;
+  method: string;
+  phone: string;
+  country: string;
+  status: string;
+  failureReason: string;
+  createdAt: string;
+}
+
 export interface ConnectPlatformDetail {
   platform: {
     id: string;
@@ -352,15 +383,21 @@ export interface ConnectPlatformDetail {
     isActive: boolean;
     createdAt: string;
   };
-  balances: {
-    escrow_total: number;
-    available_total: number;
-    blocked_total: number;
-    paid_out_total: number;
-  };
+  balances: ConnectSplitBalances;
   revenueTotal: number;
   accountsCount: number;
   recentTransactions: ConnectTransactionRow[];
+  recentPayouts: ConnectPayoutRow[];
+}
+
+export function connectPayoutStatusLabel(status: string): string {
+  const labels: Record<string, string> = {
+    pending: "En attente",
+    processing: "En cours",
+    succeeded: "Réussi",
+    failed: "Échoué",
+  };
+  return labels[status] ?? status;
 }
 
 export function connectTransactionStatusLabel(status: string): string {
