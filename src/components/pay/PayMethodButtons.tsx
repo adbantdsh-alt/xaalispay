@@ -1,7 +1,10 @@
 /** Boutons paiement — design Wave/Orange validé, ne pas modifier ces deux-là.
- * Les opérateurs additionnels (MTN/Moov/Togocell/Mobicash/MaxIt, marchés
- * hors Sénégal) réutilisent le même gabarit de bouton avec un badge
- * générique (voir OperatorMonogram) faute de logo de marque disponible. */
+ * Tous les opérateurs ont désormais un vrai logo. Deux traitements :
+ * - "wordmark" (MaxIt/MTN/Moov) : le logo contient déjà le nom de la marque
+ *   sur son propre fond — tuile blanche neutre, pas de texte dupliqué.
+ * - "icône + texte" (Togocell/Mobicash) : logo = symbole seul, sans texte —
+ *   même gabarit que le badge générique d'avant (fond teinté à la couleur de
+ *   marque), juste le vrai logo à la place du monogramme. */
 "use client";
 
 import { useEffect, useState } from "react";
@@ -11,8 +14,29 @@ import {
   orangeRequiresOtp,
   type MobileMoneyMethod,
 } from "@/lib/payment-methods";
-import { OperatorMonogram, WaveFavicon, OrangeFavicon } from "./PaymentBrandLogos";
+import {
+  MaxitFavicon,
+  MobicashFavicon,
+  MoovFavicon,
+  MtnFavicon,
+  TogocellFavicon,
+  WaveFavicon,
+  OrangeFavicon,
+} from "./PaymentBrandLogos";
 import s from "./PayMethodButtons.module.css";
+
+const WORDMARK_METHODS = new Set<MobileMoneyMethod>(["maxit", "mtn", "moov"]);
+
+function WordmarkIcon({ id, className }: { id: MobileMoneyMethod; className?: string }) {
+  if (id === "maxit") return <MaxitFavicon className={className} />;
+  if (id === "mtn") return <MtnFavicon className={className} />;
+  return <MoovFavicon className={className} />;
+}
+
+function IconOnlyLogo({ id, className }: { id: MobileMoneyMethod; className?: string }) {
+  if (id === "togocell") return <TogocellFavicon className={className} />;
+  return <MobicashFavicon className={className} />;
+}
 
 export function PayMethodButtons({
   country = "SN",
@@ -105,8 +129,20 @@ export function PayMethodButtons({
             type="button"
             onClick={() => handleClick(method.id)}
             disabled={disabled || paying}
-            className={`${s.payBtn} ${method.id === "wave" ? s.wave : method.id === "orange" ? s.orange : s.generic} ${isActive ? s.loadingBtn : ""}`}
-            style={method.id !== "wave" && method.id !== "orange" ? { background: method.color } : undefined}
+            className={`${s.payBtn} ${
+              method.id === "wave"
+                ? s.wave
+                : method.id === "orange"
+                  ? s.orange
+                  : WORDMARK_METHODS.has(method.id)
+                    ? s.maxit
+                    : s.generic
+            } ${isActive ? s.loadingBtn : ""}`}
+            style={
+              method.id === "wave" || method.id === "orange" || WORDMARK_METHODS.has(method.id)
+                ? undefined
+                : { background: method.color }
+            }
             aria-label={`Payer avec ${method.name}`}
           >
             {isActive ? (
@@ -123,9 +159,12 @@ export function PayMethodButtons({
                 </span>
                 <span className={s.orangeName}>ORANGE MONEY</span>
               </>
+            ) : WORDMARK_METHODS.has(method.id) ? (
+              // Pas de texte séparé : le logo réel contient déjà le nom de la marque.
+              <WordmarkIcon id={method.id} className={s.maxitFavicon} />
             ) : (
               <>
-                <OperatorMonogram className={s.genericIcon} color="rgba(255,255,255,0.25)" label={method.shortName} />
+                <IconOnlyLogo id={method.id} className={s.genericIcon} />
                 <span className={s.genericName}>{method.shortName}</span>
               </>
             )}

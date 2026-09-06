@@ -108,8 +108,28 @@
   text-transform: uppercase;
 }
 
-/* Opérateurs additionnels (MTN/Moov/Togocell/Mobicash/MaxIt) — même gabarit
- * de bouton, couleur de marque en fond, badge générique faute de logo. */
+/* Logos "wordmark" (MaxIt/MTN/Moov) — le nom de la marque est déjà écrit sur
+ * son propre fond dans l'image, pas de texte dupliqué à côté contrairement à
+ * Wave/Orange (dont les favicons sont des icônes seules, sans texte). Tuile
+ * blanche neutre : chaque logo apporte déjà sa propre couleur de fond. */
+.maxit {
+  background: #fff;
+  border: 1px solid rgba(15, 31, 102, 0.1);
+  box-shadow: none;
+}
+
+.maxitFavicon {
+  width: 40px;
+  height: 40px;
+  border-radius: 9px;
+  object-fit: cover;
+  flex-shrink: 0;
+  display: block;
+}
+
+/* Logos "icône seule" (Togocell/Mobicash) — le symbole ne contient pas le nom
+ * de la marque, donc fond teinté à la couleur de marque + texte à côté, même
+ * gabarit qu'avant avec le badge générique. */
 .generic {
   box-shadow: none;
 }
