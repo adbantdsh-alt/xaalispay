@@ -19,6 +19,6 @@ export function formatDeliveryWindow(hours: number): string {
   return `${days} jours`;
 }
 
-export const DELIVERY_DEADLINE_HOURS = 48;
+export const DELIVERY_DEADLINE_HOURS = 72;
 
 export const CHARGEBACK_DANGER_RATE = 10;
