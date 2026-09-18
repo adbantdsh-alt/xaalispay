@@ -253,8 +253,6 @@ export interface AdaptedDeliverySession {
   status: Order["status"];
   productName: string;
   pin: string;
-  deliveryCodeIssuedAt?: string;
-  deliveryCodeExpiresAt?: string;
   protectionEndsAt?: string;
 }
 
@@ -266,8 +264,6 @@ export function adaptDeliverySession(o: Json): AdaptedDeliverySession {
     status: o.status,
     productName: o.product_name,
     pin: o.pin || "",
-    deliveryCodeIssuedAt: o.delivery_code_issued_at || undefined,
-    deliveryCodeExpiresAt: o.delivery_code_expires_at || undefined,
     protectionEndsAt: o.protection_ends_at || undefined,
   };
 }

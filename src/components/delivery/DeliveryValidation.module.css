@@ -151,20 +151,6 @@
 /* ──────────────────────────────────────────────
    Compte à rebours
 ─────────────────────────────────────────────── */
-.countdown {
-  text-align: center;
-  margin-top: 0.5rem;
-}
-
-.countdownLabel {
-  margin: 0;
-  font-size: 0.6875rem;
-  font-weight: 600;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  color: #94a3b8;
-}
-
 .countdownTime {
   margin: 0.2rem 0 0;
   font-size: 1.375rem;
@@ -187,13 +173,6 @@
   background: #d4a373;
   border-radius: inherit;
   transition: width 1s linear;
-}
-
-.expiredNote {
-  margin: 0.5rem 0 0;
-  font-size: 0.78rem;
-  color: #d97706;
-  text-align: center;
 }
 
 /* ──────────────────────────────────────────────
@@ -241,22 +220,6 @@
   cursor: not-allowed;
 }
 
-.renewBtn {
-  min-height: 40px;
-  border: 1.5px solid #d4a373;
-  border-radius: 999px;
-  background: transparent;
-  color: #b8895d;
-  font-weight: 700;
-  font-size: 0.875rem;
-  cursor: pointer;
-  transition: background 0.15s;
-}
-
-.renewBtn:hover {
-  background: rgba(212, 163, 115, 0.08);
-}
-
 .hint {
   margin: 0;
   font-size: 0.73rem;
@@ -272,16 +235,6 @@
 .hintIcon {
   flex-shrink: 0;
   opacity: 0.7;
-}
-
-.error {
-  margin: 0.75rem 0 0;
-  padding: 0.6rem 0.75rem;
-  border-radius: 10px;
-  background: #fef2f2;
-  border: 1px solid #fecaca;
-  color: #dc2626;
-  font-size: 0.8125rem;
 }
 
 /* ──────────────────────────────────────────────

@@ -12,7 +12,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { IconCheck, IconShield } from "@/components/ui/AppIcon";
 import { CopyButton } from "@/components/ui/CopyButton";
 import { buildPinShareMessage, buildWhatsAppUrl } from "@/lib/share";
-import { DELIVERY_CODE_TTL_MINUTES } from "@/lib/delivery-code";
 import { apiFetch } from "@/lib/api-client";
 import { adaptDeliverySession, type AdaptedDeliverySession } from "@/lib/api-adapters";
 import styles from "./DeliveryValidation.module.css";
@@ -42,12 +41,9 @@ export function DeliveryValidation({
   const [session, setSession] = useState<DeliverySession | null>(null);
   const [loading, setLoading] = useState(true);
   const [consent, setConsent] = useState(false);
-  const [error, setError] = useState("");
-  const [codeRemainingMs, setCodeRemainingMs] = useState(0);
   const [protectionRemainingMs, setProtectionRemainingMs] = useState(0);
   const [pendingPayment, setPendingPayment] = useState(false);
   const [pendingElapsed, setPendingElapsed] = useState(0);
-  const [renewing, setRenewing] = useState(false);
 
   // Modal de confirmation PIN
   const [showModal, setShowModal] = useState(false);
@@ -125,17 +121,6 @@ export function DeliveryValidation({
     return () => clearInterval(id);
   }, [pendingPayment]);
 
-  /* ─── Compte à rebours code ─── */
-  const codeExpiresAt = session?.deliveryCodeExpiresAt;
-  useEffect(() => {
-    if (!codeExpiresAt) return;
-    const tick = () =>
-      setCodeRemainingMs(Math.max(0, new Date(codeExpiresAt).getTime() - Date.now()));
-    tick();
-    const id = setInterval(tick, 1000);
-    return () => clearInterval(id);
-  }, [codeExpiresAt]);
-
   /* ─── Compte à rebours protection ─── */
   useEffect(() => {
     const endsAt = session?.protectionEndsAt;
@@ -147,38 +132,14 @@ export function DeliveryValidation({
     return () => clearInterval(id);
   }, [session?.protectionEndsAt, session?.status]);
 
-  const codeExpired = codeRemainingMs <= 0 && !!codeExpiresAt;
   const isProtection = session?.status === "protection";
   const isReleased = session?.status === "released";
-
-  const codeProgress = useMemo(() => {
-    if (!codeExpiresAt) return 0;
-    const total = DELIVERY_CODE_TTL_MINUTES * 60 * 1000;
-    return Math.max(0, Math.min(100, (codeRemainingMs / total) * 100));
-  }, [codeExpiresAt, codeRemainingMs]);
 
   const protectionProgress = useMemo(() => {
     if (!session?.protectionEndsAt) return 0;
     const total = protectionMinutes * 60 * 1000;
     return Math.max(0, Math.min(100, (protectionRemainingMs / total) * 100));
   }, [protectionMinutes, protectionRemainingMs, session?.protectionEndsAt]);
-
-  /* ─── Renouvellement du code ─── */
-  const handleRenew = async () => {
-    setRenewing(true);
-    setError("");
-    try {
-      const res = await apiFetch(`/api/orders/${orderSlug}/renew-code`, { method: "POST" });
-      const data = await res.json();
-      if (res.ok) {
-        setSession(adaptDeliverySession(data));
-      } else {
-        setError(data.error || "Impossible de renouveler le code.");
-      }
-    } finally {
-      setRenewing(false);
-    }
-  };
 
   /* ─── Saisie OTP dans le modal ─── */
   const handleOtpDigit = (index: number, value: string) => {
@@ -413,19 +374,6 @@ export function DeliveryValidation({
                   <p className={styles.pinCode}>{session.pin}</p>
                 </div>
 
-                <div className={styles.countdown}>
-                  <p className={styles.countdownLabel}>
-                    Preuve de vie — expire dans ({DELIVERY_CODE_TTL_MINUTES} min)
-                  </p>
-                  <p className={styles.countdownTime}>{formatCountdown(codeRemainingMs)}</p>
-                  <div className={styles.protectionBar}>
-                    <div className={styles.protectionFill} style={{ width: `${codeProgress}%` }} />
-                  </div>
-                  {codeExpired && (
-                    <p className={styles.expiredNote}>Code expiré — renouveler pour continuer.</p>
-                  )}
-                </div>
-
                 {/* Copier + Partager sur la même ligne */}
                 <div className={styles.shareRow}>
                   <CopyButton
@@ -462,32 +410,19 @@ export function DeliveryValidation({
 
           {/* Actions */}
           <div className={styles.actions}>
-            {codeExpired ? (
-              <button
-                type="button"
-                className={styles.renewBtn}
-                onClick={handleRenew}
-                disabled={renewing}
-              >
-                {renewing ? "Renouvellement…" : "Renouveler le code"}
-              </button>
-            ) : (
-              <button
-                type="button"
-                className={styles.confirmBtn}
-                disabled={!consent}
-                onClick={openModal}
-              >
-                Confirmer la réception
-              </button>
-            )}
+            <button
+              type="button"
+              className={styles.confirmBtn}
+              disabled={!consent}
+              onClick={openModal}
+            >
+              Confirmer la réception
+            </button>
             <p className={styles.hint}>
               <IconShield size={13} className={styles.hintIcon} />
               Déclenche le Séquestre Flash {protectionMinutes} min
             </p>
           </div>
-
-          {error && <p className={styles.error}>{error}</p>}
         </div>
       </div>
 
