@@ -121,6 +121,32 @@ const exPayout = `curl -X POST $XAALISPAY_API/api/v1/connect/accounts/b5013175-d
   -H "Authorization: Bearer $SK" -H "Content-Type: application/json" \\
   -d '{"amount": 8850}'`;
 
+const exAccountPatch = `curl -X PATCH $XAALISPAY_API/api/v1/connect/accounts/317b47db-c715-4d1d-bad5-39bffe5cbbff \\
+  -H "Authorization: Bearer $SK" -H "Content-Type: application/json" \\
+  -d '{"display_name":"Boutique Adba (Dakar)","payout_method":"wave","payout_phone":"+221770000000"}'`;
+
+const exTxnSplits = `curl -X POST $XAALISPAY_API/api/v1/connect/transactions \\
+  -H "Authorization: Bearer $SK" -H "Content-Type: application/json" \\
+  -d '{
+    "amount": 10000,
+    "splits": [
+      {"account": "merchant-1", "amount": 6000},
+      {"account": "merchant-2", "amount": 2850}
+    ],
+    "application_fee": 1000,
+    "release_policy": "manual",
+    "external_ref": "order-campaign-1"
+  }'`;
+
+const exSplitRelease = `curl -X POST $XAALISPAY_API/api/v1/connect/transactions/{id}/release \\
+  -H "Authorization: Bearer $SK" -H "Content-Type: application/json" \\
+  -d '{"split_releases": [{"split": 3, "amount": 3000}]}'`;
+
+const exDispute = `curl -X POST $XAALISPAY_API/api/v1/connect/transactions/{id}/dispute \\
+  -H "Authorization: Bearer $SK"`;
+
+const exReturn = `curl $XAALISPAY_API/api/v1/connect/pay/caa2fc15-22b3-4e08-b42b-f37c09173158/return`;
+
 export default function ConnectDocsPage() {
   return (
     <div className="docs-shell">
@@ -130,7 +156,7 @@ export default function ConnectDocsPage() {
           <span className="docs-brand-tag">Connect</span>
         </div>
         <div className="docs-status">
-          Vérifié contre <code>apps/connect/</code> · MAJ 2026-09-05
+          Vérifié contre <code>apps/connect/</code> · MAJ 2026-09-27
           <br />
           Référence de champs : <code>/api/schema/swagger-ui/</code>
         </div>
@@ -138,12 +164,16 @@ export default function ConnectDocsPage() {
           <div className="docs-nav-group">
             <div className="docs-nav-label">Démarrer</div>
             <a href="#apercu">Aperçu</a>
+            <a className="docs-nav-sub" href="#faq-simple-paiement">Paiement simple, sans séquestre ?</a>
             <a href="#demarrage">Démarrage rapide</a>
             <a className="docs-nav-sub" href="#platform">La Platform</a>
+            <a className="docs-nav-sub" href="#comptes-connectes">Comptes — types &amp; PATCH</a>
             <a className="docs-nav-sub" href="#frais-financement">Frais — financement</a>
             <a className="docs-nav-sub" href="#frais-retrait">Frais — retrait</a>
             <a className="docs-nav-sub" href="#arrondi">Règle d&apos;arrondi</a>
             <a className="docs-nav-sub" href="#flux">Flux d&apos;intégration</a>
+            <a className="docs-nav-sub" href="#after-delay">Filet — after_delay</a>
+            <a className="docs-nav-sub" href="#split-releases">Libération partielle</a>
           </div>
           <div className="docs-nav-group">
             <div className="docs-nav-label">Référence</div>
@@ -154,6 +184,7 @@ export default function ConnectDocsPage() {
             <a className="docs-nav-sub" href="#signature">Vérifier la signature</a>
             <a className="docs-nav-sub" href="#evenements">Catalogue d&apos;événements</a>
             <a href="#code-livraison">Code de livraison</a>
+            <a href="#litige">Litige (dispute)</a>
             <a href="#erreurs">Erreurs &amp; limites</a>
           </div>
           <div className="docs-nav-group">
@@ -210,9 +241,38 @@ export default function ConnectDocsPage() {
           <Callout kind="warn" title="Opérateurs mobile money">
             <code>GET /operators?country=SN</code> renvoie la liste blanche opérateur/pays — à
             interroger avant de proposer un choix d&apos;opérateur à votre client plutôt que de
-            la deviner ou la dupliquer (voir <a href="#exemples">exemples §3</a>), elle évolue
+            la deviner ou la dupliquer (voir <a href="#exemples">exemples §5</a>), elle évolue
             indépendamment.
           </Callout>
+        </section>
+
+        <section className="docs-section" id="faq-simple-paiement">
+          <h2 className="docs-h2">Puis-je l&apos;utiliser comme un simple paiement, sans séquestre ?</h2>
+          <Callout kind="info">
+            Oui. Créez <strong>une seule</strong> <code>ConnectedAccount</code> représentant
+            votre propre plateforme, créez vos transactions avec <code>beneficiary</code>{" "}
+            pointant vers ce compte et <code>release_policy=on_funding</code> : les fonds
+            passent en <code>escrow</code> puis en <code>available</code>{" "}
+            <strong>dans le même appel webhook</strong> — le résultat pratique est celui d&apos;une
+            passerelle de paiement classique.
+          </Callout>
+          <p>Trois points faciles à manquer :</p>
+          <ul>
+            <li>
+              Un <code>beneficiary</code> (compte connecté) reste <strong>obligatoire</strong>,
+              même pour une seule plateforme qui s&apos;auto-encaisse — il n&apos;existe aucun
+              moyen de créer une transaction sans au moins un compte connecté.
+            </li>
+            <li>
+              Les frais s&apos;appliquent <strong>toujours</strong> : <code>xaalispay_fee</code>{" "}
+              (1,5&nbsp;% au financement) et le frais payout (3,5&nbsp;% au retrait). Il
+              n&apos;existe aucun mode gratuit/passthrough.
+            </li>
+            <li>
+              Comptablement, chaque transaction continue de traverser le séquestre — c&apos;est
+              seulement instantané avec <code>on_funding</code>, jamais court-circuité.
+            </li>
+          </ul>
         </section>
 
         <section className="docs-section" id="demarrage">
@@ -267,6 +327,44 @@ export default function ConnectDocsPage() {
             seule la clé change de préfixe. Il n&apos;y a pas de bac à sable séparé : testez avec
             de petits montants réels ou coordonnez-vous avec XaalisPay pour du mode test.
           </Callout>
+
+          <h2 className="docs-h2" id="comptes-connectes">Comptes connectés — types, hiérarchie et mise à jour</h2>
+          <p>Un compte connecté (<code>ConnectedAccount</code>) porte un <code>kind</code> :</p>
+          <div className="docs-table-wrap">
+            <table className="docs-table">
+              <thead><tr><th><code>kind</code></th><th>Usage</th></tr></thead>
+              <tbody>
+                <tr><td><code>merchant</code></td><td>Cas par défaut — un marchand/bénéficiaire classique (CopyX : une boutique).</td></tr>
+                <tr><td><code>beneficiary</code></td><td>Synonyme sémantique de <code>merchant</code> pour un usage non-marchand (ex. un bailleur, un créateur).</td></tr>
+                <tr><td><code>platform_revenue</code></td><td>Trésorerie interne d&apos;une <code>Platform</code> (créé automatiquement) — vous n&apos;en créez jamais un vous-même.</td></tr>
+                <tr><td><code>sub_platform</code></td><td>Sous-plateforme dans une hiérarchie multi-niveaux (ex. une agence qui gère elle-même des bénéficiaires).</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p>
+            Le champ <code>parent</code> porte cette hiérarchie multi-niveaux :
+          </p>
+          <ul>
+            <li><code>Platform</code> (vous)</li>
+            <li><code>sub_platform</code> (une agence)</li>
+            <li><code>beneficiary</code> (le bénéficiaire final)</li>
+          </ul>
+          <p>
+            Un usage mono-niveau (CopyX : un marchand direct) laisse <code>parent</code> à{" "}
+            <code>null</code> — c&apos;est le cas le plus courant, <code>parent</code> n&apos;est
+            utile que si vous représentez vous-même une hiérarchie à plusieurs échelons dans
+            XaalisPay Connect plutôt que dans votre propre base.
+          </p>
+
+          <h3 className="docs-h3" id="comptes-patch">Mettre à jour un compte (<code>PATCH /accounts/{"{id}"}</code>)</h3>
+          <Code lang="bash" copyText={exAccountPatch}>{exAccountPatch}</Code>
+          <p>
+            Seuls <code>display_name</code>, <code>payout_method</code>, <code>payout_phone</code>,{" "}
+            <code>status</code> et <code>metadata</code> sont modifiables — <code>kind</code>,{" "}
+            <code>external_ref</code> et <code>parent</code> sont figés à la création. Envoyez
+            uniquement les champs que vous voulez changer ; une valeur invalide pour{" "}
+            <code>status</code> ou <code>payout_method</code> renvoie <code>400</code>.
+          </p>
 
           <h2 className="docs-h2" id="frais-financement">
             Au financement
@@ -413,12 +511,63 @@ export default function ConnectDocsPage() {
             </li>
           </ol>
 
-          <h2 className="docs-h2">Flux type — produit physique</h2>
+          <h3 className="docs-h3" id="pay-return">L&apos;API derrière la page de retour</h3>
+          <p>
+            La page <code>/connect/pay/{"{id}"}</code> (celle qui reçoit l&apos;acheteur après
+            Bictorys) s&apos;appuie sur une API JSON publique, sans authentification :
+          </p>
+          <Code lang="http" copyText={exReturn}>
+            {`GET /api/v1/connect/pay/{id}/return
+
+{ "status": "released", "success_url": "https://...", "error_url": "" }`}
+          </Code>
+          <Callout kind="info">
+            Aucune donnée sensible n&apos;est exposée (pas de montant, pas de payeur, pas de
+            splits) — c&apos;est le navigateur de l&apos;acheteur qui appelle cet endpoint, il
+            n&apos;a pas de clé API. <code>success_url</code>/<code>error_url</code> sont
+            exactement celles fournies à la création de la transaction, chaîne vide si jamais
+            fournies.
+          </Callout>
+
+          <h2 className="docs-h2" id="flux-physique">Flux type — produit physique</h2>
           <p>Deux politiques de libération selon que vous avez un signal de livraison fiable :</p>
           <ul>
             <li><code>release_policy=manual</code> — vous appelez vous-même <code>POST /transactions/{"{id}"}/release</code> quand votre système confirme la livraison.</li>
             <li><code>release_policy=on_delivery_code</code> — XaalisPay gère la confirmation via un code à 4 chiffres. Voir <a href="#code-livraison">Code de livraison</a>.</li>
+            <li><code>release_policy=after_delay</code> — filet de sécurité générique : la transaction se libère <strong>automatiquement</strong> <code>hold_window_minutes</code> minutes après le financement, sans validation de votre part ni de l&apos;acheteur.</li>
           </ul>
+
+          <h3 className="docs-h3" id="after-delay"><code>hold_window_minutes</code> — n&apos;a d&apos;effet qu&apos;avec <code>after_delay</code></h3>
+          <p>
+            <code>hold_window_minutes</code> (fourni à la création, ou résolu depuis{" "}
+            <code>Platform.default_hold_window_minutes</code> si omis) fixe{" "}
+            <code>auto_release_at = funded_at + hold_window_minutes</code> pour une transaction{" "}
+            <code>after_delay</code> — un sweep XaalisPay libère alors automatiquement la
+            transaction à cette échéance si vous n&apos;avez rien fait entre-temps.
+          </p>
+          <Callout kind="warn">
+            Une valeur strictement positive est <strong>obligatoire</strong> pour cette policy
+            (400 sinon) ; ce champ n&apos;a aucun effet sur les trois autres policies (
+            <code>on_funding</code> est déjà immédiat, <code>manual</code> est pilotée par vous,{" "}
+            <code>on_delivery_code</code> a son propre mécanisme indépendant).
+          </Callout>
+
+          <h3 className="docs-h3" id="split-releases">Libération partielle (marketplace multi-bénéficiaires)</h3>
+          <p>
+            <code>POST /transactions/{"{id}"}/release</code> accepte un <code>split_releases</code>{" "}
+            optionnel pour libérer seulement une partie des fonds d&apos;un ou plusieurs splits :
+          </p>
+          <Code lang="json" copyText={exSplitRelease}>{`{ "split_releases": [{ "split": 3, "amount": 3000 }] }`}</Code>
+          <p>
+            <code>split</code> est l&apos;<code>id</code> numérique du split (celui renvoyé dans{" "}
+            <code>transaction.splits[].id</code>, pas l&apos;id du compte), <code>amount</code>{" "}
+            doit être inférieur ou égal au reste non encore libéré de ce split. Statut →{" "}
+            <code>partially_released</code>, webhook <code>transaction.partially_released</code>.
+            Les frais (<code>application_fee</code>/<code>xaalispay_fee</code>) ne sont libérés
+            qu&apos;une fois <strong>tous</strong> les splits entièrement libérés, moment où le
+            statut passe à <code>released</code>. Omettre <code>split_releases</code> libère tout
+            le reste en une fois.
+          </p>
 
           <h3 className="docs-h3">Suivre l&apos;activité</h3>
           <ul>
@@ -575,7 +724,7 @@ X-XaalisPay-Event: transaction.released
               <thead><tr><th>Événement</th><th>Déclenché quand</th></tr></thead>
               <tbody>
                 <tr><td><code>transaction.funded</code></td><td>Le paiement est confirmé côté Bictorys et les fonds entrent en séquestre.</td></tr>
-                <tr><td><code>transaction.released</code></td><td>Libération totale (manuelle, <code>on_funding</code> immédiat, ou code de livraison confirmé).</td></tr>
+                <tr><td><code>transaction.released</code></td><td>Libération totale (manuelle, <code>on_funding</code> immédiat, délai <code>after_delay</code> écoulé, ou code de livraison confirmé).</td></tr>
                 <tr><td><code>transaction.partially_released</code></td><td>Libération partielle (marketplace multi-splits, tranches).</td></tr>
                 <tr><td><code>transaction.refunded</code></td><td>Remboursement à l&apos;acheteur (via <code>/refund</code>, ou automatique si <code>on_delivery_code</code> jamais confirmé).</td></tr>
                 <tr><td><code>transaction.disputed</code></td><td>La transaction est bloquée en litige (<code>/dispute</code>).</td></tr>
@@ -674,6 +823,30 @@ X-XaalisPay-Event: transaction.released
           </Callout>
         </section>
 
+        <section className="docs-section" id="litige">
+          <div className="docs-eyebrow">Référence</div>
+          <h2 className="docs-h2">Litige (<code>dispute</code>)</h2>
+          <p>
+            <code>POST /transactions/{"{id}"}/dispute</code> bloque les fonds en cas de
+            contestation (fraude suspectée, litige acheteur/bénéficiaire…) : tout le reste non
+            libéré (splits + <code>application_fee</code> + <code>xaalispay_fee</code>) passe de
+            la poche <code>escrow</code> à la poche <code>blocked</code>, statut →{" "}
+            <code>disputed</code>. Possible uniquement depuis <code>funded</code> ou{" "}
+            <code>partially_released</code> (400 sinon). Webhook <code>transaction.disputed</code>.
+          </p>
+          <Code lang="bash" copyText={exDispute}>{exDispute}</Code>
+          <p>Résolution ensuite via les <strong>mêmes</strong> endpoints que le flux normal :</p>
+          <ul>
+            <li><code>POST /transactions/{"{id}"}/release</code> — tranche en faveur du/des bénéficiaire(s), déplace <code>blocked → available</code>.</li>
+            <li><code>POST /transactions/{"{id}"}/refund</code> — tranche en faveur de l&apos;acheteur, sort les fonds du séquestre.</li>
+          </ul>
+          <Callout kind="warn">
+            Une transaction contestée n&apos;est <strong>jamais</strong> libérée automatiquement
+            par le filet <code>after_delay</code> — le litige gèle toute auto-libération tant que
+            vous n&apos;avez pas tranché explicitement.
+          </Callout>
+        </section>
+
         <section className="docs-section" id="erreurs">
           <div className="docs-eyebrow">Référence</div>
           <h2 className="docs-h2">Erreurs et limites de débit</h2>
@@ -692,12 +865,12 @@ X-XaalisPay-Event: transaction.released
             <table className="docs-table">
               <thead><tr><th>Code</th><th>Cas</th></tr></thead>
               <tbody>
-                <tr><td><strong>400</strong></td><td>Requête invalide côté vous : violation d&apos;invariant de montant, état ne permettant pas l&apos;action, opérateur non activé pour le pays, code de livraison erroné, mot de passe portail trop court.</td></tr>
+                <tr><td><strong>400</strong></td><td>Requête invalide côté vous : violation d&apos;invariant de montant, état ne permettant pas l&apos;action, opérateur non activé pour le pays, <code>hold_window_minutes</code> manquant pour <code>after_delay</code>, code de livraison erroné <strong>ou verrouillé après trop de tentatives</strong> (même message générique dans les deux cas), mot de passe portail trop court.</td></tr>
                 <tr><td><strong>401</strong></td><td>Aucune credential valide — clé API absente/invalide/révoquée, ou token portail absent/expiré.</td></tr>
                 <tr><td><strong>403</strong></td><td>Authentification réussie mais n&apos;autorise pas cette action — ex. une clé API appelant un endpoint portail-only.</td></tr>
                 <tr><td><strong>404</strong></td><td>Ressource introuvable <strong>ou appartenant à une autre plateforme</strong> — jamais de fuite d&apos;existence inter-plateforme.</td></tr>
                 <tr><td><strong>409</strong></td><td>Conflit d&apos;idempotence : <code>external_ref</code> déjà utilisé pour cette plateforme.</td></tr>
-                <tr><td><strong>429</strong></td><td>Limite de débit dépassée, ou compte verrouillé après trop d&apos;échecs.</td></tr>
+                <tr><td><strong>429</strong></td><td>Limite de débit dépassée, ou compte <strong>portail</strong> verrouillé après trop d&apos;échecs de mot de passe (<strong>pas</strong> le code de livraison, qui renvoie 400).</td></tr>
                 <tr><td><strong>502</strong></td><td>Requête acceptée mais l&apos;appel sortant vers Bictorys a échoué — un retry a du sens.</td></tr>
               </tbody>
             </table>
@@ -757,7 +930,16 @@ export SK="sk_test_..."`}
           </Code>
           <p><code>external_ref</code> est unique par plateforme — réutilisez-le directement (<code>&quot;beneficiary&quot;: &quot;merchant-1&quot;</code>), pas besoin de retenir l&apos;UUID.</p>
 
-          <h3 className="docs-h3">2. Créer une transaction (sans initier de paiement)</h3>
+          <h3 className="docs-h3">2. Mettre à jour un compte connecté</h3>
+          <Code lang="bash" copyText={exAccountPatch}>{exAccountPatch}</Code>
+          <p>
+            Réponse : <code>ConnectedAccountSerializer</code> complet, avec les champs modifiés.
+            Seuls <code>display_name</code>, <code>payout_method</code>, <code>payout_phone</code>,{" "}
+            <code>status</code> et <code>metadata</code> sont acceptés — les autres champs
+            envoyés sont ignorés silencieusement.
+          </p>
+
+          <h3 className="docs-h3">3. Créer une transaction (sans initier de paiement)</h3>
           <p>Utile pour un flux où <strong>vous</strong> gérez l&apos;encaissement et ne voulez que le séquestre/split (<code>initiate_charge: false</code>, défaut <code>true</code>) :</p>
           <Code lang="bash" copyText={exTxnNoCharge}>{exTxnNoCharge}</Code>
           <Code lang="json — réponse">
@@ -790,12 +972,22 @@ export SK="sk_test_..."`}
           </Code>
           <p>Notez <code>xaalispay_fee: 150</code> calculé automatiquement (1,5&nbsp;% de 10 000) et <code>splits[0].amount: 8850</code> = le reste.</p>
 
-          <h3 className="docs-h3">3. Lister les opérateurs mobile money valides pour un pays</h3>
+          <h3 className="docs-h3">4. Créer une transaction multi-bénéficiaires (<code>splits</code>)</h3>
+          <p>Cas marketplace : plusieurs bénéficiaires sur une même transaction, chacun avec son propre montant.</p>
+          <Code lang="bash" copyText={exTxnSplits}>{exTxnSplits}</Code>
+          <p>
+            Réponse : même forme que l&apos;exemple 3, mais <code>splits</code> contient deux
+            entrées. <code>splits</code> et <code>beneficiary</code> sont mutuellement exclusifs ;
+            la somme <code>xaalispay_fee + application_fee + Σ splits.amount</code> doit égaler{" "}
+            <code>amount</code> exactement, sinon 400.
+          </p>
+
+          <h3 className="docs-h3">5. Lister les opérateurs mobile money valides pour un pays</h3>
           <Code lang="bash" copyText={exOperators}>{exOperators}</Code>
           <Code lang="json — réponse">{`{ "operators": ["wave", "orange", "maxit"] }`}</Code>
           <p>Un pays inconnu ou sans opérateur activé renvoie une liste vide, jamais une erreur : <code>{"{\"operators\": []}"}</code>. Envoyer un <code>payment_method</code> hors liste est rejeté en 400.</p>
 
-          <h3 className="docs-h3">4. Créer une transaction avec paiement (checkout Bictorys)</h3>
+          <h3 className="docs-h3">6. Créer une transaction avec paiement (checkout Bictorys)</h3>
           <Code lang="bash" copyText={exTxnCharge}>{exTxnCharge}</Code>
           <Code lang="json — réponse">
             {`{
@@ -810,7 +1002,7 @@ export SK="sk_test_..."`}
           </Code>
           <p>Avec <code>release_policy=on_funding</code>, la transaction passe directement <code>pending_payment → funded → released</code> et vous recevez <code>transaction.funded</code> puis <code>transaction.released</code> en webhook — pas besoin de poller.</p>
 
-          <h3 className="docs-h3">5. Consulter une transaction libérée</h3>
+          <h3 className="docs-h3">7. Consulter une transaction libérée</h3>
           <Code lang="bash">
             {`curl $XAALISPAY_API/api/v1/connect/transactions/caa2fc15-22b3-4e08-b42b-f37c09173158 \\
   -H "Authorization: Bearer $SK"`}
@@ -828,7 +1020,7 @@ export SK="sk_test_..."`}
 }`}
           </Code>
 
-          <h3 className="docs-h3">6. Consulter le solde et le relevé d&apos;un compte</h3>
+          <h3 className="docs-h3">8. Consulter le solde et le relevé d&apos;un compte</h3>
           <Code lang="bash">
             {`curl $XAALISPAY_API/api/v1/connect/accounts/317b47db-.../balance \\
   -H "Authorization: Bearer $SK"`}
@@ -842,7 +1034,7 @@ export SK="sk_test_..."`}
           </Code>
           <p>Renvoie les écritures comptables (append-only), plus récentes d&apos;abord — filtrable avec <code>?pocket=available</code>, <code>?from=</code>, <code>?to=</code>, <code>?store_id=</code>.</p>
 
-          <h3 className="docs-h3">7. Enregistrer un endpoint webhook</h3>
+          <h3 className="docs-h3">9. Enregistrer un endpoint webhook</h3>
           <Code lang="bash" copyText={exWebhookRegister}>{exWebhookRegister}</Code>
           <Code lang="json — réponse">
             {`{
@@ -856,7 +1048,7 @@ export SK="sk_test_..."`}
           </Code>
           <p><code>secret</code> n&apos;est renvoyé qu&apos;ici, à la création — copiez-le.</p>
 
-          <h3 className="docs-h3">8. Effectuer un retrait (payout)</h3>
+          <h3 className="docs-h3">10. Effectuer un retrait (payout)</h3>
           <p><code>amount</code> est débité en entier du solde <code>available</code>, mais seul <code>net_amount</code> est réellement envoyé à l&apos;opérateur mobile money :</p>
           <Code lang="bash" copyText={exPayout}>{exPayout}</Code>
           <Code lang="json — réponse">
@@ -897,7 +1089,31 @@ export SK="sk_test_..."`}
 ]`}
           </Code>
 
-          <h3 className="docs-h3">Erreurs — formes réelles</h3>
+          <h3 className="docs-h3">11. Libérer partiellement une transaction (<code>split_releases</code>)</h3>
+          <Code lang="bash" copyText={exSplitRelease}>{exSplitRelease}</Code>
+          <p>
+            Réponse : <code>status: &quot;partially_released&quot;</code>, le{" "}
+            <code>released_amount</code> du split ciblé est mis à jour, les autres restent
+            intacts. <code>split</code> est l&apos;<code>id</code> numérique du split, pas l&apos;id
+            du compte bénéficiaire.
+          </p>
+
+          <h3 className="docs-h3">12. Contester une transaction (litige)</h3>
+          <Code lang="bash" copyText={exDispute}>{exDispute}</Code>
+          <p>
+            Réponse : <code>status: &quot;disputed&quot;</code>. Les fonds non encore libérés
+            passent de la poche <code>escrow</code> à la poche <code>blocked</code> ; la
+            résolution se fait ensuite via <code>/release</code> ou <code>/refund</code>.
+          </p>
+
+          <h3 className="docs-h3">13. Consulter le statut public de retour</h3>
+          <Code lang="bash" copyText={exReturn}>{exReturn}</Code>
+          <Code lang="json — réponse">
+            {`{ "status": "released", "success_url": "https://votre-plateforme.com/commande/43?ok=1", "error_url": "" }`}
+          </Code>
+          <p>Sans authentification — c&apos;est le navigateur de l&apos;acheteur qui appelle cet endpoint après son passage par Bictorys.</p>
+
+          <h3 className="docs-h3">14. Erreurs — formes réelles</h3>
           <Code lang="bash">
             {`# external_ref déjà utilisé sur cette plateforme
 curl -X POST $XAALISPAY_API/api/v1/connect/accounts -H "Authorization: Bearer $SK" \\
@@ -920,16 +1136,25 @@ curl $XAALISPAY_API/api/v1/connect/portal/me -H "Authorization: Bearer $SK"
 
 # remboursement d'une transaction pas encore financée
 curl -X POST $XAALISPAY_API/api/v1/connect/transactions/{id}/refund -H "Authorization: Bearer $SK"
-# → 400 {"error":"Transaction non remboursable dans l'état pending_payment."}`}
+# → 400 {"error":"Transaction non remboursable dans l'état pending_payment."}
+
+# release_policy=after_delay sans hold_window_minutes résolu
+curl -X POST $XAALISPAY_API/api/v1/connect/transactions -H "Authorization: Bearer $SK" \\
+  -H "Content-Type: application/json" \\
+  -d '{"amount":5000,"beneficiary":"merchant-1","release_policy":"after_delay","initiate_charge":false}'
+# → 400 {"error":"hold_window_minutes (fourni ou Platform.default_hold_window_minutes) doit être strictement positif pour release_policy=after_delay."}`}
           </Code>
         </section>
 
         <footer className="docs-footer">
           Rédigé et vérifié contre le code et les tests réels d&apos;<code>apps/connect/</code>,
-          dernière mise à jour le 2026-09-05 (modèle de commission scindé — 1,5&nbsp;% au
-          financement + 3,5&nbsp;% au retrait, remplace le taux plat unique). Si un exemple ne
-          correspond plus au comportement de l&apos;API, il doit être rejoué contre un
-          environnement de test avant d&apos;être corrigé.
+          dernière mise à jour le 2026-09-27 (implémentation de <code>release_policy=after_delay</code>{" "}
+          et <code>hold_window_minutes</code>, documentation du litige, du <code>PATCH</code>{" "}
+          compte, des types de compte connecté, des transactions multi-bénéficiaires, de la
+          libération partielle et de l&apos;API publique de retour, et ajout d&apos;une FAQ sur
+          l&apos;usage en paiement simple). Si un exemple ne correspond plus au comportement de
+          l&apos;API, il doit être rejoué contre un environnement de test avant d&apos;être
+          corrigé.
         </footer>
       </main>
     </div>
