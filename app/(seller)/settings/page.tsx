@@ -3,7 +3,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import type { CountryCode } from "libphonenumber-js/max";
-import { Eye, Lock, LogOut } from "lucide-react";
+import { Eye, Lock, LogOut, MessageCircle } from "lucide-react";
 import { buildShopPath } from "@/lib/site-url";
 import { COUNTRIES, dialCodeFor, formatPhoneDisplay } from "@/lib/utils";
 import { IconCheck } from "@/components/ui/AppIcon";
@@ -12,6 +12,7 @@ import { SettingsProfileEditor } from "@/components/seller/SettingsProfileEditor
 import { SettingsNotificationPrefs } from "@/components/seller/SettingsNotificationPrefs";
 import { useSellerData } from "@/components/seller/SellerDataProvider";
 import { useAuth } from "@/lib/auth-client";
+import { markCommunityJoined, WHATSAPP_COMMUNITY_URL } from "@/lib/community";
 
 const ACCOUNT_LINKS = [
   { href: "/create?tab=tag", label: "Mon XaalisTag", desc: "Modifier votre identifiant public" },
@@ -31,11 +32,15 @@ function SettingsLink({
   label,
   desc,
   icon,
+  external,
+  onClick,
 }: {
   href: string;
   label: string;
   desc?: string;
   icon?: ReactNode;
+  external?: boolean;
+  onClick?: () => void;
 }) {
   const text = (
     <>
@@ -44,8 +49,8 @@ function SettingsLink({
     </>
   );
 
-  return (
-    <Link href={href} className="settings-link-item">
+  const content = (
+    <>
       {icon ? (
         <div className="settings-link-body-iconed">
           {icon}
@@ -57,6 +62,20 @@ function SettingsLink({
       <svg className="settings-link-chevron" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" aria-hidden="true">
         <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
       </svg>
+    </>
+  );
+
+  if (external) {
+    return (
+      <a href={href} target="_blank" rel="noopener noreferrer" className="settings-link-item" onClick={onClick}>
+        {content}
+      </a>
+    );
+  }
+
+  return (
+    <Link href={href} className="settings-link-item" onClick={onClick}>
+      {content}
     </Link>
   );
 }
@@ -172,6 +191,14 @@ export default function SettingsPage() {
       <section className="settings-section">
         <p className="settings-section-label">Aide &amp; légal</p>
         <div className="settings-link-group">
+          <SettingsLink
+            href={WHATSAPP_COMMUNITY_URL}
+            external
+            label="Communauté WhatsApp"
+            desc="Astuces et entraide entre vendeurs"
+            icon={<MessageCircle size={17} strokeWidth={1.5} />}
+            onClick={() => markCommunityJoined(profile.id)}
+          />
           {HELP_LINKS.map((item) => (
             <SettingsLink key={item.href} {...item} />
           ))}

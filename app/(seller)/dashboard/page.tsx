@@ -16,9 +16,18 @@ import { DashboardSkeleton } from "@/components/ui/Skeleton";
 import { WalletOverview } from "@/components/seller/WalletOverview";
 import { AssetRow } from "@/components/seller/AssetRow";
 import { OrderDetailSheet } from "@/components/seller/OrderDetailSheet";
+import { CommunityInviteDialog } from "@/components/seller/CommunityInviteDialog";
+import { CommunityInviteCard } from "@/components/seller/CommunityInviteCard";
 import { buildShopUrl, formatPublicUrl } from "@/lib/site-url";
 import { useSellerData } from "@/components/seller/SellerDataProvider";
 import { apiFetch } from "@/lib/api-client";
+import {
+  dismissCommunityCard,
+  getCommunityState,
+  markCommunityJoined,
+  markCommunityModalSeen,
+  type CommunityState,
+} from "@/lib/community";
 
 const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
 
@@ -56,6 +65,39 @@ function DashboardContent() {
       router.replace("/dashboard", { scroll: false });
     }
   }, [searchParams, router]);
+
+  // Invitation communauté : modal une seule fois par vendeur/appareil (y
+  // compris les comptes existants), puis la carte prend le relais aux visites
+  // suivantes tant qu'il n'a ni rejoint ni masqué la carte.
+  const profileId = data?.profile.id;
+  const [community, setCommunity] = useState<CommunityState | null>(null);
+  const [communityOpen, setCommunityOpen] = useState(false);
+
+  useEffect(() => {
+    if (!profileId) return;
+    const timer = setTimeout(() => {
+      const state = getCommunityState(profileId);
+      setCommunity(state);
+      if (!state.modalSeen && !state.joined) {
+        markCommunityModalSeen(profileId);
+        setCommunityOpen(true);
+      }
+    }, 800);
+    return () => clearTimeout(timer);
+  }, [profileId]);
+
+  const joinCommunity = () => {
+    if (!profileId) return;
+    markCommunityJoined(profileId);
+    setCommunityOpen(false);
+    setCommunity((c) => (c ? { ...c, joined: true } : c));
+  };
+
+  const hideCommunityCard = () => {
+    if (!profileId) return;
+    dismissCommunityCard(profileId);
+    setCommunity((c) => (c ? { ...c, cardDismissed: true } : c));
+  };
 
   useEffect(() => {
     apiFetch("/api/catalog/products/")
@@ -185,6 +227,16 @@ function DashboardContent() {
         }
         protectionMinutes={data.protectionMinutes}
         onCountdownExpire={() => refresh({ silent: true })}
+      />
+
+      {community?.modalSeen && !community.joined && !community.cardDismissed && (
+        <CommunityInviteCard onJoin={joinCommunity} onDismiss={hideCommunityCard} />
+      )}
+
+      <CommunityInviteDialog
+        open={communityOpen}
+        onClose={() => setCommunityOpen(false)}
+        onJoin={joinCommunity}
       />
 
       {actionOrders.length > 0 && (

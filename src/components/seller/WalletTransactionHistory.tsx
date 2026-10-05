@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
 import { ArrowDownLeft, ArrowUpRight, ChevronRight } from "lucide-react";
 import { splitCurrency } from "@/lib/utils";
 import { apiFetch } from "@/lib/api-client";
@@ -20,10 +21,19 @@ function fmtDate(iso: string) {
   });
 }
 
-export function WalletTransactionHistory({ refreshKey = 0 }: { refreshKey?: number }) {
+// preview (page Portefeuille) : 3 lignes + « Tout voir » vers
+// /wallet/transactions ; full : tout, la page porte déjà le titre.
+export function WalletTransactionHistory({
+  refreshKey = 0,
+  variant = "preview",
+}: {
+  refreshKey?: number;
+  variant?: "preview" | "full";
+}) {
   const [transactions, setTransactions] = useState<TransactionItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [expanded, setExpanded] = useState(false);
+  const isPreview = variant === "preview";
+  const title = isPreview ? <h2 className="wallet-section-title">Mouvements</h2> : null;
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -45,7 +55,7 @@ export function WalletTransactionHistory({ refreshKey = 0 }: { refreshKey?: numb
   if (loading) {
     return (
       <section className="wallet-txn-history">
-        <h2 className="wallet-section-title">Mouvements</h2>
+        {title}
         <p className="text-muted wallet-txn-empty">Chargement…</p>
       </section>
     );
@@ -54,7 +64,7 @@ export function WalletTransactionHistory({ refreshKey = 0 }: { refreshKey?: numb
   if (transactions.length === 0) {
     return (
       <section className="wallet-txn-history">
-        <h2 className="wallet-section-title">Mouvements</h2>
+        {title}
         <p className="text-muted wallet-txn-empty">
           Aucun mouvement pour le moment. Paiements, libérations et retraits apparaîtront ici.
         </p>
@@ -62,18 +72,20 @@ export function WalletTransactionHistory({ refreshKey = 0 }: { refreshKey?: numb
     );
   }
 
-  const visible = expanded ? transactions : transactions.slice(0, PREVIEW_COUNT);
+  const visible = isPreview ? transactions.slice(0, PREVIEW_COUNT) : transactions;
 
   return (
     <section className="wallet-txn-history">
-      <div className="wallet-section-head">
-        <h2 className="wallet-section-title">Mouvements</h2>
-        {transactions.length > PREVIEW_COUNT && !expanded && (
-          <button type="button" className="wallet-section-see-all" onClick={() => setExpanded(true)}>
-            Tout voir <ChevronRight size={14} strokeWidth={1.5} />
-          </button>
-        )}
-      </div>
+      {isPreview && (
+        <div className="wallet-section-head">
+          {title}
+          {transactions.length > PREVIEW_COUNT && (
+            <Link href="/wallet/transactions" className="wallet-section-see-all">
+              Tout voir <ChevronRight size={14} strokeWidth={1.5} />
+            </Link>
+          )}
+        </div>
+      )}
       <div className="wallet-txn-list">
         {visible.map((txn) => (
           <article key={txn.id} className="wallet-txn-item">

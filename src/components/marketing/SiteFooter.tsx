@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { MapPin } from "lucide-react";
+import { WHATSAPP_COMMUNITY_URL } from "@/lib/community";
 
 const COLS = [
   {
@@ -25,6 +26,7 @@ const COLS = [
     links: [
       { label: "Créer un compte", href: "/auth?mode=signup" },
       { label: "Se connecter", href: "/auth" },
+      { label: "Communauté WhatsApp", href: WHATSAPP_COMMUNITY_URL, external: true },
     ],
   },
   {
@@ -60,11 +62,23 @@ export function SiteFooter() {
         {COLS.map((col) => (
           <div key={col.title} className="lp-footer-col">
             <p className="lp-footer-col-title">{col.title}</p>
-            {col.links.map((link) => (
-              <Link key={link.label} href={link.href} className="lp-footer-link">
-                {link.label}
-              </Link>
-            ))}
+            {col.links.map((link) =>
+              "external" in link ? (
+                <a
+                  key={link.label}
+                  href={link.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="lp-footer-link"
+                >
+                  {link.label}
+                </a>
+              ) : (
+                <Link key={link.label} href={link.href} className="lp-footer-link">
+                  {link.label}
+                </Link>
+              )
+            )}
           </div>
         ))}
       </div>

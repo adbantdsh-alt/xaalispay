@@ -1,6 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
+import { ChevronRight } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { apiFetch } from "@/lib/api-client";
 import { adaptPayout, type AdaptedPayout } from "@/lib/api-adapters";
@@ -15,6 +17,8 @@ const STATUS_LABELS: Record<PayoutItem["status"], string> = {
   failed: "Échoué",
 };
 
+const PREVIEW_COUNT = 3;
+
 function fmtDate(iso: string) {
   return new Date(iso).toLocaleDateString("fr-FR", {
     day: "2-digit",
@@ -25,9 +29,18 @@ function fmtDate(iso: string) {
   });
 }
 
-export function WalletPayoutHistory({ refreshKey = 0 }: { refreshKey?: number }) {
+// Même découpage preview/full que WalletTransactionHistory.
+export function WalletPayoutHistory({
+  refreshKey = 0,
+  variant = "preview",
+}: {
+  refreshKey?: number;
+  variant?: "preview" | "full";
+}) {
   const [payouts, setPayouts] = useState<PayoutItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const isPreview = variant === "preview";
+  const title = isPreview ? <h2 className="wallet-section-title">Historique des retraits</h2> : null;
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -49,7 +62,7 @@ export function WalletPayoutHistory({ refreshKey = 0 }: { refreshKey?: number })
   if (loading) {
     return (
       <section className="wallet-payout-history">
-        <h2 className="wallet-section-title">Historique des retraits</h2>
+        {title}
         <p className="text-muted wallet-payout-empty">Chargement…</p>
       </section>
     );
@@ -58,7 +71,7 @@ export function WalletPayoutHistory({ refreshKey = 0 }: { refreshKey?: number })
   if (payouts.length === 0) {
     return (
       <section className="wallet-payout-history">
-        <h2 className="wallet-section-title">Historique des retraits</h2>
+        {title}
         <p className="text-muted wallet-payout-empty">
           Aucun retrait pour le moment. Vos retraits Wave et Orange Money apparaîtront ici.
         </p>
@@ -66,11 +79,22 @@ export function WalletPayoutHistory({ refreshKey = 0 }: { refreshKey?: number })
     );
   }
 
+  const visible = isPreview ? payouts.slice(0, PREVIEW_COUNT) : payouts;
+
   return (
     <section className="wallet-payout-history">
-      <h2 className="wallet-section-title">Historique des retraits</h2>
+      {isPreview && (
+        <div className="wallet-section-head">
+          {title}
+          {payouts.length > PREVIEW_COUNT && (
+            <Link href="/wallet/payouts" className="wallet-section-see-all">
+              Tout voir <ChevronRight size={14} strokeWidth={1.5} />
+            </Link>
+          )}
+        </div>
+      )}
       <div className="wallet-payout-list">
-        {payouts.map((payout) => (
+        {visible.map((payout) => (
           <article key={payout.id} className="wallet-payout-item">
             <div className="wallet-payout-item-main">
               <p className="wallet-payout-item-amount">
