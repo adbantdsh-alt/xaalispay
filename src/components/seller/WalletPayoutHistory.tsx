@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, formatPhoneInternational } from "@/lib/utils";
 import { apiFetch } from "@/lib/api-client";
 import { adaptPayout, type AdaptedPayout } from "@/lib/api-adapters";
 import { MOBILE_MONEY_LABELS } from "@/lib/payment-methods";
@@ -101,7 +101,7 @@ export function WalletPayoutHistory({
                 {formatCurrency(payout.netAmount ?? payout.amount)}
               </p>
               <p className="wallet-payout-item-meta text-muted">
-                {MOBILE_MONEY_LABELS[payout.method] || payout.method} · {payout.phone}
+                {MOBILE_MONEY_LABELS[payout.method] || payout.method} · {formatPhoneInternational(payout.phone)}
               </p>
               <p className="wallet-payout-item-date text-muted">{fmtDate(payout.createdAt)}</p>
             </div>

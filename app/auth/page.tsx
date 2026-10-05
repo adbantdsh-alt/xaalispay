@@ -3,7 +3,8 @@
 import { Suspense, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { ArrowRight, MessageCircle, ShieldCheck } from "lucide-react";
+import { ArrowRight, ShieldCheck } from "lucide-react";
+import { WhatsAppLogo } from "@/components/ui/WhatsAppLogo";
 import type { CountryCode } from "libphonenumber-js/max";
 import { BrandMark } from "@/components/ui/BrandMark";
 import { OtpInput, emptyDigits } from "@/components/ui/OtpInput";
@@ -458,7 +459,7 @@ function AuthForm() {
           >
             <div className="auth-otp-banner">
               <span className="auth-otp-banner-icon">
-                <MessageCircle size={16} />
+                <WhatsAppLogo size={18} color="#fff" />
               </span>
               <span className="auth-otp-banner-text">Code envoyé au {maskPhoneForDisplay(phone, dial, country)}</span>
               <button type="button" className="auth-otp-banner-edit" onClick={handleEditPhone}>

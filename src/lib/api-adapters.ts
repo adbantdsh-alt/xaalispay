@@ -164,12 +164,16 @@ const ENTRY_TYPE_LABELS: Record<string, string> = {
   refund_debit: "Remboursement",
   payout_debit: "Retrait",
   payout_reversal: "Retrait annulé",
+  payout_settled: "Retrait réglé",
+  affiliate_commission_credit: "Commission d'affiliation",
 };
 
 export function adaptTransaction(t: Json): AdaptedTransaction {
   return {
     id: String(t.id),
-    label: ENTRY_TYPE_LABELS[t.entry_type] || t.entry_type,
+    // Jamais le code brut à l'écran : un type inconnu (ajouté côté backend
+    // avant le front) retombe sur un libellé neutre.
+    label: ENTRY_TYPE_LABELS[t.entry_type] || "Mouvement",
     detail: t.description || undefined,
     signedAmount: t.signed_amount,
     direction: t.direction,

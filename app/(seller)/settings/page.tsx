@@ -3,7 +3,8 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import type { CountryCode } from "libphonenumber-js/max";
-import { Eye, Lock, LogOut, MessageCircle } from "lucide-react";
+import { Eye, Lock, LogOut } from "lucide-react";
+import { WhatsAppLogo } from "@/components/ui/WhatsAppLogo";
 import { buildShopPath } from "@/lib/site-url";
 import { COUNTRIES, dialCodeFor, formatPhoneDisplay } from "@/lib/utils";
 import { IconCheck } from "@/components/ui/AppIcon";
@@ -195,8 +196,8 @@ export default function SettingsPage() {
             href={WHATSAPP_COMMUNITY_URL}
             external
             label="Communauté WhatsApp"
-            desc="Astuces et entraide entre vendeurs"
-            icon={<MessageCircle size={17} strokeWidth={1.5} />}
+            desc="Donnez votre avis, échangez entre vendeurs"
+            icon={<WhatsAppLogo size={18} />}
             onClick={() => markCommunityJoined(profile.id)}
           />
           {HELP_LINKS.map((item) => (

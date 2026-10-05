@@ -90,6 +90,15 @@ export function formatPhoneDisplay(phone: string, region: CountryCode = DEFAULT_
   return parsed ? parsed.formatNational() : phone;
 }
 
+/** Numéro E.164 stocké → affichage international lisible ("+221 78 384 61 71").
+ * Des retraits anciens ont été enregistrés avec l'indicatif en double
+ * ("+221 +221783846171") : on repart du dernier "+" pour les afficher proprement. */
+export function formatPhoneInternational(phone: string): string {
+  const lastPlus = phone.lastIndexOf("+");
+  const parsed = parseMobilePhone(lastPlus > 0 ? phone.slice(lastPlus) : phone);
+  return parsed ? parsed.formatInternational() : phone;
+}
+
 /** Vrai si `phone` est un numéro mobile valide pour `region` (SN par défaut). */
 export function isValidMobilePhone(phone: string, region: CountryCode = DEFAULT_PHONE_REGION): boolean {
   return parseMobilePhone(phone, region) !== null;

@@ -1,12 +1,14 @@
 "use client";
 
-import { MessageCircle } from "lucide-react";
+import { WhatsAppLogo } from "@/components/ui/WhatsAppLogo";
 import { WHATSAPP_COMMUNITY_URL } from "@/lib/community";
 
+// XaalisPay est un outil pour les vendeurs : la communauté sert d'abord à
+// construire le produit avec eux — c'est le message principal du modal.
 const BENEFITS = [
-  "Astuces pour vendre plus et rassurer vos clients",
-  "Les nouveautés XaalisPay en avant-première",
-  "Entraide entre vendeurs et réponses rapides de l'équipe",
+  "Proposez les fonctionnalités dont vous avez besoin",
+  "Testez les nouveautés avant tout le monde",
+  "Échangez astuces et conseils avec d'autres vendeurs",
 ];
 
 export function CommunityInviteDialog({
@@ -31,14 +33,14 @@ export function CommunityInviteDialog({
       >
         <div className="modal-sheet-handle" />
         <div className="community-invite-icon" aria-hidden="true">
-          <MessageCircle size={26} strokeWidth={1.75} />
+          <WhatsAppLogo size={30} />
         </div>
         <h3 id="community-invite-title" className="community-invite-title">
-          Rejoignez la communauté XaalisPay
+          Construisons XaalisPay ensemble
         </h3>
         <p className="community-invite-lead">
-          Échangez avec d&apos;autres vendeurs et l&apos;équipe XaalisPay, directement sur
-          WhatsApp. C&apos;est gratuit.
+          XaalisPay est fait pour les vendeurs, et nous voulons l&apos;améliorer avec vous.
+          Rejoignez la communauté WhatsApp : vos retours guident nos prochaines évolutions.
         </p>
         <ul className="community-invite-list">
           {BENEFITS.map((b) => (
@@ -52,7 +54,8 @@ export function CommunityInviteDialog({
           className="btn-seller-primary"
           onClick={onJoin}
         >
-          Rejoindre sur WhatsApp
+          <WhatsAppLogo size={20} color="#fff" />
+          Rejoindre la communauté
         </a>
         <button type="button" className="community-invite-later" onClick={onClose}>
           Plus tard
