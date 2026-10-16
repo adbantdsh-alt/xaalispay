@@ -3,7 +3,7 @@
  * inchangée par rapport au design validé. */
 "use client";
 
-import { dialCodeFor, phonePlaceholderFor, splitCurrency } from "@/lib/utils";
+import { COUNTRIES, dialCodeFor, phonePlaceholderFor, splitCurrency } from "@/lib/utils";
 import s from "./PayClientFields.module.css";
 
 export interface PayClientFieldsValues {
@@ -21,12 +21,22 @@ interface PayClientFieldsProps {
   /** Total à payer recalculé pour la zone sélectionnée — affiché en rappel
    * juste sous le choix de zone, pour éviter de remonter voir le résumé. */
   totalToPay?: number;
-  /** Pays du vendeur (order.country) — détermine l'indicatif et le format
-   * d'exemple affichés, jamais codés en dur sur le Sénégal. */
+  /** Pays du numéro de l'ACHETEUR (= pays de son portefeuille mobile money,
+   * qui peut différer de celui du vendeur) — détermine l'indicatif, le format
+   * d'exemple et, côté page, les opérateurs proposés. */
   country?: string;
+  /** Absent -> indicatif figé (aperçu vendeur). */
+  onCountryChange?: (country: string) => void;
 }
 
-export function PayClientFields({ values, onChange, zones, totalToPay, country = "SN" }: PayClientFieldsProps) {
+export function PayClientFields({
+  values,
+  onChange,
+  zones,
+  totalToPay,
+  country = "SN",
+  onCountryChange,
+}: PayClientFieldsProps) {
   const set = (key: keyof PayClientFieldsValues, value: string) => {
     onChange({ ...values, [key]: value });
   };
@@ -67,7 +77,22 @@ export function PayClientFields({ values, onChange, zones, totalToPay, country =
           Numéro de téléphone
         </label>
         <div className={s.phoneRow}>
-          <span className={s.prefix}>{dialCodeFor(country)}</span>
+          {onCountryChange ? (
+            <select
+              className={s.prefix}
+              value={country}
+              onChange={(e) => onCountryChange(e.target.value)}
+              aria-label="Pays de votre numéro"
+            >
+              {COUNTRIES.map((c) => (
+                <option key={c.code} value={c.code}>
+                  {c.flag} {c.dial}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <span className={s.prefix}>{dialCodeFor(country)}</span>
+          )}
           <input
             id="pay-phone"
             className={`${s.input} ${s.phoneInput}`}

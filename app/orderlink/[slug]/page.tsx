@@ -32,6 +32,11 @@ export default function PayPage() {
   const [clientPhone, setClientPhone] = useState("");
   const [clientAddress, setClientAddress] = useState("");
   const [selectedZoneId, setSelectedZoneId] = useState("");
+  // Pays du numéro de l'acheteur = pays de son portefeuille mobile money.
+  // Défaut : pays du vendeur, mais un Burkinabè qui achète chez un vendeur
+  // sénégalais doit payer en Wave/Orange/Moov BURKINA — un lien Wave émis
+  // pour le Sénégal échoue dans son app ("Checkout failed").
+  const [buyerCountry, setBuyerCountry] = useState<string | null>(null);
   const [trackingSlug, setTrackingSlug] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [paying, setPaying] = useState(false);
@@ -75,6 +80,8 @@ export default function PayPage() {
     return () => clearInterval(interval);
   }, [fetchOrder, order?.isProductLink, trackingSlug]);
 
+  const paymentCountry = buyerCountry || order?.country || "SN";
+
   const handlePay = async (method: string, otp?: string) => {
     if (
       !clientFirstName.trim() ||
@@ -94,13 +101,15 @@ export default function PayPage() {
         client_first_name: clientFirstName.trim(),
         // Bictorys exige du E.164 strict ("+221771234567", sans espace) pour
         // customerObject.phone — clientPhone est en saisie libre espacée.
-        // Région = pays du vendeur (order.country), pas un défaut Sénégal.
-        client_phone: toE164(clientPhone.trim(), (order?.country || "SN") as CountryCode),
+        // Région = pays choisi par l'acheteur pour son numéro.
+        client_phone: toE164(clientPhone.trim(), paymentCountry as CountryCode),
         client_address: clientAddress.trim(),
         delivery_zone_id: Number(selectedZoneId),
         payment_method: method,
-        // Uniquement rempli pour Orange Money Côte d'Ivoire (voir
-        // PayMethodButtons) — ignoré par le backend pour tout autre cas.
+        // Le backend retient de toute façon le pays de l'indicatif du numéro.
+        payment_country: paymentCountry,
+        // Uniquement rempli pour Orange Money Côte d'Ivoire / Burkina Faso
+        // (voir PayMethodButtons) — ignoré par le backend pour tout autre cas.
         otp: otp || "",
       }),
     });
@@ -283,11 +292,12 @@ export default function PayPage() {
             }}
             zones={order.deliveryZones || []}
             totalToPay={checkoutTotal}
-            country={order.country}
+            country={paymentCountry}
+            onCountryChange={setBuyerCountry}
           />
         </PayCheckoutSection>
 
-        <PayMethodButtons country={order.country} onPay={handlePay} paying={paying} />
+        <PayMethodButtons country={paymentCountry} onPay={handlePay} paying={paying} />
 
         {error && <p className="alert-danger" role="alert">{error}</p>}
       </div>

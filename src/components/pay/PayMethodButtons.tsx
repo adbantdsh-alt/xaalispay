@@ -50,7 +50,7 @@ export function PayMethodButtons({
   disabled?: boolean;
 }) {
   const [activeMethod, setActiveMethod] = useState<MobileMoneyMethod | null>(null);
-  // Étape OTP dédiée (Orange Money Côte d'Ivoire uniquement) : l'acheteur
+  // Étape OTP dédiée (Orange Money Côte d'Ivoire / Burkina Faso) : l'acheteur
   // compose #144*82#, reçoit un code, le saisit ici avant que la charge ne
   // parte réellement — voir apps.payments.operators.operator_requires_orange_otp.
   const [otpMethod, setOtpMethod] = useState<MobileMoneyMethod | null>(null);

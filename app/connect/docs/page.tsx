@@ -109,7 +109,21 @@ const exTxnCharge = `curl -X POST $XAALISPAY_API/api/v1/connect/transactions \\
     "application_fee": 1000,
     "release_policy": "on_funding",
     "external_ref": "order-43",
+    "payer": {"name": "Issa", "phone": "+22670123456"},
     "payment_method": "wave",
+    "initiate_charge": true
+  }'`;
+
+const exTxnOrangeOtp = `curl -X POST $XAALISPAY_API/api/v1/connect/transactions \\
+  -H "Authorization: Bearer $SK" -H "Content-Type: application/json" \\
+  -d '{
+    "amount": 10000,
+    "beneficiary": "merchant-1",
+    "release_policy": "on_funding",
+    "external_ref": "order-44",
+    "payer": {"name": "Aya", "phone": "+2250701234567"},
+    "payment_method": "orange",
+    "otp": "482913",
     "initiate_charge": true
   }'`;
 
@@ -243,6 +257,18 @@ export default function ConnectDocsPage() {
             interroger avant de proposer un choix d&apos;opérateur à votre client plutôt que de
             la deviner ou la dupliquer (voir <a href="#exemples">exemples §5</a>), elle évolue
             indépendamment.
+          </Callout>
+
+          <Callout kind="warn" title="Pays du paiement = pays du numéro du payeur">
+            Le paiement est créé dans le pays de l&apos;indicatif de <code>payer.phone</code> (pays
+            du portefeuille mobile money), <strong>pas</strong> dans le pays de votre plateforme ni
+            celui de livraison : un acheteur en <code>+226</code> paie en Wave/Orange/Moov
+            Burkina, même chez un marchand sénégalais. Un compte Wave Burkina ne peut pas régler
+            un lien Wave Sénégal (l&apos;app Wave affiche « Checkout failed »). Envoyez donc
+            toujours <code>payer.phone</code> en E.164 et proposez les opérateurs de{" "}
+            <code>GET /operators?country=</code>
+            <em>pays de ce numéro</em>. Le champ <code>country</code> n&apos;est qu&apos;un repli
+            quand <code>payer.phone</code> est absent.
           </Callout>
         </section>
 
@@ -984,8 +1010,10 @@ export SK="sk_test_..."`}
 
           <h3 className="docs-h3">5. Lister les opérateurs mobile money valides pour un pays</h3>
           <Code lang="bash" copyText={exOperators}>{exOperators}</Code>
-          <Code lang="json — réponse">{`{ "operators": ["wave", "orange", "maxit"] }`}</Code>
-          <p>Un pays inconnu ou sans opérateur activé renvoie une liste vide, jamais une erreur : <code>{"{\"operators\": []}"}</code>. Envoyer un <code>payment_method</code> hors liste est rejeté en 400.</p>
+          <Code lang="json — réponse">{`{ "operators": ["wave", "orange", "maxit"], "otp_required": [] }`}</Code>
+          <p>Un pays inconnu ou sans opérateur activé renvoie une liste vide, jamais une erreur : <code>{"{\"operators\": [], \"otp_required\": []}"}</code>. Envoyer un <code>payment_method</code> hors liste est rejeté en 400.</p>
+          <p>Pays couverts : <code>SN</code>, <code>CI</code>, <code>ML</code>, <code>BJ</code>, <code>TG</code>, <code>BF</code>. <code>otp_required</code> liste les opérateurs qui exigent le champ <code>otp</code> à la création dans ce pays — aujourd&apos;hui Orange Money en Côte d&apos;Ivoire et au Burkina Faso :</p>
+          <Code lang="json — GET /operators?country=BF">{`{ "operators": ["moov", "wave", "orange"], "otp_required": ["orange"] }`}</Code>
 
           <h3 className="docs-h3">6. Créer une transaction avec paiement (checkout Bictorys)</h3>
           <Code lang="bash" copyText={exTxnCharge}>{exTxnCharge}</Code>
@@ -1001,6 +1029,12 @@ export SK="sk_test_..."`}
 }`}
           </Code>
           <p>Avec <code>release_policy=on_funding</code>, la transaction passe directement <code>pending_payment → funded → released</code> et vous recevez <code>transaction.funded</code> puis <code>transaction.released</code> en webhook — pas besoin de poller.</p>
+          <p>Ici <code>payer.phone</code> est burkinabè (<code>+226</code>) : la transaction est créée avec <code>&quot;country&quot;: &quot;BF&quot;</code> et le paiement part en Wave Burkina, quel que soit le <code>country</code> éventuellement envoyé. <code>payment_method</code> est validé contre les opérateurs de ce pays (400 sinon, <strong>avant</strong> toute création : vous pouvez réessayer avec le même <code>external_ref</code>).</p>
+
+          <h3 className="docs-h3">6 bis. Orange Money avec OTP (Côte d&apos;Ivoire, Burkina Faso)</h3>
+          <p>Pour les opérateurs listés dans <code>otp_required</code>, l&apos;acheteur compose <strong>#144*82#</strong> sur son téléphone Orange, reçoit un code, et vous le transmettez dans <code>otp</code>. Affichez ce champ dans votre checkout dès que l&apos;acheteur choisit Orange dans ces pays.</p>
+          <Code lang="bash" copyText={exTxnOrangeOtp}>{exTxnOrangeOtp}</Code>
+          <p>Sans <code>otp</code> : 400 <code>{"{\"error\": \"Orange Money (CI) exige `otp` : …\"}"}</code>, sans qu&apos;aucune transaction ne soit créée.</p>
 
           <h3 className="docs-h3">7. Consulter une transaction libérée</h3>
           <Code lang="bash">
@@ -1125,6 +1159,12 @@ curl -X POST $XAALISPAY_API/api/v1/connect/transactions -H "Authorization: Beare
   -H "Content-Type: application/json" \\
   -d '{"amount":5000,"beneficiary":"merchant-1","release_policy":"manual","payment_method":"mtn","initiate_charge":true}'
 # → 400 {"error":"Opérateur 'mtn' non disponible pour le pays 'SN'."}
+
+# Orange Money Côte d'Ivoire / Burkina Faso sans otp
+curl -X POST $XAALISPAY_API/api/v1/connect/transactions -H "Authorization: Bearer $SK" \\
+  -H "Content-Type: application/json" \\
+  -d '{"amount":5000,"beneficiary":"merchant-1","release_policy":"manual","payer":{"phone":"+22670123456"},"payment_method":"orange","initiate_charge":true}'
+# → 400 {"error":"Orange Money (BF) exige \`otp\` : l'acheteur compose #144*82# puis transmet le code reçu."}
 
 # aucune authentification
 curl $XAALISPAY_API/api/v1/connect/accounts
