@@ -95,7 +95,7 @@ export function AdminConnectOverviewSection() {
         <div className="admin-stat-grid" style={{ marginTop: "0.75rem" }}>
           <div className="admin-stat-box">
             <div className="admin-stat-box-label">Disponible pour retrait</div>
-            <div className="admin-stat-box-value">{formatCurrency(overview.revenue.treasury_available_balance)}</div>
+            <div className="admin-stat-box-value">{formatCurrency(overview.revenue.treasury_withdrawable)}</div>
           </div>
           <div className="admin-stat-box">
             <div className="admin-stat-box-label">Déjà retiré par XaalisPay</div>

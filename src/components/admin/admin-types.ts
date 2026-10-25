@@ -305,6 +305,9 @@ export interface ConnectOverviewData {
     bictorys_fees_total: number;
     net_revenue: number;
     treasury_available_balance: number;
+    /** Réellement retirable : solde comptable − frais Bictorys Connect
+     * (prélevés sur le compte commun, absents du ledger). */
+    treasury_withdrawable: number;
     treasury_paid_out_balance: number;
     treasury_escrow_balance: number;
     treasury_blocked_balance: number;
