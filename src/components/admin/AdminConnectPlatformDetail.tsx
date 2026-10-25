@@ -52,6 +52,8 @@ function adaptDetail(data: any): ConnectPlatformDetail {
     },
     balances: data.balances,
     revenueTotal: data.revenue_total,
+    bictorysFeesTotal: data.bictorys_fees_total,
+    netRevenue: data.net_revenue,
     accountsCount: data.accounts_count,
     recentTransactions: data.recent_transactions.map(adaptConnectTransactionRow),
     recentPayouts: data.recent_payouts.map(adaptConnectPayoutRow),
@@ -134,6 +136,14 @@ export function AdminConnectPlatformDetail({ platformId, onClose }: { platformId
                 <div className="admin-stat-box">
                   <div className="admin-stat-box-label">Revenu Connect total</div>
                   <div className="admin-stat-box-value">{formatCurrency(detail.revenueTotal)}</div>
+                </div>
+                <div className="admin-stat-box">
+                  <div className="admin-stat-box-label">Frais Bictorys</div>
+                  <div className="admin-stat-box-value">− {formatCurrency(detail.bictorysFeesTotal)}</div>
+                </div>
+                <div className="admin-stat-box">
+                  <div className="admin-stat-box-label">Bénéfice net</div>
+                  <div className="admin-stat-box-value">{formatCurrency(detail.netRevenue)}</div>
                 </div>
               </div>
             </div>

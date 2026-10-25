@@ -221,6 +221,8 @@ export function adaptConnectPlatformRow(p: any): ConnectPlatformRow {
     isActive: p.is_active,
     transactionsCount: p.transactions_count,
     revenueTotal: p.revenue_total,
+    bictorysFeesTotal: p.bictorys_fees_total,
+    netRevenue: p.net_revenue,
     ownAvailableBalance: p.own_available_balance,
     merchantAvailableBalance: p.merchant_available_balance,
     createdAt: p.created_at,

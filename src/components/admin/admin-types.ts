@@ -347,6 +347,8 @@ export interface ConnectPlatformRow {
   isActive: boolean;
   transactionsCount: number;
   revenueTotal: number;
+  bictorysFeesTotal: number;
+  netRevenue: number;
   ownAvailableBalance: number;
   merchantAvailableBalance: number;
   createdAt: string;
@@ -393,6 +395,8 @@ export interface ConnectPlatformDetail {
   };
   balances: ConnectSplitBalances;
   revenueTotal: number;
+  bictorysFeesTotal: number;
+  netRevenue: number;
   accountsCount: number;
   recentTransactions: ConnectTransactionRow[];
   recentPayouts: ConnectPayoutRow[];

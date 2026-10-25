@@ -100,6 +100,7 @@ export function AdminConnectPlatformsSection() {
                   <th>Commission payout</th>
                   <th>Transactions</th>
                   <th>Revenu généré</th>
+                  <th>Bénéfice net</th>
                   <th>Solde propre dispo.</th>
                   <th>Solde marchands dispo.</th>
                   <th>Connectée le</th>
@@ -118,6 +119,7 @@ export function AdminConnectPlatformsSection() {
                     <td className="admin-mono">{(Number(p.xaalispayPayoutFeePercent) * 100).toFixed(2)} %</td>
                     <td className="admin-mono">{p.transactionsCount}</td>
                     <td className="admin-mono">{formatCurrency(p.revenueTotal)}</td>
+                    <td className="admin-mono">{formatCurrency(p.netRevenue)}</td>
                     <td className="admin-mono">{formatCurrency(p.ownAvailableBalance)}</td>
                     <td className="admin-mono">{formatCurrency(p.merchantAvailableBalance)}</td>
                     <td>{formatAdminDate(p.createdAt)}</td>
