@@ -2,10 +2,45 @@
 
 import { useState, useEffect } from "react";
 import { TriangleAlert } from "lucide-react";
+import { calculateSellerCommission } from "@/lib/fees";
 import { formatCurrency } from "@/lib/utils";
 import { formatAdminDate, isDisputeOverdue, type DisputeRow } from "./admin-types";
 
 type ResolutionAction = "release_full" | "refund_full" | "split";
+
+type PendingDecision = { action: ResolutionAction; refundAmount?: number };
+
+const DECISION_TITLES: Record<ResolutionAction, string> = {
+  refund_full: "Rembourser l'acheteur",
+  release_full: "Libérer au vendeur",
+  split: "Partager le montant",
+};
+
+/** Ce que la décision va réellement faire, montants compris — affiché AVANT
+ * exécution (étape de confirmation : décision irréversible, argent réel). */
+function decisionLines(dispute: DisputeRow, decision: PendingDecision): string[] {
+  const total = dispute.total;
+  if (decision.action === "refund_full") {
+    return [
+      `${formatCurrency(total)} renvoyés à ${dispute.clientName} (${dispute.clientPhone})`,
+      `Le vendeur ${dispute.sellerName} ne reçoit rien`,
+    ];
+  }
+  if (decision.action === "release_full") {
+    const commission = calculateSellerCommission(total);
+    return [
+      `${formatCurrency(total - commission)} crédités à ${dispute.sellerName} (commission ${formatCurrency(commission)} déduite)`,
+      `L'acheteur ${dispute.clientName} n'est pas remboursé`,
+    ];
+  }
+  const refund = decision.refundAmount ?? 0;
+  const sellerPart = total - refund;
+  const commission = calculateSellerCommission(sellerPart);
+  return [
+    `${formatCurrency(refund)} renvoyés à ${dispute.clientName} (${dispute.clientPhone})`,
+    `${formatCurrency(sellerPart - commission)} crédités à ${dispute.sellerName} (commission ${formatCurrency(commission)} déduite)`,
+  ];
+}
 
 export function AdminDisputesSection({
   disputes,
@@ -22,6 +57,7 @@ export function AdminDisputesSection({
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
   const [splitAmount, setSplitAmount] = useState("");
   const [showSplitForm, setShowSplitForm] = useState(false);
+  const [pendingDecision, setPendingDecision] = useState<PendingDecision | null>(null);
 
   useEffect(() => {
     onActivityChange?.(!!selectedDispute || !!lightboxUrl);
@@ -31,11 +67,15 @@ export function AdminDisputesSection({
     setSelectedDispute(dispute);
     setShowSplitForm(false);
     setSplitAmount("");
+    setPendingDecision(null);
   };
 
   const resolve = async (disputeId: string, action: ResolutionAction, refundAmount?: number) => {
     const ok = await onResolve(disputeId, action, refundAmount);
-    if (ok) setSelectedDispute(null);
+    if (ok) {
+      setSelectedDispute(null);
+      setPendingDecision(null);
+    }
   };
 
   return (
@@ -291,12 +331,52 @@ export function AdminDisputesSection({
                 <TriangleAlert size={18} aria-hidden="true" />
                 <span>Action irréversible — vérifiez les preuves et contactez les parties avant de trancher.</span>
               </div>
+              {pendingDecision ? (
+                <div className={`admin-arbitrage-confirm is-${pendingDecision.action}`} role="alertdialog" aria-labelledby="arbitrage-confirm-title">
+                  <p id="arbitrage-confirm-title" className="admin-arbitrage-confirm-title">
+                    Confirmer : {DECISION_TITLES[pendingDecision.action]}
+                  </p>
+                  <ul className="admin-arbitrage-confirm-lines">
+                    {decisionLines(selectedDispute, pendingDecision).map((line) => (
+                      <li key={line}>{line}</li>
+                    ))}
+                  </ul>
+                  <div className="admin-arbitrage-actions">
+                    <button
+                      type="button"
+                      className="admin-arbitrage-btn admin-arbitrage-cancel"
+                      disabled={resolving !== null}
+                      onClick={() => setPendingDecision(null)}
+                    >
+                      Annuler
+                    </button>
+                    <button
+                      type="button"
+                      className={`admin-arbitrage-btn admin-arbitrage-go`}
+                      disabled={resolving !== null}
+                      onClick={() =>
+                        resolve(selectedDispute.id, pendingDecision.action, pendingDecision.refundAmount)
+                      }
+                    >
+                      {resolving === selectedDispute.id + pendingDecision.action ? (
+                        <>
+                          <span className="btn-spinner" aria-hidden="true" />
+                          En cours…
+                        </>
+                      ) : (
+                        "Confirmer la décision"
+                      )}
+                    </button>
+                  </div>
+                </div>
+              ) : (
+              <>
               <div className="admin-arbitrage-actions">
                 <button
                   type="button"
                   className="admin-arbitrage-btn admin-arbitrage-refund"
                   disabled={resolving !== null}
-                  onClick={() => resolve(selectedDispute.id, "refund_full")}
+                  onClick={() => setPendingDecision({ action: "refund_full" })}
                 >
                   {resolving === selectedDispute.id + "refund_full" ? (
                     <>
@@ -311,7 +391,7 @@ export function AdminDisputesSection({
                   type="button"
                   className="admin-arbitrage-btn admin-arbitrage-release"
                   disabled={resolving !== null}
-                  onClick={() => resolve(selectedDispute.id, "release_full")}
+                  onClick={() => setPendingDecision({ action: "release_full" })}
                 >
                   {resolving === selectedDispute.id + "release_full" ? (
                     <>
@@ -351,7 +431,7 @@ export function AdminDisputesSection({
                     type="button"
                     className="admin-arbitrage-split"
                     disabled={resolving !== null || !Number(splitAmount)}
-                    onClick={() => resolve(selectedDispute.id, "split", Number(splitAmount))}
+                    onClick={() => setPendingDecision({ action: "split", refundAmount: Number(splitAmount) })}
                   >
                     {resolving === selectedDispute.id + "split" ? (
                       <>
@@ -359,10 +439,12 @@ export function AdminDisputesSection({
                         En cours…
                       </>
                     ) : (
-                      "Confirmer le partage"
+                      "Vérifier le partage"
                     )}
                   </button>
                 </div>
+              )}
+              </>
               )}
             </div>
           </article>

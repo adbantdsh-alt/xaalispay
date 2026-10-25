@@ -114,42 +114,40 @@ export function AdminConnectPlatformDetail({ platformId, onClose }: { platformId
 
         {!loading && detail && (
           <>
-            <div className="admin-dispute-section" style={{ display: "flex", gap: "1.1rem", fontSize: "0.8125rem" }}>
-              <span style={{ color: "#6b7280" }}>Inscrite le {formatAdminDate(detail.platform.createdAt)}</span>
-              <span style={{ color: "#9aa3ad" }}>·</span>
-              <span style={{ color: "#6b7280" }}>
-                Commission payin {(Number(detail.platform.xaalispayFeePercent) * 100).toFixed(2)} %
+            <div className="admin-dispute-section av-chip-row">
+              <span className="av-meta-chip">Inscrite le {formatAdminDate(detail.platform.createdAt)}</span>
+              <span className="av-meta-chip">
+                Encaissement {(Number(detail.platform.xaalispayFeePercent) * 100).toFixed(2)} %
               </span>
-              <span style={{ color: "#9aa3ad" }}>·</span>
-              <span style={{ color: "#6b7280" }}>
-                Commission payout {(Number(detail.platform.xaalispayPayoutFeePercent) * 100).toFixed(2)} %
+              <span className="av-meta-chip">
+                Retrait {(Number(detail.platform.xaalispayPayoutFeePercent) * 100).toFixed(2)} %
               </span>
-              <span style={{ color: "#9aa3ad" }}>·</span>
-              <span style={{ color: "#6b7280" }}>{detail.accountsCount} compte(s) connecté(s)</span>
-              <span style={{ color: "#9aa3ad" }}>·</span>
-              <span style={{ color: "#6b7280" }}>Devise {detail.platform.currency}</span>
+              <span className="av-meta-chip">{detail.accountsCount} compte(s) connecté(s)</span>
+              <span className="av-meta-chip">{detail.platform.currency}</span>
             </div>
 
             <div className="admin-dispute-section">
-              <h3 className="admin-dispute-section-title">Revenu XaalisPay généré par cette plateforme</h3>
-              <div className="admin-stat-grid">
-                <div className="admin-stat-box">
-                  <div className="admin-stat-box-label">Revenu Connect total</div>
-                  <div className="admin-stat-box-value">{formatCurrency(detail.revenueTotal)}</div>
+              <h3 className="admin-dispute-section-title">Ce que cette plateforme rapporte à XaalisPay</h3>
+              <div className="av-net-band">
+                <div>
+                  <span>Revenu brut</span>
+                  <strong className="admin-mono">{formatCurrency(detail.revenueTotal)}</strong>
                 </div>
-                <div className="admin-stat-box">
-                  <div className="admin-stat-box-label">Frais Bictorys</div>
-                  <div className="admin-stat-box-value">− {formatCurrency(detail.bictorysFeesTotal)}</div>
+                <span className="av-net-op" aria-hidden="true">−</span>
+                <div>
+                  <span>Frais Bictorys de ses flux</span>
+                  <strong className="admin-mono av-minus">{formatCurrency(detail.bictorysFeesTotal)}</strong>
                 </div>
-                <div className="admin-stat-box">
-                  <div className="admin-stat-box-label">Bénéfice net</div>
-                  <div className="admin-stat-box-value">{formatCurrency(detail.netRevenue)}</div>
+                <span className="av-net-op" aria-hidden="true">=</span>
+                <div>
+                  <span>Bénéfice net</span>
+                  <strong className="admin-mono av-net-total">{formatCurrency(detail.netRevenue)}</strong>
                 </div>
               </div>
             </div>
 
             <div className="admin-dispute-section">
-              <h3 className="admin-dispute-section-title">Solde propre de la plateforme (commission Connect)</h3>
+              <h3 className="admin-dispute-section-title">Commission de la plateforme</h3>
               <div className="admin-hint-banner">
                 <span className="admin-hint-dot" aria-hidden="true" />
                 <span className="admin-hint-muted">
@@ -161,7 +159,7 @@ export function AdminConnectPlatformDetail({ platformId, onClose }: { platformId
             </div>
 
             <div className="admin-dispute-section">
-              <h3 className="admin-dispute-section-title">Solde de ses marchands / bénéficiaires (séquestre)</h3>
+              <h3 className="admin-dispute-section-title">Fonds de ses marchands — jamais l&apos;argent de la plateforme</h3>
               <BalanceGroup balances={detail.balances.merchants} />
             </div>
 

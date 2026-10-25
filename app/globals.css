@@ -8404,3 +8404,100 @@ label.delivery-zone-chip {
 .av-balance-grid { margin: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.625rem; }
 .av-balance-cell { padding: 0.875rem; border-radius: 12px; background: var(--color-gray-50); display: flex; flex-direction: column; gap: 0.25rem; }
 .av-balance-cell dd { margin: 0; font-size: 1.0625rem; font-weight: 600; }
+
+/* — Admin v2 : composants partagés par toutes les pages — */
+.admin-section { display: flex; flex-direction: column; gap: 1.25rem; }
+.admin-section > * { margin-top: 0; }
+.admin-section-hint, .admin-empty { color: #5F6672; }
+.admin-card { padding: 1.5rem; }
+.admin-card-title { margin-bottom: 1rem; }
+.admin-kpi { padding: 1.25rem; display: flex; flex-direction: column; gap: 0.375rem; }
+.admin-kpi-value {
+  margin: 0; font-family: var(--font-mono), monospace; font-feature-settings: "tnum";
+  font-size: 1.5rem; font-weight: 600; letter-spacing: -0.02em;
+}
+.admin-kpi-sub { margin: 0; font-size: 0.8125rem; }
+.admin-kpi-grid { grid-template-columns: repeat(auto-fit, minmax(min(100%, 190px), 1fr)); gap: 0.75rem; margin-bottom: 0; }
+
+.admin-stat-grid { grid-template-columns: repeat(auto-fit, minmax(min(100%, 160px), 1fr)); gap: 0.625rem; }
+.admin-stat-box { border: 0; background: var(--color-gray-50); border-radius: 12px; padding: 0.875rem 1rem; }
+.admin-stat-box-label { font-size: 0.75rem; font-weight: 500; color: #5F6672; }
+.admin-stat-box-value { font-size: 1.125rem; margin-top: 0.25rem; }
+.admin-detail-list dt { font-size: 0.75rem; text-transform: none; letter-spacing: 0; font-weight: 500; color: #5F6672; }
+
+.admin-dispute-section { padding: 1.25rem 1.5rem; border-top: 1px solid #EEEEEE; }
+.admin-dispute-section-title {
+  margin: 0 0 0.75rem; font-size: 0.9375rem; font-weight: 600; text-transform: none; letter-spacing: -0.01em;
+  color: var(--color-navy);
+}
+
+.admin-action-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem; min-height: 36px;
+  padding: 0 0.875rem; border-radius: 10px; font-size: 0.8125rem; font-weight: 500; cursor: pointer;
+}
+.admin-action-btn:hover:not(:disabled) { background: var(--color-navy-soft); }
+.admin-action-btn--warn { background: var(--color-coral); color: var(--color-navy); }
+.admin-action-btn--warn:hover:not(:disabled) { background: var(--color-coral-hover); }
+.admin-filters { gap: 0.5rem; margin-bottom: 0; align-items: center; }
+.admin-filter {
+  min-height: 36px; padding: 0 0.875rem; border-radius: 10px; border-color: var(--color-gray-200);
+  font-weight: 500; cursor: pointer;
+}
+.admin-filter:hover:not(.is-active) { border-color: var(--color-navy); }
+.admin-search-wrap svg { color: #5F6672; }
+.admin-daterange { background: var(--color-white); border: 1px solid var(--color-gray-200); border-radius: 10px; }
+
+.admin-modal-backdrop { background: rgba(30, 58, 95, 0.45); }
+.admin-modal { border-radius: 20px 20px 0 0; padding: 0; overflow: hidden auto; }
+.admin-modal-head {
+  position: sticky; top: 0; z-index: 1; margin: 0; padding: 1.25rem 1.5rem; gap: 1rem;
+  background: var(--color-white); border-bottom: 1px solid #EEEEEE;
+}
+.admin-modal > :not(.admin-modal-head):not(.admin-dispute-section) { margin-left: 1.5rem; margin-right: 1.5rem; }
+.admin-modal-head-title { font-size: 1.125rem; letter-spacing: -0.01em; }
+.admin-modal-head-subtitle { color: #5F6672; }
+.admin-modal-close { cursor: pointer; background: var(--color-gray-50); color: var(--color-navy); }
+.admin-modal-close:hover { background: var(--color-gray-200); }
+@media (min-width: 40rem) {
+  .admin-modal-backdrop { align-items: center; padding: 2rem; }
+  .admin-modal { border-radius: 16px; }
+}
+
+/* Arbitrage : décisions irréversibles, argent réel — couleurs franches mais
+   dans la charte, jamais un bouton principal plein qui invite au clic. */
+.admin-arbitrage-warn { background: #F6EDE3; border-color: #E7D4C2; color: #6B4A2B; border-radius: 12px; font-size: 0.8125rem; }
+.admin-arbitrage-warn svg { color: #7A4E25; }
+.admin-arbitrage-btn { border-radius: 12px; font-weight: 600; min-height: 48px; }
+.admin-arbitrage-refund { background: #F8E8E6; color: #9A2F25; border: 1.5px solid #EBC7C2; }
+.admin-arbitrage-refund:hover:not(:disabled) { border-color: #9A2F25; }
+.admin-arbitrage-release { background: #E6F0EA; color: #245A3F; border: 1.5px solid #BFD8C9; }
+.admin-arbitrage-release:hover:not(:disabled) { border-color: #245A3F; }
+.admin-arbitrage-split { border-radius: 12px; color: var(--color-navy); }
+.admin-timeline-dot--ok { background: #245A3F; }
+.admin-timeline-dot--bad { background: #9A2F25; }
+.admin-error { border-radius: 12px; background: #F8E8E6; color: #9A2F25; }
+.admin-modal { padding-bottom: 1.5rem; }
+.av-chip-row { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.av-meta-chip { font-size: 0.8125rem; padding: 0.35rem 0.75rem; border-radius: 999px; background: var(--color-gray-50); color: var(--color-navy); }
+.av-net-band {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 1rem 1.5rem; padding: 1.25rem 1.5rem;
+  border-radius: 14px; background: var(--color-navy); color: var(--color-white);
+}
+.av-net-band > div { flex: 1 1 150px; display: flex; flex-direction: column; gap: 0.3rem; }
+.av-net-band span { font-size: 0.8125rem; color: #D5DEEA; }
+.av-net-band strong { font-size: 1.375rem; font-weight: 600; }
+.av-net-band .av-minus { color: #F1DDC6; }
+.av-net-band .av-net-total { font-size: 1.625rem; }
+.av-net-band .av-net-op { font-size: 1.25rem; color: var(--color-coral); flex: none; }
+.admin-arbitrage-confirm {
+  display: flex; flex-direction: column; gap: 0.875rem; padding: 1rem 1.125rem; border-radius: 12px;
+  border: 1.5px solid var(--color-navy); background: var(--color-white);
+}
+.admin-arbitrage-confirm.is-refund_full { border-color: #9A2F25; }
+.admin-arbitrage-confirm.is-release_full { border-color: #245A3F; }
+.admin-arbitrage-confirm-title { margin: 0; font-size: 0.9375rem; font-weight: 600; }
+.admin-arbitrage-confirm-lines { margin: 0; padding-left: 1.1rem; display: flex; flex-direction: column; gap: 0.375rem; font-size: 0.875rem; line-height: 1.45; }
+.admin-arbitrage-cancel { background: var(--color-white); color: var(--color-navy); border: 1.5px solid var(--color-gray-200); }
+.admin-arbitrage-cancel:hover:not(:disabled) { border-color: var(--color-navy); }
+.admin-arbitrage-go { background: var(--color-navy); color: var(--color-white); border: 1.5px solid var(--color-navy); }
+.admin-arbitrage-go:hover:not(:disabled) { background: var(--color-navy-soft); }

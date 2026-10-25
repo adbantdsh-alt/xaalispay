@@ -198,15 +198,15 @@ export function AdminSellerDetail({ sellerId, onClose }: { sellerId: number; onC
         {!loading && detail && (
           <>
             <div className="admin-dispute-section" style={{ display: "flex", gap: "1.1rem", fontSize: "0.8125rem" }}>
-              <span className="admin-mono" style={{ color: "#6b7280" }}>
+              <span className="admin-mono" style={{ color: "#5F6672" }}>
                 <a href={`tel:${detail.profile.phone}`}>{detail.profile.phone}</a>
               </span>
-              <span style={{ color: "#9aa3ad" }}>·</span>
-              <span style={{ color: "#6b7280" }}>Inscrit le {formatAdminDate(detail.profile.createdAt)}</span>
+              <span style={{ color: "#5F6672" }}>·</span>
+              <span style={{ color: "#5F6672" }}>Inscrit le {formatAdminDate(detail.profile.createdAt)}</span>
               {detail.profile.email && (
                 <>
-                  <span style={{ color: "#9aa3ad" }}>·</span>
-                  <span style={{ color: "#6b7280" }}>{detail.profile.email}</span>
+                  <span style={{ color: "#5F6672" }}>·</span>
+                  <span style={{ color: "#5F6672" }}>{detail.profile.email}</span>
                 </>
               )}
             </div>
@@ -353,7 +353,7 @@ export function AdminSellerDetail({ sellerId, onClose }: { sellerId: number; onC
             <div className="admin-dispute-section">
               <h3 className="admin-dispute-section-title">Affiliation</h3>
               {detail.referredBy && (
-                <p style={{ fontSize: "0.8125rem", color: "#6b7280", marginBottom: "0.75rem" }}>
+                <p style={{ fontSize: "0.8125rem", color: "#5F6672", marginBottom: "0.75rem" }}>
                   Parrainé par <strong>{detail.referredBy.businessName}</strong>{" "}
                   <span className="admin-mono">@{detail.referredBy.username}</span> le{" "}
                   {formatAdminDate(detail.referredBy.createdAt)}.
