@@ -3,31 +3,41 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { apiFetch } from "@/lib/api-client";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, splitCurrency } from "@/lib/utils";
 import { handleAdminAuthStatus } from "./AdminDataProvider";
 import { connectTransactionStatusLabel, type ConnectBalanceSummary, type ConnectOverviewData } from "./admin-types";
 
 const AUTO_REFRESH_MS = 30_000;
 
-function BalanceGroup({ title, balances }: { title: string; balances: ConnectBalanceSummary }) {
+function BalanceGroup({
+  title,
+  hint,
+  balances,
+}: {
+  title: string;
+  hint: string;
+  balances: ConnectBalanceSummary;
+}) {
+  const rows = [
+    ["Disponible", balances.available_total],
+    ["En séquestre", balances.escrow_total],
+    ["Bloqué (litiges)", balances.blocked_total],
+    ["Déjà retiré", balances.paid_out_total],
+  ] as const;
   return (
-    <div className="admin-stat-grid">
-      <div className="admin-stat-box">
-        <div className="admin-stat-box-label">{title} — en séquestre</div>
-        <div className="admin-stat-box-value">{formatCurrency(balances.escrow_total)}</div>
+    <div className="av-balance-group">
+      <div>
+        <h3 className="av-subtitle">{title}</h3>
+        <p className="av-card-hint">{hint}</p>
       </div>
-      <div className="admin-stat-box">
-        <div className="admin-stat-box-label">{title} — disponible</div>
-        <div className="admin-stat-box-value">{formatCurrency(balances.available_total)}</div>
-      </div>
-      <div className="admin-stat-box">
-        <div className="admin-stat-box-label">{title} — bloqué (litiges)</div>
-        <div className="admin-stat-box-value">{formatCurrency(balances.blocked_total)}</div>
-      </div>
-      <div className="admin-stat-box">
-        <div className="admin-stat-box-label">{title} — déjà retiré</div>
-        <div className="admin-stat-box-value">{formatCurrency(balances.paid_out_total)}</div>
-      </div>
+      <dl className="av-balance-grid">
+        {rows.map(([label, value]) => (
+          <div key={label} className="av-balance-cell">
+            <dt className="av-card-label">{label}</dt>
+            <dd className="admin-mono">{formatCurrency(value)}</dd>
+          </div>
+        ))}
+      </dl>
     </div>
   );
 }
@@ -72,102 +82,102 @@ export function AdminConnectOverviewSection() {
 
   if (!overview) return null;
 
-  const statusEntries = Object.entries(overview.transactions_by_status);
+  const statusEntries = Object.entries(overview.transactions_by_status).filter(([, count]) => count > 0);
+  const { revenue } = overview;
+  const [withdrawable, withdrawableCurrency] = splitCurrency(revenue.treasury_withdrawable);
 
   return (
-    <section className="admin-section">
-      <article className="admin-card">
-        <h2 className="admin-card-title">Trésorerie XaalisPay — son propre argent</h2>
-        <div className="admin-stat-grid">
-          <div className="admin-stat-box">
-            <div className="admin-stat-box-label">Revenu Connect depuis le début</div>
-            <div className="admin-stat-box-value">{formatCurrency(overview.revenue.xaalispay_fee_total)}</div>
+    <section className="admin-section av-overview">
+      <div className="av-row">
+        <article className="av-hero">
+          <div className="av-hero-main">
+            <span className="av-hero-label">Disponible pour retrait</span>
+            <span className="av-hero-value admin-mono">
+              {withdrawable}
+              {withdrawableCurrency && <span className="av-hero-currency">{withdrawableCurrency}</span>}
+            </span>
+            <span className="av-hero-sub">
+              Solde comptable de la trésorerie moins les frais Bictorys déjà prélevés sur le compte commun.
+            </span>
           </div>
-          <div className="admin-stat-box">
-            <div className="admin-stat-box-label">Frais Bictorys</div>
-            <div className="admin-stat-box-value">− {formatCurrency(overview.revenue.bictorys_fees_total)}</div>
-          </div>
-          <div className="admin-stat-box">
-            <div className="admin-stat-box-label">Bénéfice net Connect</div>
-            <div className="admin-stat-box-value">{formatCurrency(overview.revenue.net_revenue)}</div>
-          </div>
-        </div>
-        <div className="admin-stat-grid" style={{ marginTop: "0.75rem" }}>
-          <div className="admin-stat-box">
-            <div className="admin-stat-box-label">Disponible pour retrait</div>
-            <div className="admin-stat-box-value">{formatCurrency(overview.revenue.treasury_withdrawable)}</div>
-          </div>
-          <div className="admin-stat-box">
-            <div className="admin-stat-box-label">Déjà retiré par XaalisPay</div>
-            <div className="admin-stat-box-value">{formatCurrency(overview.revenue.treasury_paid_out_balance)}</div>
-          </div>
-        </div>
-        {(overview.revenue.treasury_escrow_balance > 0 || overview.revenue.treasury_blocked_balance > 0) && (
-          <div className="admin-stat-grid" style={{ marginTop: "0.75rem" }}>
-            <div className="admin-stat-box">
-              <div className="admin-stat-box-label">En séquestre (trésorerie)</div>
-              <div className="admin-stat-box-value">{formatCurrency(overview.revenue.treasury_escrow_balance)}</div>
+          <dl className="av-hero-breakdown">
+            <div>
+              <dt>Revenu Connect brut</dt>
+              <dd className="admin-mono">{formatCurrency(revenue.xaalispay_fee_total)}</dd>
             </div>
-            <div className="admin-stat-box">
-              <div className="admin-stat-box-label">Bloqué (trésorerie)</div>
-              <div className="admin-stat-box-value">{formatCurrency(overview.revenue.treasury_blocked_balance)}</div>
+            <div>
+              <dt>Frais Bictorys</dt>
+              <dd className="admin-mono av-minus">− {formatCurrency(revenue.bictorys_fees_total)}</dd>
             </div>
-          </div>
-        )}
-      </article>
+            <div>
+              <dt>Déjà retiré</dt>
+              <dd className="admin-mono av-minus">− {formatCurrency(revenue.treasury_paid_out_balance)}</dd>
+            </div>
+            <div className="av-hero-total">
+              <dt>Bénéfice net Connect</dt>
+              <dd className="admin-mono">{formatCurrency(revenue.net_revenue)}</dd>
+            </div>
+            {(revenue.treasury_escrow_balance > 0 || revenue.treasury_blocked_balance > 0) && (
+              <div>
+                <dt>Commissions à venir (séquestre / litiges)</dt>
+                <dd className="admin-mono">
+                  {formatCurrency(revenue.treasury_escrow_balance + revenue.treasury_blocked_balance)}
+                </dd>
+              </div>
+            )}
+          </dl>
+        </article>
 
-      <article className="admin-card" style={{ marginTop: "1rem" }}>
-        <h2 className="admin-card-title">Fonds détenus dans Connect — n&apos;appartient PAS à XaalisPay</h2>
-        <div className="admin-hint-banner">
-          <span className="admin-hint-dot" aria-hidden="true" />
-          <span className="admin-hint-strong">Commission Connect uniquement</span>
-          <span className="admin-hint-muted">
-            — &ldquo;Solde propre des plateformes&rdquo; ne montre que la commission perçue via les transactions
-            Connect. Une plateforme (ex. CopyX) peut avoir d&apos;autres revenus totalement invisibles ici
-            (abonnements…) : ce chiffre n&apos;est jamais son revenu total.
-          </span>
+        <div className="av-side">
+          <div className="av-mini-grid">
+            <article className="av-mini">
+              <span className="av-card-label">Plateformes actives</span>
+              <span className="av-mini-value admin-mono">{overview.active_platforms_count}</span>
+            </article>
+            <article className="av-mini">
+              <span className="av-card-label">Transactions</span>
+              <span className="av-mini-value admin-mono">{overview.transactions_count}</span>
+            </article>
+            <article className="av-mini">
+              <span className="av-card-label">Volume payé</span>
+              <span className="av-mini-value admin-mono">{formatCurrency(overview.gmv_total)}</span>
+            </article>
+          </div>
+          <article className="av-card">
+            <h2 className="av-card-title">Transactions par statut</h2>
+            {statusEntries.length === 0 ? (
+              <p className="av-card-hint">Aucune transaction.</p>
+            ) : (
+              <ul className="av-legend">
+                {statusEntries.map(([status, count]) => (
+                  <li key={status}>
+                    <span className="av-legend-label">{connectTransactionStatusLabel(status)}</span>
+                    <span className="admin-mono">{count}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </article>
         </div>
-        <BalanceGroup title="Solde propre des plateformes" balances={overview.platform_balances.platform_own} />
-        <div style={{ marginTop: "0.75rem" }}>
+      </div>
+
+      <article className="av-card">
+        <div className="av-card-head">
+          <h2 className="av-card-title">Fonds détenus dans Connect</h2>
+          <span className="av-card-hint">jamais l&apos;argent de XaalisPay</span>
+        </div>
+        <div className="av-grid-2">
           <BalanceGroup
-            title="Solde de leurs marchands / bénéficiaires"
+            title="Commission des plateformes"
+            hint="Leur commission perçue via Connect, jamais leur revenu total"
+            balances={overview.platform_balances.platform_own}
+          />
+          <BalanceGroup
+            title="Argent de leurs marchands"
+            hint="Argent de tiers en séquestre chez les plateformes"
             balances={overview.platform_balances.merchants}
           />
         </div>
-      </article>
-
-      <div className="admin-kpi-grid" style={{ marginTop: "1rem" }}>
-        <article className="admin-kpi">
-          <p className="admin-kpi-label">Plateformes actives</p>
-          <p className="admin-kpi-value">{overview.active_platforms_count}</p>
-          <p className="admin-kpi-sub">{overview.platforms_count} au total</p>
-        </article>
-        <article className="admin-kpi">
-          <p className="admin-kpi-label">Transactions</p>
-          <p className="admin-kpi-value">{overview.transactions_count}</p>
-          <p className="admin-kpi-sub">Toutes plateformes confondues</p>
-        </article>
-        <article className="admin-kpi">
-          <p className="admin-kpi-label">Volume Connect (GMV)</p>
-          <p className="admin-kpi-value">{formatCurrency(overview.gmv_total)}</p>
-          <p className="admin-kpi-sub">Toutes transactions confondues</p>
-        </article>
-      </div>
-
-      <article className="admin-card" style={{ marginTop: "1rem" }}>
-        <h2 className="admin-card-title">Transactions par statut</h2>
-        {statusEntries.length === 0 ? (
-          <p className="admin-empty">Aucune transaction.</p>
-        ) : (
-          <div className="admin-stat-grid">
-            {statusEntries.map(([status, count]) => (
-              <div className="admin-stat-box" key={status}>
-                <div className="admin-stat-box-label">{connectTransactionStatusLabel(status)}</div>
-                <div className="admin-stat-box-value">{count}</div>
-              </div>
-            ))}
-          </div>
-        )}
       </article>
     </section>
   );

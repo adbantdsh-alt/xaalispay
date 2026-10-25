@@ -4,43 +4,47 @@ import { usePathname } from "next/navigation";
 import { Menu, RefreshCw } from "lucide-react";
 import { useAdminData } from "./AdminDataProvider";
 
+// [groupe, titre] — le groupe reprend celui de la barre latérale.
 const PAGE_META: Record<string, [string, string]> = {
-  "/admin": ["Vue d'ensemble", "Surveillance de la plateforme en temps réel"],
-  "/admin/analytics": ["Analytics", "Tendances de commandes, volume d'affaires et revenu"],
-  "/admin/affiliation": ["Affiliation", "Programme de parrainage et commissions versées"],
-  "/admin/disputes": ["Litiges", "Arbitrage des conflits acheteur / vendeur"],
-  "/admin/payouts": ["Retraits", "Suivi et relance des versements"],
-  "/admin/sellers": ["Vendeurs", "Comptes et soldes des vendeurs"],
-  "/admin/products": ["Produits", "Catalogue et modération"],
-  "/admin/profile": ["Mon profil", "Votre compte et l'équipe XaalisPay"],
-  "/admin/change-password": ["Changer mon mot de passe", "Étape obligatoire avant de continuer"],
+  "/admin": ["Pilotage", "Vue d'ensemble"],
+  "/admin/analytics": ["Pilotage", "Analytics"],
+  "/admin/orders": ["Marketplace", "Commandes"],
+  "/admin/disputes": ["Marketplace", "Litiges"],
+  "/admin/payouts": ["Marketplace", "Retraits"],
+  "/admin/refunds": ["Marketplace", "Remboursements"],
+  "/admin/sellers": ["Marketplace", "Vendeurs"],
+  "/admin/products": ["Marketplace", "Produits"],
+  "/admin/affiliation": ["Marketplace", "Affiliation"],
+  "/admin/connect": ["Connect", "Trésorerie"],
+  "/admin/connect/analytics": ["Connect", "Analytics Connect"],
+  "/admin/connect/platforms": ["Connect", "Plateformes"],
+  "/admin/profile": ["Compte", "Mon profil"],
+  "/admin/change-password": ["Compte", "Changer mon mot de passe"],
 };
 
 function resolvePageMeta(pathname: string): [string, string] {
-  if (pathname === "/admin") return PAGE_META["/admin"];
-  const match = Object.entries(PAGE_META).find(([path]) => path !== "/admin" && pathname.startsWith(path));
-  return match?.[1] ?? PAGE_META["/admin"];
+  if (PAGE_META[pathname]) return PAGE_META[pathname];
+  // Préfixe le plus long d'abord : /admin/connect/platforms avant /admin/connect.
+  const match = Object.keys(PAGE_META)
+    .filter((path) => path !== "/admin" && pathname.startsWith(path))
+    .sort((a, b) => b.length - a.length)[0];
+  return match ? PAGE_META[match] : PAGE_META["/admin"];
 }
 
 export function AdminTopbar({ onMenuClick }: { onMenuClick: () => void }) {
   const pathname = usePathname();
   const { lastUpdated, autoRefreshing, refresh } = useAdminData();
-  const [title, sub] = resolvePageMeta(pathname);
+  const [group, title] = resolvePageMeta(pathname);
 
   return (
     <header className="admin-topbar">
-      <button
-        type="button"
-        className="admin-topbar-toggle"
-        onClick={onMenuClick}
-        aria-label="Ouvrir le menu"
-      >
-        <Menu size={20} />
+      <button type="button" className="admin-topbar-toggle" onClick={onMenuClick} aria-label="Ouvrir le menu">
+        <Menu size={20} aria-hidden="true" />
       </button>
 
       <div className="admin-topbar-titles">
-        <span className="admin-topbar-title">{title}</span>
-        <span className="admin-topbar-sub">{sub}</span>
+        <span className="admin-topbar-sub">{group}</span>
+        <h1 className="admin-topbar-title">{title}</h1>
       </div>
 
       <div className="admin-refresh-group">
@@ -54,11 +58,7 @@ export function AdminTopbar({ onMenuClick }: { onMenuClick: () => void }) {
             ) : (
               <>
                 <span className="admin-live-dot" aria-hidden="true" />
-                {lastUpdated.toLocaleTimeString("fr-FR", {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                  second: "2-digit",
-                })}
+                {lastUpdated.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
               </>
             )}
           </span>

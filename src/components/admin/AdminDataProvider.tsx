@@ -51,6 +51,8 @@ async function fetchDisputeCountOnly(): Promise<OverviewData | null> {
   const rows = await res.json();
   return {
     sellers_count: 0,
+    sellers_new_7d: 0,
+    refunds_to_review: { count: 0, amount: 0 },
     products_count: 0,
     orders_count: 0,
     orders_by_status: {},

@@ -5,6 +5,10 @@ import type { DisputeMedia, DisputeResponsibleParty, DisputeType, OrderStatus } 
  * dans src/lib/types.ts à respecter). */
 export interface OverviewData {
   sellers_count: number;
+  /** Vendeurs inscrits ces 7 derniers jours. */
+  sellers_new_7d: number;
+  /** Remboursements acheteurs à vérifier : échoués + anciens jamais envoyés. */
+  refunds_to_review: { count: number; amount: number };
   products_count: number;
   orders_count: number;
   orders_by_status: Record<string, number>;
