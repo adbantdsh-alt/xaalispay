@@ -69,6 +69,9 @@ export function AdminAnalyticsSection() {
   const [days, setDays] = useState<AnalyticsDayPoint[]>([]);
   const [dateFrom, setDateFrom] = useState(daysAgo(29));
   const [dateTo, setDateTo] = useState(daysAgo(0));
+  // Période réellement couverte : le backend ramène « Tout » au premier jour
+  // d'activité réelle.
+  const [coveredFrom, setCoveredFrom] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -92,6 +95,7 @@ export function AdminAnalyticsSection() {
         }
         const data = await res.json();
         setDays(data.days);
+        setCoveredFrom(data.date_from ?? null);
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -164,7 +168,7 @@ export function AdminAnalyticsSection() {
           }}
         />
         <span className="ax-muted">
-          Du {dateFrom.split("-").reverse().join("/")} au {dateTo.split("-").reverse().join("/")}
+          Du {(coveredFrom ?? dateFrom).split("-").reverse().join("/")} au {dateTo.split("-").reverse().join("/")}
         </span>
       </div>
 

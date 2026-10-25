@@ -31,20 +31,20 @@ import {
 
 const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
 
+// Même règle que le backend (Order.PAID_STATUSES) : seul l'argent réellement
+// encaissé compte — jamais en attente, annulée ni remboursée.
+const PAID_STATUSES = ["paid", "protection", "released", "dispute"];
+
 function computeDashboardStats(orders: Order[]) {
-  const now = Date.now();
-  const salesLast30Days = orders
-    .filter(
-      (o) =>
-        ["paid", "protection", "released"].includes(o.status) &&
-        o.paidAt &&
-        now - new Date(o.paidAt).getTime() <= THIRTY_DAYS_MS
-    )
+  const now = new Date();
+  const paidOrders = orders.filter((o) => PAID_STATUSES.includes(o.status) && o.paidAt);
+  const salesLast30Days = paidOrders
+    .filter((o) => now.getTime() - new Date(o.paidAt as string).getTime() <= THIRTY_DAYS_MS)
     .reduce((sum, o) => sum + getOrderTotal(o), 0);
-  const thisMonth = new Date().getMonth();
-  const ordersThisMonthCount = orders.filter(
-    (o) => new Date(o.createdAt).getMonth() === thisMonth
-  ).length;
+  const ordersThisMonthCount = paidOrders.filter((o) => {
+    const paidAt = new Date(o.paidAt as string);
+    return paidAt.getMonth() === now.getMonth() && paidAt.getFullYear() === now.getFullYear();
+  }).length;
   return { salesLast30Days, ordersThisMonthCount };
 }
 
