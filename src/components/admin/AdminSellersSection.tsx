@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Search } from "lucide-react";
+import { ChevronRight, Users } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
-import { activeStatusClass, formatAdminDate, type SellerRow } from "./admin-types";
+import { formatAdminDate, type SellerRow } from "./admin-types";
+import { EmptyState, EntityCell, Panel, SearchField, StatStrip, StatusPill, Tabs } from "./AdminUI";
 import { AdminSellerDetail } from "./AdminSellerDetail";
 
 const ORDERING_OPTIONS = [
@@ -21,7 +22,7 @@ export function AdminSellersSection({
   onSearch: (params: { search?: string; ordering?: string }) => void;
 }) {
   const [search, setSearch] = useState("");
-  const [ordering, setOrdering] = useState("-created_at");
+  const [ordering, setOrdering] = useState<string>("-created_at");
   const [selectedSellerId, setSelectedSellerId] = useState<number | null>(null);
 
   useEffect(() => {
@@ -30,66 +31,88 @@ export function AdminSellersSection({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search, ordering]);
 
+  const stats = {
+    active: sellers.filter((seller) => seller.isActive).length,
+    selling: sellers.filter((seller) => seller.ordersCount > 0).length,
+    gmv: sellers.reduce((sum, seller) => sum + seller.lifetimeGmv, 0),
+    available: sellers.reduce((sum, seller) => sum + seller.balance.availableBalance, 0),
+  };
+
   return (
     <section className="admin-section">
-      <div className="admin-filters">
-        <div className="admin-search-wrap">
-          <Search size={16} aria-hidden="true" />
-          <input
-            className="input-field input-compact"
-            placeholder="Rechercher un vendeur (nom, @, téléphone)…"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        </div>
-        <select className="input-field input-compact" value={ordering} onChange={(e) => setOrdering(e.target.value)}>
-          {ORDERING_OPTIONS.map((opt) => (
-            <option key={opt.value} value={opt.value}>
-              {opt.label}
-            </option>
-          ))}
-        </select>
-      </div>
+      <StatStrip
+        items={[
+          { label: "Vendeurs", value: sellers.length, hint: `${stats.active} actif(s)`, tone: "accent" },
+          {
+            label: "Ont déjà vendu",
+            value: stats.selling,
+            hint: sellers.length ? `${Math.round((stats.selling / sellers.length) * 100)} % des vendeurs` : "—",
+          },
+          { label: "CA cumulé", value: formatCurrency(stats.gmv), hint: "tous vendeurs listés" },
+          { label: "Disponible à retirer", value: formatCurrency(stats.available), hint: "argent des vendeurs" },
+        ]}
+      />
 
-      {sellers.length === 0 ? (
-        <p className="admin-empty">Aucun vendeur trouvé.</p>
-      ) : (
-        <div className="admin-table-wrap">
-          <table className="admin-table">
+      <Panel
+        title="Vendeurs"
+        count={sellers.length}
+        toolbar={
+          <>
+            <SearchField value={search} onChange={setSearch} placeholder="Nom, @identifiant, téléphone…" />
+            <Tabs
+              label="Trier"
+              value={ordering}
+              onChange={setOrdering}
+              options={ORDERING_OPTIONS.map((option) => ({ value: option.value, label: option.label }))}
+            />
+          </>
+        }
+      >
+        {sellers.length === 0 ? (
+          <EmptyState icon={Users} title="Aucun vendeur" hint="Aucun vendeur ne correspond à cette recherche." />
+        ) : (
+          <table className="ax-table">
             <thead>
               <tr>
                 <th>Vendeur</th>
                 <th>Téléphone</th>
-                <th>Commandes</th>
-                <th>CA cumulé</th>
-                <th>Solde dispo.</th>
+                <th className="is-num">Commandes</th>
+                <th className="is-num">CA cumulé</th>
+                <th className="is-num">Disponible</th>
                 <th>Inscrit le</th>
                 <th>Statut</th>
+                <th aria-label="Ouvrir" />
               </tr>
             </thead>
             <tbody>
-              {sellers.map((s) => (
-                <tr key={s.id} className="admin-row-click" onClick={() => setSelectedSellerId(s.id)}>
+              {sellers.map((seller) => (
+                <tr
+                  key={seller.id}
+                  className="ax-row"
+                  tabIndex={0}
+                  onClick={() => setSelectedSellerId(seller.id)}
+                  onKeyDown={(e) => e.key === "Enter" && setSelectedSellerId(seller.id)}
+                >
                   <td>
-                    <strong>{s.businessName}</strong>
-                    <span className="admin-cell-sub admin-mono">@{s.username}</span>
+                    <EntityCell name={seller.businessName} sub={`@${seller.username}`} />
                   </td>
-                  <td className="admin-mono">{s.phone}</td>
-                  <td className="admin-mono">{s.ordersCount}</td>
-                  <td className="admin-mono">{formatCurrency(s.lifetimeGmv)}</td>
-                  <td className="admin-mono">{formatCurrency(s.balance.availableBalance)}</td>
-                  <td>{formatAdminDate(s.createdAt)}</td>
+                  <td className="admin-mono is-muted">{seller.phone}</td>
+                  <td className="is-num">{seller.ordersCount}</td>
+                  <td className="is-num">{formatCurrency(seller.lifetimeGmv)}</td>
+                  <td className="is-num">{formatCurrency(seller.balance.availableBalance)}</td>
+                  <td className="is-nowrap is-muted">{formatAdminDate(seller.createdAt)}</td>
                   <td>
-                    <span className={`admin-badge ${activeStatusClass(s.isActive)}`}>
-                      {s.isActive ? "Actif" : "Inactif"}
-                    </span>
+                    <StatusPill tone={seller.isActive ? "good" : "neutral"} label={seller.isActive ? "Actif" : "Inactif"} />
+                  </td>
+                  <td className="ax-chevron">
+                    <ChevronRight size={16} aria-hidden="true" />
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
-        </div>
-      )}
+        )}
+      </Panel>
 
       {selectedSellerId && (
         <AdminSellerDetail sellerId={selectedSellerId} onClose={() => setSelectedSellerId(null)} />

@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Search } from "lucide-react";
+import { Handshake } from "lucide-react";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { formatCurrency } from "@/lib/utils";
 import { NAVY } from "./admin-chart-colors";
 import { formatAdminDate, type AffiliateProgramSummary, type ReferrerGroupRow } from "./admin-types";
+import { EmptyState, EntityCell, Panel, SearchField, StatStrip, StatusPill, Tabs } from "./AdminUI";
 
 const ORDERING_OPTIONS = [
   { value: "-total_commission", label: "Commission la plus élevée" },
@@ -38,22 +39,25 @@ function ExtendBoostCell({
   };
 
   return (
-    <div onClick={(e) => e.stopPropagation()}>
-      <div style={{ display: "flex", gap: "0.4rem", alignItems: "center" }}>
+    <div onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
+      <span className="ax-inline-form">
+        <label className="ax-sr-only" htmlFor={`extend-all-${referrerId}`}>
+          Jours de prolongation du palier 1 %
+        </label>
         <input
+          id={`extend-all-${referrerId}`}
           type="number"
           min={1}
           placeholder="Jours"
-          className="input-field input-compact"
-          style={{ width: "5.5rem" }}
+          className="ax-input"
           value={days}
           onChange={(e) => setDays(e.target.value)}
         />
-        <button type="button" className="btn-secondary" disabled={extending} onClick={handleExtend}>
+        <button type="button" className="ax-btn ax-btn--sm" disabled={extending} onClick={handleExtend}>
           {extending ? "…" : "Prolonger"}
         </button>
-      </div>
-      {error && <span className="admin-cell-sub admin-health-bad">{error}</span>}
+      </span>
+      {error && <span className="ax-cell-sub">{error}</span>}
     </div>
   );
 }
@@ -72,7 +76,7 @@ export function AdminAffiliationSection({
   onOpenDetail: (referrerId: number, businessName: string) => void;
 }) {
   const [search, setSearch] = useState("");
-  const [ordering, setOrdering] = useState("-total_commission");
+  const [ordering, setOrdering] = useState<string>("-total_commission");
 
   useEffect(() => {
     const id = setTimeout(() => onSearch({ search, ordering }), 300);
@@ -87,55 +91,45 @@ export function AdminAffiliationSection({
 
   return (
     <section className="admin-section">
-      <div className="admin-kpi-grid">
-        <article className="admin-kpi">
-          <p className="admin-kpi-label">Parrainages actifs (boost 1 %)</p>
-          <p className="admin-kpi-value">{summary ? summary.boostedCount : "—"}</p>
-        </article>
-        <article className="admin-kpi">
-          <p className="admin-kpi-label">Parrainages à vie (0,25 %)</p>
-          <p className="admin-kpi-value">{summary ? summary.lifetimeCount : "—"}</p>
-        </article>
-        <article className="admin-kpi">
-          <p className="admin-kpi-label">Total parrainages</p>
-          <p className="admin-kpi-value">{summary ? summary.totalReferrals : "—"}</p>
-        </article>
-        <article className="admin-kpi">
-          <p className="admin-kpi-label">Commissions versées (cumulé)</p>
-          <p className="admin-kpi-value">{summary ? formatCurrency(summary.commissionsPaidTotal) : "—"}</p>
-        </article>
-      </div>
+      <StatStrip
+        items={[
+          {
+            label: "Commissions versées",
+            value: summary ? formatCurrency(summary.commissionsPaidTotal) : "—",
+            hint: "payées par XaalisPay, cumulé",
+            tone: "accent",
+          },
+          { label: "Parrainages au palier 1 %", value: summary ? summary.boostedCount : "—", hint: "boost des 90 premiers jours" },
+          { label: "Parrainages à vie (0,25 %)", value: summary ? summary.lifetimeCount : "—" },
+          { label: "Total parrainages", value: summary ? summary.totalReferrals : "—" },
+        ]}
+      />
 
-      <div className="admin-filters">
-        <div className="admin-search-wrap">
-          <Search size={16} aria-hidden="true" />
-          <input
-            className="input-field input-compact"
-            placeholder="Rechercher un parrain…"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        </div>
-        <select className="input-field input-compact" value={ordering} onChange={(e) => setOrdering(e.target.value)}>
-          {ORDERING_OPTIONS.map((opt) => (
-            <option key={opt.value} value={opt.value}>
-              {opt.label}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      {referrers.length === 0 ? (
-        <p className="admin-empty">Aucun parrain trouvé.</p>
-      ) : (
-        <div className="admin-table-wrap">
-          <table className="admin-table">
+      <Panel
+        title="Parrains"
+        count={referrers.length}
+        toolbar={
+          <>
+            <SearchField value={search} onChange={setSearch} placeholder="Rechercher un parrain…" />
+            <Tabs
+              label="Trier"
+              value={ordering}
+              onChange={setOrdering}
+              options={ORDERING_OPTIONS.map((option) => ({ value: option.value, label: option.label }))}
+            />
+          </>
+        }
+      >
+        {referrers.length === 0 ? (
+          <EmptyState icon={Handshake} title="Aucun parrain" hint="Aucun vendeur n'a encore parrainé d'autre vendeur." />
+        ) : (
+          <table className="ax-table">
             <thead>
               <tr>
                 <th>Parrain</th>
                 <th>Filleuls</th>
-                <th>CA global</th>
-                <th>Commission totale</th>
+                <th className="is-num">CA des filleuls</th>
+                <th className="is-num">Commission</th>
                 <th>Palier</th>
                 <th>Prolonger le palier 1 %</th>
               </tr>
@@ -144,28 +138,23 @@ export function AdminAffiliationSection({
               {referrers.map((r) => (
                 <tr
                   key={r.referrerId}
-                  style={{ cursor: "pointer" }}
+                  className="ax-row"
+                  tabIndex={0}
                   onClick={() => onOpenDetail(r.referrerId, r.referrerBusinessName)}
+                  onKeyDown={(e) => e.key === "Enter" && onOpenDetail(r.referrerId, r.referrerBusinessName)}
                 >
                   <td>
-                    <strong>{r.referrerBusinessName}</strong>
-                    <span className="admin-cell-sub admin-mono">@{r.referrerUsername}</span>
+                    <EntityCell name={r.referrerBusinessName} sub={`@${r.referrerUsername}`} />
                   </td>
                   <td>
-                    <span className={`admin-badge ${r.boostedCount > 0 ? "good" : "neutral"}`}>
-                      {r.boostedCount} boostés
-                    </span>
-                    <span className="admin-cell-sub">/ {r.referralCount} au total</span>
+                    <span className="ax-cell-strong">{r.referralCount}</span>
+                    <span className="ax-cell-sub">dont {r.boostedCount} au palier 1 %</span>
                   </td>
-                  <td className="admin-mono">{formatCurrency(r.totalLifetimeGmv)}</td>
-                  <td className="admin-mono">{formatCurrency(r.totalCommission)}</td>
+                  <td className="is-num">{formatCurrency(r.totalLifetimeGmv)}</td>
+                  <td className="is-num">{formatCurrency(r.totalCommission)}</td>
                   <td>
-                    <span className={`admin-badge ${r.boostedCount > 0 ? "good" : "neutral"}`}>
-                      {r.boostedCount > 0 ? "1 %" : "0,25 %"}
-                    </span>
-                    <span className="admin-cell-sub">
-                      jusqu&apos;au {formatAdminDate(r.latestBoostExpiresAt)}
-                    </span>
+                    <StatusPill tone={r.boostedCount > 0 ? "good" : "neutral"} label={r.boostedCount > 0 ? "1 %" : "0,25 %"} />
+                    <span className="ax-cell-sub">jusqu&apos;au {formatAdminDate(r.latestBoostExpiresAt)}</span>
                   </td>
                   <td>
                     <ExtendBoostCell referrerId={r.referrerId} onExtendAllBoost={onExtendAllBoost} />
@@ -174,22 +163,21 @@ export function AdminAffiliationSection({
               ))}
             </tbody>
           </table>
-        </div>
-      )}
+        )}
+      </Panel>
 
       {topReferrers.length > 0 && (
-        <article className="admin-card admin-chart-card">
-          <h2 className="admin-card-title">Top parrains par commission gagnée</h2>
-          <ResponsiveContainer width="100%" height={Math.max(160, topReferrers.length * 36)}>
-            <BarChart layout="vertical" data={topReferrers}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis type="number" tickFormatter={(v) => formatCurrency(Number(v))} tick={{ fontSize: 10 }} />
-              <YAxis type="category" dataKey="name" width={160} tick={{ fontSize: 11 }} />
-              <Tooltip formatter={(v: unknown) => formatCurrency(Number(v))} />
-              <Bar dataKey="total" name="Commission gagnée" fill={NAVY} radius={[0, 4, 4, 0]} />
+        <Panel title="Top parrains par commission gagnée" flush={false}>
+          <ResponsiveContainer width="100%" height={Math.max(160, topReferrers.length * 34)}>
+            <BarChart layout="vertical" data={topReferrers} margin={{ left: 8, right: 16 }}>
+              <CartesianGrid horizontal={false} stroke="#EEEEEE" />
+              <XAxis type="number" tickFormatter={(v) => formatCurrency(Number(v))} tick={{ fontSize: 10, fill: "#5F6672" }} axisLine={false} tickLine={false} />
+              <YAxis type="category" dataKey="name" width={150} tick={{ fontSize: 11, fill: "#1E3A5F" }} axisLine={false} tickLine={false} />
+              <Tooltip formatter={(v: unknown) => formatCurrency(Number(v))} cursor={{ fill: "#F5F5F5" }} />
+              <Bar dataKey="total" name="Commission gagnée" fill={NAVY} radius={[0, 4, 4, 0]} barSize={16} />
             </BarChart>
           </ResponsiveContainer>
-        </article>
+        </Panel>
       )}
     </section>
   );

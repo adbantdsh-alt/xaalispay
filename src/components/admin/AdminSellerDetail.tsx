@@ -4,8 +4,8 @@ import { useEffect, useState } from "react";
 import { apiFetch, extractApiError } from "@/lib/api-client";
 import { formatCurrency } from "@/lib/utils";
 import { ORDER_STATUS_LABELS } from "@/lib/types";
+import { ContactCard, DetailPanel, DetailSection, StatusPill, toneForStatus } from "./AdminUI";
 import {
-  adminStatusClass,
   formatAdminDate,
   payoutStatusLabel,
   type OrderSummaryRow,
@@ -168,260 +168,174 @@ export function AdminSellerDetail({ sellerId, onClose }: { sellerId: number; onC
     await fetchDetail();
   };
 
+  const profile = detail?.profile;
+
   return (
-    <div className="admin-modal-backdrop" onClick={onClose}>
-      <article className="admin-modal admin-modal--seller" onClick={(e) => e.stopPropagation()}>
-        <header className="admin-modal-head">
-          <div className="admin-modal-head-id">
-            {detail && (
-              <span className="admin-seller-avatar" aria-hidden="true">
-                {detail.profile.businessName.charAt(0).toUpperCase()}
-              </span>
-            )}
+    <DetailPanel
+      wide
+      title={profile ? profile.businessName : "Vendeur"}
+      subtitle={profile ? `@${profile.username} · inscrit le ${formatAdminDate(profile.createdAt)}` : undefined}
+      badge={profile && <StatusPill tone={profile.isActive ? "good" : "neutral"} label={profile.isActive ? "Actif" : "Inactif"} />}
+      onClose={onClose}
+    >
+      {loading && <p className="ax-muted ax-pad">Chargement…</p>}
+      {!loading && error && <p className="ax-muted ax-pad">{error}</p>}
+
+      {!loading && detail && profile && (
+        <>
+          <div className="ax-summary">
             <div>
-              <div className="admin-modal-head-title">{detail ? detail.profile.businessName : "Vendeur"}</div>
-              {detail && (
-                <div className="admin-modal-head-subtitle admin-mono">
-                  @{detail.profile.username} · {detail.profile.isActive ? "Actif" : "Inactif"}
-                </div>
-              )}
+              <div className="ax-summary-label">CA cumulé</div>
+              <div className="ax-summary-amount">{formatCurrency(detail.lifetime.lifetimeGmv)}</div>
             </div>
+            <span className="ax-muted">{detail.lifetime.ordersCount} commande(s) au total</span>
           </div>
-          <button type="button" className="admin-modal-close" onClick={onClose} aria-label="Fermer">
-            ×
-          </button>
-        </header>
 
-        {loading && <p className="admin-empty">Chargement…</p>}
-        {!loading && error && <p className="admin-empty">{error}</p>}
-
-        {!loading && detail && (
-          <>
-            <div className="admin-dispute-section" style={{ display: "flex", gap: "1.1rem", fontSize: "0.8125rem" }}>
-              <span className="admin-mono" style={{ color: "#5F6672" }}>
-                <a href={`tel:${detail.profile.phone}`}>{detail.profile.phone}</a>
-              </span>
-              <span style={{ color: "#5F6672" }}>·</span>
-              <span style={{ color: "#5F6672" }}>Inscrit le {formatAdminDate(detail.profile.createdAt)}</span>
-              {detail.profile.email && (
-                <>
-                  <span style={{ color: "#5F6672" }}>·</span>
-                  <span style={{ color: "#5F6672" }}>{detail.profile.email}</span>
-                </>
-              )}
+          <DetailSection title="Contact">
+            <div className="ax-contacts">
+              <ContactCard
+                role={profile.email ?? "Pas d'email"}
+                name={profile.displayName || profile.businessName}
+                phone={profile.phone}
+                sub={
+                  profile.payoutMethod
+                    ? `Retraits vers ${profile.payoutMethod === "wave" ? "Wave" : "Orange Money"} ${profile.payoutPhone ?? ""}`
+                    : undefined
+                }
+              />
             </div>
+          </DetailSection>
 
-            <div className="admin-dispute-section">
-              <h3 className="admin-dispute-section-title">Solde</h3>
-              <div className="admin-stat-grid">
-                <div className="admin-stat-box">
-                  <div className="admin-stat-box-label">En séquestre</div>
-                  <div className="admin-stat-box-value">{formatCurrency(detail.profile.balance.escrowBalance)}</div>
+          <DetailSection title="Solde">
+            <div className="ax-balance">
+              {[
+                ["Disponible", profile.balance.availableBalance],
+                ["En séquestre", profile.balance.escrowBalance],
+                ["Bloqué (litiges)", profile.balance.blockedBalance],
+                ["Déjà versé", profile.balance.paidOutBalance],
+              ].map(([label, value]) => (
+                <div key={label as string} className="ax-balance-cell">
+                  <span>{label}</span>
+                  <strong className="admin-mono">{formatCurrency(value as number)}</strong>
                 </div>
-                <div className="admin-stat-box">
-                  <div className="admin-stat-box-label">Disponible</div>
-                  <div className="admin-stat-box-value">{formatCurrency(detail.profile.balance.availableBalance)}</div>
-                </div>
-                <div className="admin-stat-box">
-                  <div className="admin-stat-box-label">Déjà versé</div>
-                  <div className="admin-stat-box-value">{formatCurrency(detail.profile.balance.paidOutBalance)}</div>
-                </div>
-              </div>
-              <div className="admin-stat-grid" style={{ marginTop: "0.75rem" }}>
-                <div className="admin-stat-box">
-                  <div className="admin-stat-box-label">Bloqué (litiges)</div>
-                  <div className="admin-stat-box-value">{formatCurrency(detail.profile.balance.blockedBalance)}</div>
-                </div>
-                <div className="admin-stat-box">
-                  <div className="admin-stat-box-label">Commandes (total)</div>
-                  <div className="admin-stat-box-value">{detail.lifetime.ordersCount}</div>
-                </div>
-                <div className="admin-stat-box">
-                  <div className="admin-stat-box-label">CA cumulé</div>
-                  <div className="admin-stat-box-value">{formatCurrency(detail.lifetime.lifetimeGmv)}</div>
-                </div>
-              </div>
+              ))}
             </div>
+          </DetailSection>
 
-            <div className="admin-dispute-section">
-              <h3 className="admin-dispute-section-title">Commandes récentes</h3>
-              {detail.recentOrders.length === 0 ? (
-                <p className="admin-empty">Aucune commande.</p>
-              ) : (
-                <div className="admin-table-wrap">
-                  <table className="admin-table">
-                    <thead>
-                      <tr>
-                        <th>Commande</th>
-                        <th>Client</th>
-                        <th>Montant</th>
-                        <th>Statut</th>
-                        <th>Date</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {detail.recentOrders.map((o) => (
-                        <tr key={o.id}>
-                          <td>
-                            <strong>{o.orderNumber}</strong>
-                            <span className="admin-cell-sub">{o.productName}</span>
-                          </td>
-                          <td>{o.clientName}</td>
-                          <td>{formatCurrency(o.total)}</td>
-                          <td>
-                            <span className={`admin-badge ${adminStatusClass(o.status)}`}>
-                              {ORDER_STATUS_LABELS[o.status]}
-                            </span>
-                          </td>
-                          <td>{formatAdminDate(o.createdAt)}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </div>
+          <DetailSection title={`Commandes récentes · ${detail.recentOrders.length}`}>
+            {detail.recentOrders.length === 0 ? (
+              <p className="ax-muted">Aucune commande.</p>
+            ) : (
+              <ul className="ax-list">
+                {detail.recentOrders.map((o) => (
+                  <li key={o.id}>
+                    <span className="ax-list-main">
+                      <span className="ax-list-title">
+                        <span className="admin-mono">{o.orderNumber}</span> · {o.productName}
+                      </span>
+                      <span className="ax-list-sub">
+                        {o.clientName} · {formatAdminDate(o.createdAt)}
+                      </span>
+                    </span>
+                    <span className="ax-list-amount admin-mono">{formatCurrency(o.total)}</span>
+                    <StatusPill tone={toneForStatus(o.status)} label={ORDER_STATUS_LABELS[o.status]} />
+                  </li>
+                ))}
+              </ul>
+            )}
+          </DetailSection>
 
-            <div className="admin-dispute-section">
-              <h3 className="admin-dispute-section-title">Retraits récents</h3>
-              {detail.recentPayouts.length === 0 ? (
-                <p className="admin-empty">Aucun retrait.</p>
-              ) : (
-                <div className="admin-table-wrap">
-                  <table className="admin-table">
-                    <thead>
-                      <tr>
-                        <th>Montant</th>
-                        <th>Méthode</th>
-                        <th>Statut</th>
-                        <th>Date</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {detail.recentPayouts.map((p) => (
-                        <tr key={p.id}>
-                          <td>{formatCurrency(p.amount)}</td>
-                          <td>{p.method}</td>
-                          <td>
-                            <span className={`admin-badge ${adminStatusClass(p.status)}`}>
-                              {payoutStatusLabel(p.status)}
-                            </span>
-                          </td>
-                          <td>{formatAdminDate(p.createdAt)}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </div>
+          <DetailSection title={`Retraits récents · ${detail.recentPayouts.length}`}>
+            {detail.recentPayouts.length === 0 ? (
+              <p className="ax-muted">Aucun retrait.</p>
+            ) : (
+              <ul className="ax-list">
+                {detail.recentPayouts.map((p) => (
+                  <li key={p.id}>
+                    <span className="ax-list-main">
+                      <span className="ax-list-title">{p.method === "wave" ? "Wave" : p.method === "orange" ? "Orange Money" : p.method}</span>
+                      <span className="ax-list-sub">{formatAdminDate(p.createdAt)}</span>
+                    </span>
+                    <span className="ax-list-amount admin-mono">{formatCurrency(p.amount)}</span>
+                    <StatusPill tone={toneForStatus(p.status)} label={payoutStatusLabel(p.status)} />
+                  </li>
+                ))}
+              </ul>
+            )}
+          </DetailSection>
 
-            <div className="admin-dispute-section">
-              <h3 className="admin-dispute-section-title">Litiges récents</h3>
-              {detail.disputes.length === 0 ? (
-                <p className="admin-empty">Aucun litige.</p>
-              ) : (
-                <div className="admin-table-wrap">
-                  <table className="admin-table">
-                    <thead>
-                      <tr>
-                        <th>Commande</th>
-                        <th>Type</th>
-                        <th>Raison</th>
-                        <th>Statut</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {detail.disputes.map((d) => (
-                        <tr key={d.id}>
-                          <td>{d.orderNumber}</td>
-                          <td>{d.disputeTypeLabel}</td>
-                          <td className="admin-dispute-reason">{d.disputeReason}</td>
-                          <td>
-                            <span className={`admin-badge ${adminStatusClass(d.status)}`}>
-                              {ORDER_STATUS_LABELS[d.status]}
-                            </span>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </div>
+          {detail.disputes.length > 0 && (
+            <DetailSection title={`Litiges · ${detail.disputes.length}`}>
+              <ul className="ax-list">
+                {detail.disputes.map((d) => (
+                  <li key={d.id}>
+                    <span className="ax-list-main">
+                      <span className="ax-list-title">
+                        <span className="admin-mono">{d.orderNumber}</span> · {d.disputeTypeLabel}
+                      </span>
+                      <span className="ax-list-sub">{d.disputeReason}</span>
+                    </span>
+                    <StatusPill tone={toneForStatus(d.status)} label={ORDER_STATUS_LABELS[d.status]} />
+                  </li>
+                ))}
+              </ul>
+            </DetailSection>
+          )}
 
-            <div className="admin-dispute-section">
-              <h3 className="admin-dispute-section-title">Affiliation</h3>
-              {detail.referredBy && (
-                <p style={{ fontSize: "0.8125rem", color: "#5F6672", marginBottom: "0.75rem" }}>
-                  Parrainé par <strong>{detail.referredBy.businessName}</strong>{" "}
-                  <span className="admin-mono">@{detail.referredBy.username}</span> le{" "}
-                  {formatAdminDate(detail.referredBy.createdAt)}.
-                </p>
-              )}
-              {detail.referralsMade.length === 0 ? (
-                <p className="admin-empty">N&apos;a parrainé aucun vendeur.</p>
-              ) : (
-                <div className="admin-table-wrap">
-                  <table className="admin-table">
-                    <thead>
-                      <tr>
-                        <th>Filleul</th>
-                        <th>CA</th>
-                        <th>Commission gagnée</th>
-                        <th>Palier</th>
-                        <th>Prolonger le palier 1 %</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {detail.referralsMade.map((r) => (
-                        <tr key={r.id}>
-                          <td>
-                            <strong>{r.businessName}</strong>
-                            <span className="admin-cell-sub admin-mono">@{r.username}</span>
-                          </td>
-                          <td className="admin-mono">{formatCurrency(r.lifetimeGmv)}</td>
-                          <td className="admin-mono">{formatCurrency(r.commissionEarnedTotal)}</td>
-                          <td>
-                            <span className={`admin-badge ${r.isBoosted ? "good" : "neutral"}`}>
-                              {r.isBoosted ? "1 %" : "0,25 %"}
-                            </span>
-                            <span className="admin-cell-sub">jusqu&apos;au {formatAdminDate(r.boostExpiresAt)}</span>
-                          </td>
-                          <td>
-                            <div style={{ display: "flex", gap: "0.4rem", alignItems: "center" }}>
-                              <input
-                                type="number"
-                                min={1}
-                                placeholder="Jours"
-                                className="input-field input-compact"
-                                style={{ width: "5.5rem" }}
-                                value={extendDays[r.id] ?? ""}
-                                onChange={(e) =>
-                                  setExtendDays((prev) => ({ ...prev, [r.id]: e.target.value }))
-                                }
-                              />
-                              <button
-                                type="button"
-                                className="btn-secondary"
-                                disabled={extendingId === r.id}
-                                onClick={() => extendBoost(r.id)}
-                              >
-                                {extendingId === r.id ? "…" : "Prolonger"}
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-              {extendError && <p className="alert-danger" role="alert">{extendError}</p>}
-            </div>
-          </>
-        )}
-      </article>
-    </div>
+          <DetailSection title="Affiliation">
+            {detail.referredBy && (
+              <p className="ax-muted">
+                Parrainé par <strong>{detail.referredBy.businessName}</strong> (@{detail.referredBy.username}) le{" "}
+                {formatAdminDate(detail.referredBy.createdAt)}.
+              </p>
+            )}
+            {detail.referralsMade.length === 0 ? (
+              <p className="ax-muted">N&apos;a parrainé aucun vendeur.</p>
+            ) : (
+              <ul className="ax-list">
+                {detail.referralsMade.map((r) => (
+                  <li key={r.id} className="ax-list-wrap">
+                    <span className="ax-list-main">
+                      <span className="ax-list-title">{r.businessName}</span>
+                      <span className="ax-list-sub">
+                        CA {formatCurrency(r.lifetimeGmv)} · commission {formatCurrency(r.commissionEarnedTotal)} ·
+                        palier {r.isBoosted ? "1 %" : "0,25 %"} jusqu&apos;au {formatAdminDate(r.boostExpiresAt)}
+                      </span>
+                    </span>
+                    <span className="ax-inline-form">
+                      <label className="ax-sr-only" htmlFor={`extend-${r.id}`}>
+                        Jours de prolongation du palier 1 %
+                      </label>
+                      <input
+                        id={`extend-${r.id}`}
+                        type="number"
+                        min={1}
+                        placeholder="Jours"
+                        className="ax-input"
+                        value={extendDays[r.id] ?? ""}
+                        onChange={(e) => setExtendDays((prev) => ({ ...prev, [r.id]: e.target.value }))}
+                      />
+                      <button
+                        type="button"
+                        className="ax-btn ax-btn--sm"
+                        disabled={extendingId === r.id}
+                        onClick={() => extendBoost(r.id)}
+                      >
+                        {extendingId === r.id ? "…" : "Prolonger 1 %"}
+                      </button>
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+            {extendError && (
+              <p className="admin-error" role="alert">
+                {extendError}
+              </p>
+            )}
+          </DetailSection>
+        </>
+      )}
+    </DetailPanel>
   );
 }

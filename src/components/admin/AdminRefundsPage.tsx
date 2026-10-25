@@ -3,7 +3,9 @@
 import { useEffect, useState } from "react";
 import { apiFetch } from "@/lib/api-client";
 import { formatCurrency } from "@/lib/utils";
-import { adminStatusClass, formatAdminDate } from "./admin-types";
+import { Undo2 } from "lucide-react";
+import { formatAdminDate } from "./admin-types";
+import { EmptyState, Panel, StatStrip, StatusPill, toneForStatus } from "./AdminUI";
 
 type UnsentRefund = {
   merchant_reference: string;
@@ -62,96 +64,102 @@ export function AdminRefundsPage() {
   }
 
   const failed = data.refunds.filter((r) => r.status === "failed");
+  const succeeded = data.refunds.filter((r) => r.status === "succeeded");
+  const unsentTotal = data.unsent.reduce((sum, r) => sum + r.amount, 0);
 
   return (
-    <section className="admin-section av-overview">
-      <article className="av-card">
-        <div className="av-card-head">
-          <h2 className="av-card-title">Jamais envoyés</h2>
-          <span className={`av-pill ${data.unsent.length ? "av-pill--warn" : "av-pill--good"}`}>
-            {data.unsent.length ? `${data.unsent.length} à vérifier` : "Aucun"}
-          </span>
-        </div>
-        <p className="av-card-hint">
-          Marqués remboursés en base, mais l&apos;argent n&apos;est jamais parti. Vérifiez dans le tableau de bord
-          Bictorys que le payeur n&apos;a pas été remboursé à la main avant tout envoi.
-        </p>
-        {data.unsent.length > 0 && (
-          <div className="admin-table-wrap">
-            <table className="admin-table">
-              <thead>
-                <tr>
-                  <th>Référence</th>
-                  <th>Origine</th>
-                  <th>Montant</th>
-                  <th>Payeur</th>
-                  <th>Marqué remboursé le</th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.unsent.map((r) => (
-                  <tr key={r.merchant_reference}>
-                    <td className="admin-mono">{r.merchant_reference}</td>
-                    <td>{r.source}</td>
-                    <td className="admin-mono">{formatCurrency(r.amount)}</td>
-                    <td className="admin-mono">{r.phone || "—"}</td>
-                    <td>{formatAdminDate(r.refunded_at ?? undefined)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </article>
+    <section className="admin-section">
+      <StatStrip
+        items={[
+          {
+            label: "Jamais envoyés",
+            value: data.unsent.length,
+            hint: data.unsent.length ? `${formatCurrency(unsentTotal)} à vérifier` : "rien à vérifier",
+            tone: data.unsent.length ? "warn" : "default",
+          },
+          { label: "En échec", value: failed.length, hint: "à traiter à la main", tone: failed.length ? "warn" : "default" },
+          {
+            label: "Remboursés",
+            value: formatCurrency(succeeded.reduce((sum, r) => sum + r.amount, 0)),
+            hint: `${succeeded.length} remboursement(s) réussi(s)`,
+            tone: "accent",
+          },
+        ]}
+      />
 
-      <article className="av-card">
-        <div className="av-card-head">
-          <h2 className="av-card-title">Historique</h2>
-          {failed.length > 0 && <span className="av-pill av-pill--warn">{failed.length} échoué(s)</span>}
-        </div>
-        <div className="admin-table-wrap">
-          <table className="admin-table">
+      {data.unsent.length > 0 && (
+        <Panel title="Jamais envoyés" count={data.unsent.length}>
+          <p className="ax-panel-note">
+            Marqués remboursés en base, mais l&apos;argent n&apos;est jamais parti. Vérifiez dans le tableau de bord
+            Bictorys que le payeur n&apos;a pas été remboursé à la main avant tout envoi.
+          </p>
+          <table className="ax-table">
             <thead>
               <tr>
-                <th>Date</th>
+                <th>Référence</th>
                 <th>Origine</th>
-                <th>Montant</th>
-                <th>Envoyé à</th>
-                <th>Frais Bictorys</th>
-                <th>Statut</th>
+                <th>Payeur</th>
+                <th className="is-num">Montant</th>
+                <th>Marqué remboursé le</th>
               </tr>
             </thead>
             <tbody>
-              {data.refunds.length === 0 ? (
-                <tr>
-                  <td colSpan={6}>Aucun remboursement envoyé pour l&apos;instant</td>
+              {data.unsent.map((r) => (
+                <tr key={r.merchant_reference}>
+                  <td className="admin-mono">{r.merchant_reference}</td>
+                  <td>{r.source}</td>
+                  <td className="admin-mono is-muted">{r.phone || "—"}</td>
+                  <td className="is-num">{formatCurrency(r.amount)}</td>
+                  <td className="is-nowrap is-muted">{formatAdminDate(r.refunded_at ?? undefined)}</td>
                 </tr>
-              ) : (
-                data.refunds.map((r) => (
-                  <tr key={r.id}>
-                    <td>{formatAdminDate(r.created_at)}</td>
-                    <td>
-                      <strong>{r.source}</strong>
-                      <span className="admin-cell-sub admin-mono">{r.merchant_reference}</span>
-                    </td>
-                    <td className="admin-mono">{formatCurrency(r.amount)}</td>
-                    <td className="admin-mono">{r.phone || "—"}</td>
-                    <td className="admin-mono">
-                      {r.bictorys_fee == null ? "—" : `${Number(r.bictorys_fee).toLocaleString("fr-FR")} F`}
-                    </td>
-                    <td>
-                      <span className={`admin-badge ${adminStatusClass(r.status)}`}>
-                        {REFUND_STATUS_LABELS[r.status] ?? r.status}
-                      </span>
-                      {r.failure_reason && <span className="admin-cell-sub">{r.failure_reason}</span>}
-                    </td>
-                  </tr>
-                ))
-              )}
+              ))}
             </tbody>
           </table>
-        </div>
-      </article>
+        </Panel>
+      )}
+
+      <Panel title="Historique" count={data.refunds.length}>
+        {data.refunds.length === 0 ? (
+          <EmptyState
+            icon={Undo2}
+            title="Aucun remboursement envoyé"
+            hint="Les remboursements envoyés via Bictorys apparaîtront ici avec leur statut et leurs frais."
+          />
+        ) : (
+          <table className="ax-table">
+            <thead>
+              <tr>
+                <th>Origine</th>
+                <th>Envoyé à</th>
+                <th className="is-num">Montant</th>
+                <th className="is-num">Frais Bictorys</th>
+                <th>Statut</th>
+                <th>Date</th>
+              </tr>
+            </thead>
+            <tbody>
+              {data.refunds.map((r) => (
+                <tr key={r.id}>
+                  <td>
+                    <span className="ax-cell-strong">{r.source}</span>
+                    <span className="ax-cell-sub admin-mono">{r.merchant_reference}</span>
+                  </td>
+                  <td className="admin-mono is-muted">{r.phone || "—"}</td>
+                  <td className="is-num">{formatCurrency(r.amount)}</td>
+                  <td className="is-num">
+                    {r.bictorys_fee == null ? "—" : `${Number(r.bictorys_fee).toLocaleString("fr-FR")} F`}
+                  </td>
+                  <td>
+                    <StatusPill tone={toneForStatus(r.status)} label={REFUND_STATUS_LABELS[r.status] ?? r.status} />
+                    {r.failure_reason && <span className="ax-cell-sub">{r.failure_reason}</span>}
+                  </td>
+                  <td className="is-nowrap is-muted">{formatAdminDate(r.created_at)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </Panel>
     </section>
   );
 }

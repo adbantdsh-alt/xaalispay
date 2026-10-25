@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Search } from "lucide-react";
+import { EyeOff, Package } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { formatAdminDate, type ProductRow } from "./admin-types";
+import { EmptyState, EntityCell, Panel, SearchField, StatStrip, StatusPill, Tabs } from "./AdminUI";
 
 const ORDERING_OPTIONS = [
   { value: "-created_at", label: "Plus récents" },
@@ -25,7 +26,7 @@ export function AdminProductsSection({
 }) {
   const [search, setSearch] = useState("");
   const [active, setActive] = useState<"" | "true" | "false">("");
-  const [ordering, setOrdering] = useState("-created_at");
+  const [ordering, setOrdering] = useState<string>("-created_at");
 
   useEffect(() => {
     const id = setTimeout(() => onSearch({ search, active: active || undefined, ordering }), 300);
@@ -44,101 +45,103 @@ export function AdminProductsSection({
     onDeactivate(product.id);
   };
 
+  const stats = {
+    active: products.filter((p) => p.active).length,
+    sold: products.filter((p) => p.ordersCount > 0).length,
+    orders: products.reduce((sum, p) => sum + p.ordersCount, 0),
+  };
+
   return (
     <section className="admin-section">
-      <div className="admin-filters">
-        <div className="admin-search-wrap">
-          <Search size={16} aria-hidden="true" />
-          <input
-            className="input-field input-compact"
-            placeholder="Rechercher un produit ou un vendeur…"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        </div>
-        <button
-          type="button"
-          className={`admin-filter ${active === "" ? "is-active" : ""}`}
-          onClick={() => setActive("")}
-        >
-          Tous
-        </button>
-        <button
-          type="button"
-          className={`admin-filter ${active === "true" ? "is-active" : ""}`}
-          onClick={() => setActive("true")}
-        >
-          Actifs
-        </button>
-        <button
-          type="button"
-          className={`admin-filter ${active === "false" ? "is-active" : ""}`}
-          onClick={() => setActive("false")}
-        >
-          Inactifs
-        </button>
-        <select className="input-field input-compact" value={ordering} onChange={(e) => setOrdering(e.target.value)}>
-          {ORDERING_OPTIONS.map((opt) => (
-            <option key={opt.value} value={opt.value}>
-              {opt.label}
-            </option>
-          ))}
-        </select>
-      </div>
+      <StatStrip
+        items={[
+          { label: "Produits", value: products.length, hint: `${stats.active} actif(s)`, tone: "accent" },
+          {
+            label: "Déjà vendus",
+            value: stats.sold,
+            hint: products.length ? `${Math.round((stats.sold / products.length) * 100)} % du catalogue` : "—",
+          },
+          { label: "Commandes générées", value: stats.orders, hint: "tous produits listés" },
+        ]}
+      />
 
-      {products.length === 0 ? (
-        <p className="admin-empty">Aucun produit trouvé.</p>
-      ) : (
-        <div className="admin-table-wrap">
-          <table className="admin-table">
+      <Panel
+        title="Catalogue"
+        count={products.length}
+        toolbar={
+          <>
+            <SearchField value={search} onChange={setSearch} placeholder="Produit ou vendeur…" />
+            <Tabs
+              label="Filtrer par statut"
+              value={active}
+              onChange={setActive}
+              options={[
+                { value: "", label: "Tous" },
+                { value: "true", label: "Actifs" },
+                { value: "false", label: "Inactifs" },
+              ]}
+            />
+            <label className="ax-select">
+              <span className="ax-sr-only">Trier</span>
+              <select value={ordering} onChange={(e) => setOrdering(e.target.value)}>
+                {ORDERING_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </>
+        }
+      >
+        {products.length === 0 ? (
+          <EmptyState icon={Package} title="Aucun produit" hint="Aucun produit ne correspond à ces filtres." />
+        ) : (
+          <table className="ax-table">
             <thead>
               <tr>
                 <th>Produit</th>
                 <th>Vendeur</th>
-                <th>Prix</th>
-                <th>Commandes</th>
+                <th className="is-num">Prix</th>
+                <th className="is-num">Commandes</th>
                 <th>Statut</th>
-                <th>Action</th>
+                <th aria-label="Action" />
               </tr>
             </thead>
             <tbody>
               {products.map((p) => (
                 <tr key={p.id}>
                   <td>
-                    <strong>{p.name}</strong>
-                    <span className="admin-cell-sub">{formatAdminDate(p.createdAt)}</span>
+                    <span className="ax-cell-strong">{p.name}</span>
+                    <span className="ax-cell-sub">Ajouté le {formatAdminDate(p.createdAt)}</span>
                   </td>
                   <td>
-                    {p.sellerBusinessName}
-                    <span className="admin-cell-sub admin-mono">@{p.sellerUsername}</span>
+                    <EntityCell name={p.sellerBusinessName} sub={`@${p.sellerUsername}`} />
                   </td>
-                  <td className="admin-mono">{formatCurrency(p.price)}</td>
-                  <td className="admin-mono">{p.ordersCount}</td>
+                  <td className="is-num">{formatCurrency(p.price)}</td>
+                  <td className="is-num">{p.ordersCount}</td>
                   <td>
-                    <span className={`admin-badge ${p.active ? "good" : "neutral"}`}>
-                      {p.active ? "Actif" : "Inactif"}
-                    </span>
+                    <StatusPill tone={p.active ? "good" : "neutral"} label={p.active ? "Actif" : "Inactif"} />
                   </td>
-                  <td>
-                    {p.active ? (
+                  <td className="is-nowrap">
+                    {p.active && (
                       <button
                         type="button"
-                        className="admin-action-btn"
+                        className="ax-btn ax-btn--sm"
                         disabled={deactivatingId === p.id}
                         onClick={() => handleDeactivate(p)}
                       >
+                        <EyeOff size={13} aria-hidden="true" />
                         {deactivatingId === p.id ? "…" : "Désactiver"}
                       </button>
-                    ) : (
-                      "—"
                     )}
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
-        </div>
-      )}
+        )}
+      </Panel>
     </section>
   );
 }

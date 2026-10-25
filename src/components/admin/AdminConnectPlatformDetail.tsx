@@ -4,8 +4,8 @@ import { useEffect, useState } from "react";
 import { apiFetch } from "@/lib/api-client";
 import { formatCurrency } from "@/lib/utils";
 import { adaptConnectPayoutRow, adaptConnectTransactionRow } from "./admin-adapters";
+import { DetailPanel, DetailSection, StatusPill, toneForStatus } from "./AdminUI";
 import {
-  adminStatusClass,
   connectPayoutStatusLabel,
   connectTransactionStatusLabel,
   formatAdminDate,
@@ -14,24 +14,20 @@ import {
 } from "./admin-types";
 
 function BalanceGroup({ balances }: { balances: ConnectBalanceSummary }) {
+  const cells = [
+    ["Disponible", balances.available_total],
+    ["En séquestre", balances.escrow_total],
+    ["Bloqué (litiges)", balances.blocked_total],
+    ["Déjà versé", balances.paid_out_total],
+  ] as const;
   return (
-    <div className="admin-stat-grid">
-      <div className="admin-stat-box">
-        <div className="admin-stat-box-label">En séquestre</div>
-        <div className="admin-stat-box-value">{formatCurrency(balances.escrow_total)}</div>
-      </div>
-      <div className="admin-stat-box">
-        <div className="admin-stat-box-label">Disponible</div>
-        <div className="admin-stat-box-value">{formatCurrency(balances.available_total)}</div>
-      </div>
-      <div className="admin-stat-box">
-        <div className="admin-stat-box-label">Bloqué (litiges)</div>
-        <div className="admin-stat-box-value">{formatCurrency(balances.blocked_total)}</div>
-      </div>
-      <div className="admin-stat-box">
-        <div className="admin-stat-box-label">Déjà versé</div>
-        <div className="admin-stat-box-value">{formatCurrency(balances.paid_out_total)}</div>
-      </div>
+    <div className="ax-balance">
+      {cells.map(([label, value]) => (
+        <div key={label} className="ax-balance-cell">
+          <span>{label}</span>
+          <strong className="admin-mono">{formatCurrency(value)}</strong>
+        </div>
+      ))}
     </div>
   );
 }
@@ -85,174 +81,105 @@ export function AdminConnectPlatformDetail({ platformId, onClose }: { platformId
     };
   }, [platformId]);
 
+  const platform = detail?.platform;
+
   return (
-    <div className="admin-modal-backdrop" onClick={onClose}>
-      <article className="admin-modal admin-modal--seller" onClick={(e) => e.stopPropagation()}>
-        <header className="admin-modal-head">
-          <div className="admin-modal-head-id">
-            {detail && (
-              <span className="admin-seller-avatar" aria-hidden="true">
-                {detail.platform.name.charAt(0).toUpperCase()}
-              </span>
-            )}
-            <div>
-              <div className="admin-modal-head-title">{detail ? detail.platform.name : "Plateforme"}</div>
-              {detail && (
-                <div className="admin-modal-head-subtitle admin-mono">
-                  {detail.platform.slug} · {detail.platform.country} · {detail.platform.isActive ? "Active" : "Inactive"}
-                </div>
-              )}
-            </div>
+    <DetailPanel
+      wide
+      title={platform ? platform.name : "Plateforme"}
+      subtitle={platform ? `${platform.slug} · ${platform.country} · inscrite le ${formatAdminDate(platform.createdAt)}` : undefined}
+      badge={platform && <StatusPill tone={platform.isActive ? "good" : "neutral"} label={platform.isActive ? "Active" : "Inactive"} />}
+      onClose={onClose}
+    >
+      {loading && <p className="ax-muted ax-pad">Chargement…</p>}
+      {!loading && error && <p className="ax-muted ax-pad">{error}</p>}
+
+      {!loading && detail && platform && (
+        <>
+          <div className="ax-chip-row ax-pad">
+            <span className="av-meta-chip">Encaissement {(Number(platform.xaalispayFeePercent) * 100).toFixed(2)} %</span>
+            <span className="av-meta-chip">Retrait {(Number(platform.xaalispayPayoutFeePercent) * 100).toFixed(2)} %</span>
+            <span className="av-meta-chip">{detail.accountsCount} compte(s) connecté(s)</span>
+            <span className="av-meta-chip">{platform.currency}</span>
           </div>
-          <button type="button" className="admin-modal-close" onClick={onClose} aria-label="Fermer">
-            ×
-          </button>
-        </header>
 
-        {loading && <p className="admin-empty">Chargement…</p>}
-        {!loading && error && <p className="admin-empty">{error}</p>}
-
-        {!loading && detail && (
-          <>
-            <div className="admin-dispute-section av-chip-row">
-              <span className="av-meta-chip">Inscrite le {formatAdminDate(detail.platform.createdAt)}</span>
-              <span className="av-meta-chip">
-                Encaissement {(Number(detail.platform.xaalispayFeePercent) * 100).toFixed(2)} %
-              </span>
-              <span className="av-meta-chip">
-                Retrait {(Number(detail.platform.xaalispayPayoutFeePercent) * 100).toFixed(2)} %
-              </span>
-              <span className="av-meta-chip">{detail.accountsCount} compte(s) connecté(s)</span>
-              <span className="av-meta-chip">{detail.platform.currency}</span>
-            </div>
-
-            <div className="admin-dispute-section">
-              <h3 className="admin-dispute-section-title">Ce que cette plateforme rapporte à XaalisPay</h3>
-              <div className="av-net-band">
-                <div>
-                  <span>Revenu brut</span>
-                  <strong className="admin-mono">{formatCurrency(detail.revenueTotal)}</strong>
-                </div>
-                <span className="av-net-op" aria-hidden="true">−</span>
-                <div>
-                  <span>Frais Bictorys de ses flux</span>
-                  <strong className="admin-mono av-minus">{formatCurrency(detail.bictorysFeesTotal)}</strong>
-                </div>
-                <span className="av-net-op" aria-hidden="true">=</span>
-                <div>
-                  <span>Bénéfice net</span>
-                  <strong className="admin-mono av-net-total">{formatCurrency(detail.netRevenue)}</strong>
-                </div>
+          <DetailSection title="Ce que cette plateforme rapporte à XaalisPay">
+            <div className="av-net-band">
+              <div>
+                <span>Revenu brut</span>
+                <strong className="admin-mono">{formatCurrency(detail.revenueTotal)}</strong>
+              </div>
+              <span className="av-net-op" aria-hidden="true">−</span>
+              <div>
+                <span>Frais Bictorys de ses flux</span>
+                <strong className="admin-mono av-minus">{formatCurrency(detail.bictorysFeesTotal)}</strong>
+              </div>
+              <span className="av-net-op" aria-hidden="true">=</span>
+              <div>
+                <span>Bénéfice net</span>
+                <strong className="admin-mono av-net-total">{formatCurrency(detail.netRevenue)}</strong>
               </div>
             </div>
+          </DetailSection>
 
-            <div className="admin-dispute-section">
-              <h3 className="admin-dispute-section-title">Commission de la plateforme</h3>
-              <div className="admin-hint-banner">
-                <span className="admin-hint-dot" aria-hidden="true" />
-                <span className="admin-hint-muted">
-                  Uniquement sa commission perçue via les transactions Connect — pas son revenu total (elle peut
-                  avoir d&apos;autres revenus hors Connect, ex. abonnements, invisibles ici).
-                </span>
-              </div>
-              <BalanceGroup balances={detail.balances.platform_own} />
-            </div>
+          <DetailSection title="Commission de la plateforme">
+            <BalanceGroup balances={detail.balances.platform_own} />
+            <p className="ax-muted">Sa commission perçue via Connect uniquement, jamais son revenu total.</p>
+          </DetailSection>
 
-            <div className="admin-dispute-section">
-              <h3 className="admin-dispute-section-title">Fonds de ses marchands — jamais l&apos;argent de la plateforme</h3>
-              <BalanceGroup balances={detail.balances.merchants} />
-            </div>
+          <DetailSection title="Fonds de ses marchands">
+            <BalanceGroup balances={detail.balances.merchants} />
+          </DetailSection>
 
-            <div className="admin-dispute-section">
-              <h3 className="admin-dispute-section-title">Transactions récentes</h3>
-              {detail.recentTransactions.length === 0 ? (
-                <p className="admin-empty">Aucune transaction.</p>
-              ) : (
-                <div className="admin-table-wrap">
-                  <table className="admin-table">
-                    <thead>
-                      <tr>
-                        <th>Référence</th>
-                        <th>Montant</th>
-                        <th>Devise</th>
-                        <th>Statut</th>
-                        <th>Frais XaalisPay</th>
-                        <th>Commission plateforme</th>
-                        <th>Créée le</th>
-                        <th>Libérée le</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {detail.recentTransactions.map((t) => (
-                        <tr key={t.id}>
-                          <td className="admin-mono">{t.externalRef || t.id.slice(0, 8)}</td>
-                          <td className="admin-mono">{formatCurrency(t.amount)}</td>
-                          <td className="admin-mono">{t.currency}</td>
-                          <td>
-                            <span className={`admin-badge ${adminStatusClass(t.status)}`}>
-                              {connectTransactionStatusLabel(t.status)}
-                            </span>
-                          </td>
-                          <td className="admin-mono">{formatCurrency(t.xaalispayFee)}</td>
-                          <td className="admin-mono">{formatCurrency(t.applicationFee)}</td>
-                          <td>{formatAdminDate(t.createdAt)}</td>
-                          <td>{formatAdminDate(t.releasedAt)}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </div>
+          <DetailSection title={`Transactions récentes · ${detail.recentTransactions.length}`}>
+            {detail.recentTransactions.length === 0 ? (
+              <p className="ax-muted">Aucune transaction.</p>
+            ) : (
+              <ul className="ax-list">
+                {detail.recentTransactions.map((t) => (
+                  <li key={t.id}>
+                    <span className="ax-list-main">
+                      <span className="ax-list-title admin-mono">{t.externalRef || t.id.slice(0, 8)}</span>
+                      <span className="ax-list-sub">
+                        {formatAdminDate(t.createdAt)} · XaalisPay {formatCurrency(t.xaalispayFee)} · plateforme{" "}
+                        {formatCurrency(t.applicationFee)}
+                      </span>
+                    </span>
+                    <span className="ax-list-amount admin-mono">{formatCurrency(t.amount)}</span>
+                    <StatusPill tone={toneForStatus(t.status)} label={connectTransactionStatusLabel(t.status)} />
+                  </li>
+                ))}
+              </ul>
+            )}
+          </DetailSection>
 
-            <div className="admin-dispute-section">
-              <h3 className="admin-dispute-section-title">Retraits récents</h3>
-              {detail.recentPayouts.length === 0 ? (
-                <p className="admin-empty">Aucun retrait.</p>
-              ) : (
-                <div className="admin-table-wrap">
-                  <table className="admin-table">
-                    <thead>
-                      <tr>
-                        <th>Compte</th>
-                        <th>Montant</th>
-                        <th>Frais XaalisPay</th>
-                        <th>Net envoyé</th>
-                        <th>Méthode</th>
-                        <th>Téléphone</th>
-                        <th>Pays</th>
-                        <th>Statut</th>
-                        <th>Raison d&apos;échec</th>
-                        <th>Date</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {detail.recentPayouts.map((p) => (
-                        <tr key={p.id}>
-                          <td className="admin-mono">{p.account.slice(0, 8)}</td>
-                          <td className="admin-mono">{formatCurrency(p.amount)}</td>
-                          <td className="admin-mono">{formatCurrency(p.xaalispayFee)}</td>
-                          <td className="admin-mono">{formatCurrency(p.netAmount)}</td>
-                          <td>{p.method}</td>
-                          <td className="admin-mono">{p.phone}</td>
-                          <td className="admin-mono">{p.country}</td>
-                          <td>
-                            <span className={`admin-badge ${adminStatusClass(p.status)}`}>
-                              {connectPayoutStatusLabel(p.status)}
-                            </span>
-                          </td>
-                          <td>{p.failureReason || "—"}</td>
-                          <td>{formatAdminDate(p.createdAt)}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </div>
-          </>
-        )}
-      </article>
-    </div>
+          <DetailSection title={`Retraits récents · ${detail.recentPayouts.length}`}>
+            {detail.recentPayouts.length === 0 ? (
+              <p className="ax-muted">Aucun retrait.</p>
+            ) : (
+              <ul className="ax-list">
+                {detail.recentPayouts.map((p) => (
+                  <li key={p.id}>
+                    <span className="ax-list-main">
+                      <span className="ax-list-title">
+                        {p.method === "wave" ? "Wave" : p.method === "orange" ? "Orange Money" : p.method}{" "}
+                        <span className="admin-mono">{p.phone}</span>
+                      </span>
+                      <span className="ax-list-sub">
+                        {formatAdminDate(p.createdAt)} · net envoyé {formatCurrency(p.netAmount)} · frais XaalisPay{" "}
+                        {formatCurrency(p.xaalispayFee)}
+                        {p.failureReason ? ` · ${p.failureReason}` : ""}
+                      </span>
+                    </span>
+                    <span className="ax-list-amount admin-mono">{formatCurrency(p.amount)}</span>
+                    <StatusPill tone={toneForStatus(p.status)} label={connectPayoutStatusLabel(p.status)} />
+                  </li>
+                ))}
+              </ul>
+            )}
+          </DetailSection>
+        </>
+      )}
+    </DetailPanel>
   );
 }

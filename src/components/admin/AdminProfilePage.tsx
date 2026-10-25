@@ -2,12 +2,13 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, X } from "lucide-react";
+import { ChevronRight, Plus, UserPlus } from "lucide-react";
 import { apiFetch, extractApiError } from "@/lib/api-client";
 import { useAuth } from "@/lib/auth-client";
 import { adaptTeamMemberRow } from "./admin-adapters";
 import { handleAdminAuthStatus } from "./AdminDataProvider";
 import { TEAM_ROLE_LABELS, type StaffRole, type TeamMemberRow } from "./admin-types";
+import { DetailPanel, EmptyState, EntityCell, Panel, StatusPill, initialsOf } from "./AdminUI";
 
 export function AdminProfilePage() {
   const router = useRouter();
@@ -43,73 +44,74 @@ export function AdminProfilePage() {
     );
   }
 
+  const roleLabel = TEAM_ROLE_LABELS[user?.role as StaffRole] ?? user?.role ?? "";
+
   return (
     <div className="admin-section">
-      <section className="admin-card">
-        <div className="admin-profile-self">
-          <span className="admin-seller-avatar" aria-hidden="true">
-            {(user?.display_name || "?").charAt(0).toUpperCase()}
-          </span>
-          <div>
-            <p className="admin-modal-head-title">{user?.display_name}</p>
-            <p className="admin-modal-head-subtitle admin-mono">{user?.email}</p>
-            <span className="admin-badge neutral">
-              {TEAM_ROLE_LABELS[user?.role as StaffRole] ?? user?.role}
-            </span>
-          </div>
+      <section className="ax-profile">
+        <span className="ax-avatar ax-avatar--lg" aria-hidden="true">
+          {initialsOf(user?.display_name || "?")}
+        </span>
+        <div className="ax-profile-text">
+          <h2 className="ax-profile-name">{user?.display_name}</h2>
+          <span className="ax-muted admin-mono">{user?.email}</span>
         </div>
+        <StatusPill tone="info" label={roleLabel} />
       </section>
 
-      <section className="admin-card" style={{ marginTop: "1.25rem" }}>
-        <div className="admin-section-head">
-          <h2 className="admin-card-title" style={{ marginBottom: 0 }}>
-            Équipe
-          </h2>
-          {isSuperAdmin && (
-            <button type="button" className="admin-action-btn" onClick={() => setShowCreateModal(true)}>
-              <Plus size={14} aria-hidden="true" style={{ marginRight: "0.3rem", verticalAlign: "-2px" }} />
+      <Panel
+        title="Équipe XaalisPay"
+        count={members.length}
+        actions={
+          isSuperAdmin && (
+            <button type="button" className="ax-btn ax-btn--primary" onClick={() => setShowCreateModal(true)}>
+              <Plus size={14} aria-hidden="true" />
               Ajouter un membre
             </button>
-          )}
-        </div>
-
+          )
+        }
+      >
         {members.length === 0 ? (
-          <p className="admin-empty">Aucun membre d&apos;équipe.</p>
+          <EmptyState icon={UserPlus} title="Aucun membre d'équipe" />
         ) : (
-          <div className="admin-table-wrap">
-            <table className="admin-table">
-              <thead>
-                <tr>
-                  <th>Nom</th>
-                  <th>Email</th>
-                  <th>Rôle</th>
-                  <th>Statut</th>
+          <table className="ax-table">
+            <thead>
+              <tr>
+                <th>Membre</th>
+                <th>Rôle</th>
+                <th>Statut</th>
+                {isSuperAdmin && <th aria-label="Ouvrir" />}
+              </tr>
+            </thead>
+            <tbody>
+              {members.map((m) => (
+                <tr
+                  key={m.id}
+                  className={isSuperAdmin ? "ax-row" : undefined}
+                  tabIndex={isSuperAdmin ? 0 : undefined}
+                  onClick={isSuperAdmin ? () => router.push(`/admin/profile/team/${m.id}`) : undefined}
+                  onKeyDown={
+                    isSuperAdmin ? (e) => e.key === "Enter" && router.push(`/admin/profile/team/${m.id}`) : undefined
+                  }
+                >
+                  <td>
+                    <EntityCell name={m.displayName} sub={m.email} />
+                  </td>
+                  <td>{TEAM_ROLE_LABELS[m.role]}</td>
+                  <td>
+                    <StatusPill tone={m.isActive ? "good" : "neutral"} label={m.isActive ? "Actif" : "Inactif"} />
+                  </td>
+                  {isSuperAdmin && (
+                    <td className="ax-chevron">
+                      <ChevronRight size={16} aria-hidden="true" />
+                    </td>
+                  )}
                 </tr>
-              </thead>
-              <tbody>
-                {members.map((m) => (
-                  <tr
-                    key={m.id}
-                    className={isSuperAdmin ? "admin-row-click" : ""}
-                    onClick={isSuperAdmin ? () => router.push(`/admin/profile/team/${m.id}`) : undefined}
-                  >
-                    <td>
-                      <strong>{m.displayName}</strong>
-                    </td>
-                    <td className="admin-mono">{m.email}</td>
-                    <td>{TEAM_ROLE_LABELS[m.role]}</td>
-                    <td>
-                      <span className={`admin-badge ${m.isActive ? "good" : "bad"}`}>
-                        {m.isActive ? "Actif" : "Inactif"}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+              ))}
+            </tbody>
+          </table>
         )}
-      </section>
+      </Panel>
 
       {showCreateModal && (
         <CreateTeamMemberModal onClose={() => setShowCreateModal(false)} onCreated={handleCreated} />
@@ -149,64 +151,32 @@ function CreateTeamMemberModal({
   };
 
   return (
-    <div className="admin-modal-backdrop" onClick={onClose}>
-      <article className="admin-modal" onClick={(e) => e.stopPropagation()}>
-        <header className="admin-modal-head">
-          <h2>Ajouter un membre</h2>
-          <button type="button" className="admin-modal-close" onClick={onClose} aria-label="Fermer">
-            <X size={18} aria-hidden="true" />
-          </button>
-        </header>
-        <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-          <div>
-            <label className="mb-1.5 block text-sm font-medium" htmlFor="member-name">
-              Nom complet
-            </label>
-            <input
-              id="member-name"
-              className="input-field input-compact"
-              value={displayName}
-              onChange={(e) => setDisplayName(e.target.value)}
-              required
-            />
-          </div>
-          <div>
-            <label className="mb-1.5 block text-sm font-medium" htmlFor="member-email">
-              Email
-            </label>
-            <input
-              id="member-email"
-              type="email"
-              className="input-field input-compact"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-          </div>
-          <div>
-            <label className="mb-1.5 block text-sm font-medium" htmlFor="member-role">
-              Rôle
-            </label>
-            <select
-              id="member-role"
-              className="input-field input-compact"
-              value={role}
-              onChange={(e) => setRole(e.target.value as StaffRole)}
-            >
-              <option value="super_admin">{TEAM_ROLE_LABELS.super_admin}</option>
-              <option value="dispute_manager">{TEAM_ROLE_LABELS.dispute_manager}</option>
-            </select>
-          </div>
-          {error && (
-            <p className="alert-danger" role="alert">
-              {error}
-            </p>
-          )}
-          <button type="submit" disabled={saving} className="btn-primary">
-            {saving ? "Création…" : "Créer le compte"}
-          </button>
-        </form>
-      </article>
-    </div>
+    <DetailPanel title="Ajouter un membre" subtitle="Un mot de passe temporaire lui sera attribué" onClose={onClose}>
+      <form onSubmit={handleSubmit} className="ax-form">
+        <label className="ax-field">
+          <span>Nom complet</span>
+          <input value={displayName} onChange={(e) => setDisplayName(e.target.value)} required />
+        </label>
+        <label className="ax-field">
+          <span>Email</span>
+          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+        </label>
+        <label className="ax-field">
+          <span>Rôle</span>
+          <select value={role} onChange={(e) => setRole(e.target.value as StaffRole)}>
+            <option value="super_admin">{TEAM_ROLE_LABELS.super_admin}</option>
+            <option value="dispute_manager">{TEAM_ROLE_LABELS.dispute_manager}</option>
+          </select>
+        </label>
+        {error && (
+          <p className="admin-error" role="alert">
+            {error}
+          </p>
+        )}
+        <button type="submit" disabled={saving} className="ax-btn ax-btn--primary ax-btn--block">
+          {saving ? "Création…" : "Créer le compte"}
+        </button>
+      </form>
+    </DetailPanel>
   );
 }

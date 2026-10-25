@@ -2,6 +2,7 @@
 
 import { Fragment, useState } from "react";
 import { formatAdminDate, type AffiliateApplicationRow } from "./admin-types";
+import { EntityCell, Panel } from "./AdminUI";
 
 export function AdminAffiliateApplicationsPanel({
   applications,
@@ -33,96 +34,86 @@ export function AdminAffiliateApplicationsPanel({
   };
 
   return (
-    <section className="admin-section" style={{ marginBottom: "1.5rem" }}>
-      <div className="admin-section-head" style={{ marginBottom: "0.75rem" }}>
-        <p className="admin-kpi-label" style={{ fontSize: "0.8rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", margin: 0 }}>
-          Demandes d&apos;affiliation en attente{" "}
-          <span className="admin-badge neutral">{applications.length}</span>
-        </p>
-      </div>
-      <div className="admin-table-wrap">
-        <table className="admin-table">
-          <thead>
-            <tr>
-              <th>Vendeur</th>
-              <th>Motivation</th>
-              <th>Canal</th>
-              <th>Date</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {applications.map((app) => (
-              <Fragment key={app.id}>
-                <tr>
-                  <td>
-                    <strong>{app.sellerBusinessName}</strong>
-                    <span className="admin-cell-sub admin-mono">@{app.sellerUsername}</span>
-                  </td>
-                  <td style={{ maxWidth: 280, whiteSpace: "pre-wrap" }}>{app.motivation}</td>
-                  <td style={{ maxWidth: 200, whiteSpace: "pre-wrap" }}>{app.channel}</td>
-                  <td className="admin-mono admin-cell-nowrap">{formatAdminDate(app.createdAt)}</td>
-                  <td>
-                    <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
+    <Panel title="Demandes d'affiliation en attente" count={applications.length}>
+      <table className="ax-table">
+        <thead>
+          <tr>
+            <th>Vendeur</th>
+            <th>Motivation</th>
+            <th>Canal</th>
+            <th>Reçue le</th>
+            <th aria-label="Actions" />
+          </tr>
+        </thead>
+        <tbody>
+          {applications.map((app) => (
+            <Fragment key={app.id}>
+              <tr>
+                <td>
+                  <EntityCell name={app.sellerBusinessName} sub={`@${app.sellerUsername}`} />
+                </td>
+                <td className="ax-cell-text">{app.motivation}</td>
+                <td className="ax-cell-text">{app.channel}</td>
+                <td className="is-nowrap is-muted">{formatAdminDate(app.createdAt)}</td>
+                <td className="is-nowrap">
+                  <span className="ax-inline-form">
+                    <button
+                      type="button"
+                      className="ax-btn ax-btn--sm ax-btn--primary"
+                      disabled={loadingId === app.id}
+                      onClick={() => handleApprove(app.id)}
+                    >
+                      Approuver
+                    </button>
+                    <button
+                      type="button"
+                      className="ax-btn ax-btn--sm"
+                      disabled={loadingId === app.id}
+                      onClick={() => {
+                        setRejectingId(app.id);
+                        setAdminNote("");
+                      }}
+                    >
+                      Rejeter
+                    </button>
+                  </span>
+                </td>
+              </tr>
+              {rejectingId === app.id && (
+                <tr className="ax-row-form">
+                  <td colSpan={5}>
+                    <span className="ax-inline-form ax-inline-form--full">
+                      <label className="ax-sr-only" htmlFor={`reject-note-${app.id}`}>
+                        Note pour le vendeur
+                      </label>
+                      <input
+                        id={`reject-note-${app.id}`}
+                        type="text"
+                        className="ax-input ax-input--grow"
+                        placeholder="Note pour le vendeur (optionnel)…"
+                        value={adminNote}
+                        onChange={(e) => setAdminNote(e.target.value)}
+                        autoFocus
+                      />
                       <button
                         type="button"
-                        className="admin-action-btn"
+                        className="ax-btn ax-btn--sm ax-btn--primary"
                         disabled={loadingId === app.id}
-                        onClick={() => handleApprove(app.id)}
+                        onClick={() => handleRejectSubmit(app.id)}
                       >
-                        Approuver
+                        Confirmer le rejet
                       </button>
-                      <button
-                        type="button"
-                        className="admin-action-btn admin-action-btn--warn"
-                        disabled={loadingId === app.id}
-                        onClick={() => {
-                          setRejectingId(app.id);
-                          setAdminNote("");
-                        }}
-                      >
-                        Rejeter
+                      <button type="button" className="ax-btn ax-btn--sm" onClick={() => setRejectingId(null)}>
+                        Annuler
                       </button>
-                    </div>
+                    </span>
                   </td>
                 </tr>
-                {rejectingId === app.id && (
-                  <tr>
-                    <td colSpan={5} style={{ background: "#fef2f2", paddingTop: "0.5rem" }}>
-                      <div style={{ display: "flex", gap: "0.5rem", alignItems: "flex-start" }}>
-                        <input
-                          type="text"
-                          className="input-field input-compact"
-                          placeholder="Note pour le vendeur (optionnel)…"
-                          value={adminNote}
-                          onChange={(e) => setAdminNote(e.target.value)}
-                          style={{ flex: 1 }}
-                          autoFocus
-                        />
-                        <button
-                          type="button"
-                          className="admin-action-btn admin-action-btn--warn"
-                          disabled={loadingId === app.id}
-                          onClick={() => handleRejectSubmit(app.id)}
-                        >
-                          Confirmer
-                        </button>
-                        <button
-                          type="button"
-                          className="admin-action-btn"
-                          onClick={() => setRejectingId(null)}
-                        >
-                          Annuler
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                )}
-              </Fragment>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </section>
+              )}
+            </Fragment>
+          ))}
+        </tbody>
+      </table>
+    </Panel>
   );
 }

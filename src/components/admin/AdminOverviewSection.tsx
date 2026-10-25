@@ -116,7 +116,9 @@ export function AdminOverviewSection({
             </span>
             <span className="av-sellers-value admin-mono">{overview.sellers_count}</span>
             <span className="av-sellers-foot">
-              <span className="av-chip av-chip--solid">+ {overview.sellers_new_7d} cette semaine</span>
+              {overview.sellers_new_7d != null && (
+                <span className="av-chip av-chip--solid">+ {overview.sellers_new_7d} cette semaine</span>
+              )}
               <span className="av-link">
                 Voir les vendeurs <ArrowRight size={14} aria-hidden="true" />
               </span>

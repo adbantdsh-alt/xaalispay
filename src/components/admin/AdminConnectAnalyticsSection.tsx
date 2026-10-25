@@ -2,11 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { Bar, BarChart, CartesianGrid, ComposedChart, Legend, Line, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { LineChart as LineChartIcon } from "lucide-react";
 import { apiFetch } from "@/lib/api-client";
 import { formatCurrency } from "@/lib/utils";
 import { AdminDateRangePopover } from "./AdminDateRangePopover";
 import { CORAL, NAVY } from "./admin-chart-colors";
-import type { ConnectAnalyticsDayPoint, ConnectAnalyticsSummaryData, ConnectAnalyticsWindowMetrics } from "./admin-types";
+import type { ConnectAnalyticsDayPoint, ConnectAnalyticsSummaryData } from "./admin-types";
+import { EmptyState, Panel, StatStrip, Tabs } from "./AdminUI";
 
 function toDateInput(d: Date): string {
   return d.toISOString().slice(0, 10);
@@ -35,20 +37,6 @@ function tooltipLabel(label: unknown) {
 
 function tooltipCurrency(value: unknown) {
   return formatCurrency(Number(value));
-}
-
-function WindowCard({ title, metrics }: { title: string; metrics?: ConnectAnalyticsWindowMetrics }) {
-  return (
-    <article className="admin-kpi">
-      <p className="admin-kpi-label">{title}</p>
-      <p className="admin-kpi-value">{metrics ? formatCurrency(metrics.xaalispay_fee_revenue) : "—"}</p>
-      <p className="admin-kpi-sub">
-        {metrics
-          ? `${metrics.transactions_count} transaction(s) · net de frais Bictorys : ${formatCurrency(metrics.net_revenue)}`
-          : ""}
-      </p>
-    </article>
-  );
 }
 
 export function AdminConnectAnalyticsSection() {
@@ -83,29 +71,32 @@ export function AdminConnectAnalyticsSection() {
   const isQuickRangeActive = QUICK_RANGES.some((range) => range.from() === dateFrom && daysAgo(0) === dateTo);
   const hasActivity = days.some((d) => d.transactions_count > 0 || d.xaalispay_fee_revenue > 0);
 
+  const activeRange = QUICK_RANGES.find((range) => range.from() === dateFrom && daysAgo(0) === dateTo);
+  const totals = days.reduce(
+    (acc, d) => ({
+      count: acc.count + d.transactions_count,
+      gmv: acc.gmv + d.gmv,
+      revenue: acc.revenue + d.xaalispay_fee_revenue,
+      net: acc.net + d.net_revenue,
+    }),
+    { count: 0, gmv: 0, revenue: 0, net: 0 }
+  );
+  const axisTick = { fontSize: 11, fill: "#5F6672" };
+
   return (
     <section className="admin-section">
-      <div className="admin-kpi-grid">
-        <WindowCard title="Aujourd'hui" metrics={summary?.today} />
-        <WindowCard title="7 derniers jours" metrics={summary?.last_7_days} />
-        <WindowCard title="30 derniers jours" metrics={summary?.last_30_days} />
-        <WindowCard title="Depuis le début" metrics={summary?.all_time} />
-      </div>
-
-      <div className="admin-daterange">
-        {QUICK_RANGES.map((range) => (
-          <button
-            key={range.label}
-            type="button"
-            className={`admin-filter${range.from() === dateFrom && daysAgo(0) === dateTo ? " is-active" : ""}`}
-            onClick={() => {
-              setDateFrom(range.from());
-              setDateTo(daysAgo(0));
-            }}
-          >
-            {range.label}
-          </button>
-        ))}
+      <div className="ax-filterbar">
+        <Tabs
+          label="Période"
+          value={activeRange?.label ?? "custom"}
+          onChange={(label) => {
+            const range = QUICK_RANGES.find((r) => r.label === label);
+            if (!range) return;
+            setDateFrom(range.from());
+            setDateTo(daysAgo(0));
+          }}
+          options={QUICK_RANGES.map((range) => ({ value: range.label as string, label: range.label }))}
+        />
         <AdminDateRangePopover
           dateFrom={dateFrom}
           dateTo={dateTo}
@@ -118,41 +109,73 @@ export function AdminConnectAnalyticsSection() {
         />
       </div>
 
+      <StatStrip
+        items={[
+          { label: "Bénéfice net Connect", value: formatCurrency(totals.net), hint: "sur la période", tone: "accent" },
+          { label: "Revenu brut", value: formatCurrency(totals.revenue), hint: "commissions acquises" },
+          { label: "Volume payé", value: formatCurrency(totals.gmv) },
+          { label: "Transactions payées", value: totals.count },
+        ]}
+      />
+
+      {summary && (
+        <div className="ax-windows">
+          {(
+            [
+              ["Aujourd'hui", summary.today],
+              ["7 derniers jours", summary.last_7_days],
+              ["30 derniers jours", summary.last_30_days],
+              ["Depuis le début", summary.all_time],
+            ] as const
+          ).map(([title, metrics]) => (
+            <div key={title} className="ax-window">
+              <span className="ax-window-title">{title}</span>
+              <span className="ax-window-value admin-mono">{formatCurrency(metrics.net_revenue)}</span>
+              <span className="ax-window-sub">
+                net · {metrics.transactions_count} transaction(s) · brut {formatCurrency(metrics.xaalispay_fee_revenue)}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+
       {chartLoading ? (
-        <p className="admin-empty">Chargement…</p>
+        <p className="ax-muted ax-pad">Chargement…</p>
       ) : !hasActivity ? (
-        <p className="admin-empty">Aucune activité Connect sur cette période.</p>
+        <Panel flush={false}>
+          <EmptyState icon={LineChartIcon} title="Aucune activité Connect" hint="Aucune transaction sur cette période." />
+        </Panel>
       ) : (
-        <>
-          <article className="admin-card admin-chart-card">
-            <h2 className="admin-card-title">Transactions &amp; volume Connect</h2>
-            <ResponsiveContainer width="100%" height={260}>
+        <div className="ax-charts">
+          <Panel title="Transactions & volume Connect" flush={false}>
+            <ResponsiveContainer width="100%" height={240}>
               <ComposedChart data={days}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="date" tickFormatter={tickDate} tick={{ fontSize: 11 }} />
-                <YAxis yAxisId="left" allowDecimals={false} tick={{ fontSize: 11 }} />
-                <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 11 }} />
-                <Tooltip labelFormatter={tooltipLabel} />
-                <Legend wrapperStyle={{ fontSize: 11.5 }} iconType="square" />
-                <Bar yAxisId="left" dataKey="transactions_count" name="Transactions" fill={NAVY} radius={[4, 4, 0, 0]} />
+                <CartesianGrid stroke="#EEEEEE" vertical={false} />
+                <XAxis dataKey="date" tickFormatter={tickDate} tick={axisTick} axisLine={false} tickLine={false} />
+                <YAxis yAxisId="left" allowDecimals={false} tick={axisTick} axisLine={false} tickLine={false} width={32} />
+                <YAxis yAxisId="right" orientation="right" tick={axisTick} axisLine={false} tickLine={false} />
+                <Tooltip labelFormatter={tooltipLabel} cursor={{ fill: "#F5F5F5" }} />
+                <Legend wrapperStyle={{ fontSize: 11, paddingTop: 8 }} iconType="circle" iconSize={8} />
+                <Bar yAxisId="left" dataKey="transactions_count" name="Transactions" fill={NAVY} radius={[3, 3, 0, 0]} maxBarSize={22} />
                 <Line yAxisId="right" dataKey="gmv" name="Volume (FCFA)" stroke={CORAL} strokeWidth={2} dot={false} />
               </ComposedChart>
             </ResponsiveContainer>
-          </article>
+          </Panel>
 
-          <article className="admin-card admin-chart-card">
-            <h2 className="admin-card-title">Revenu XaalisPay Connect</h2>
+          <Panel title="Revenu XaalisPay Connect" flush={false}>
             <ResponsiveContainer width="100%" height={220}>
-              <BarChart data={days}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="date" tickFormatter={tickDate} tick={{ fontSize: 11 }} />
-                <YAxis tick={{ fontSize: 11 }} />
-                <Tooltip labelFormatter={tooltipLabel} formatter={tooltipCurrency} />
-                <Bar dataKey="xaalispay_fee_revenue" name="Revenu XaalisPay" fill={NAVY} radius={[4, 4, 0, 0]} />
-              </BarChart>
+              <ComposedChart data={days}>
+                <CartesianGrid stroke="#EEEEEE" vertical={false} />
+                <XAxis dataKey="date" tickFormatter={tickDate} tick={axisTick} axisLine={false} tickLine={false} />
+                <YAxis tick={axisTick} axisLine={false} tickLine={false} />
+                <Tooltip labelFormatter={tooltipLabel} formatter={tooltipCurrency} cursor={{ fill: "#F5F5F5" }} />
+                <Legend wrapperStyle={{ fontSize: 11, paddingTop: 8 }} iconType="circle" iconSize={8} />
+                <Bar dataKey="xaalispay_fee_revenue" name="Revenu brut" fill={NAVY} radius={[3, 3, 0, 0]} maxBarSize={22} />
+                <Line dataKey="net_revenue" name="Bénéfice net" stroke={CORAL} strokeWidth={2} dot={false} />
+              </ComposedChart>
             </ResponsiveContainer>
-          </article>
-        </>
+          </Panel>
+        </div>
       )}
     </section>
   );

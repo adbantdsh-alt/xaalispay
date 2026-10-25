@@ -1,7 +1,14 @@
 "use client";
 
+import { useMemo, useState } from "react";
+import { Banknote, RotateCw } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
-import { adminStatusClass, formatAdminDate, payoutStatusLabel, type PayoutRow } from "./admin-types";
+import { formatAdminDate, payoutStatusLabel, type PayoutRow } from "./admin-types";
+import { EmptyState, EntityCell, Panel, SearchField, StatStrip, StatusPill, Tabs, toneForStatus } from "./AdminUI";
+
+type StatusFilter = "" | "processing" | "failed" | "succeeded";
+
+const METHOD_LABELS: Record<string, string> = { wave: "Wave", orange: "Orange Money" };
 
 export function AdminPayoutsSection({
   payouts,
@@ -12,83 +19,125 @@ export function AdminPayoutsSection({
   retryingId: string | null;
   onRetry: (payoutId: string) => void;
 }) {
-  const failedCount = payouts.filter((p) => p.status === "failed").length;
-  const pendingCount = payouts.filter(
-    (p) => p.status === "pending" || p.status === "processing"
-  ).length;
+  const [search, setSearch] = useState("");
+  const [status, setStatus] = useState<StatusFilter>("");
+
+  const groups = useMemo(() => {
+    const inProgress = payouts.filter((p) => p.status === "pending" || p.status === "processing");
+    const failed = payouts.filter((p) => p.status === "failed");
+    const succeeded = payouts.filter((p) => p.status === "succeeded");
+    return { inProgress, failed, succeeded };
+  }, [payouts]);
+
+  const filtered = useMemo(() => {
+    const term = search.trim().toLowerCase();
+    return payouts.filter((p) => {
+      if (status === "processing" && p.status !== "pending" && p.status !== "processing") return false;
+      if ((status === "failed" || status === "succeeded") && p.status !== status) return false;
+      if (!term) return true;
+      return (
+        p.sellerName.toLowerCase().includes(term) ||
+        p.sellerUsername.toLowerCase().includes(term) ||
+        p.phone.includes(term)
+      );
+    });
+  }, [payouts, search, status]);
+
+  const sum = (rows: PayoutRow[]) => rows.reduce((total, p) => total + p.amount, 0);
 
   return (
     <section className="admin-section">
-      {(failedCount > 0 || pendingCount > 0) && (
-        <p className="admin-section-hint">
-          {pendingCount > 0 && `${pendingCount} en cours`}
-          {pendingCount > 0 && failedCount > 0 && " · "}
-          {failedCount > 0 && (
-            <>
-              <span className="admin-hint-strong admin-hint-strong--bad">{failedCount} échoué(s)</span>
-              {" — relancer si le vendeur n'a pas reçu"}
-            </>
-          )}
-        </p>
-      )}
+      <StatStrip
+        items={[
+          {
+            label: "Versé aux vendeurs",
+            value: formatCurrency(sum(groups.succeeded)),
+            hint: `${groups.succeeded.length} retrait(s) réussi(s)`,
+            tone: "accent",
+          },
+          {
+            label: "En cours",
+            value: groups.inProgress.length,
+            hint: formatCurrency(sum(groups.inProgress)),
+          },
+          {
+            label: "En échec",
+            value: groups.failed.length,
+            hint: groups.failed.length ? `${formatCurrency(sum(groups.failed))} à relancer` : "rien à relancer",
+            tone: groups.failed.length ? "warn" : "default",
+          },
+        ]}
+      />
 
-      <div className="admin-table-wrap">
-        <table className="admin-table">
-          <thead>
-            <tr>
-              <th>Vendeur</th>
-              <th>Montant</th>
-              <th>Méthode</th>
-              <th>Téléphone</th>
-              <th>Statut</th>
-              <th>Date</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {payouts.length === 0 ? (
+      <Panel
+        title="Retraits"
+        count={filtered.length}
+        toolbar={
+          <>
+            <SearchField value={search} onChange={setSearch} placeholder="Vendeur ou numéro…" />
+            <Tabs
+              label="Filtrer par statut"
+              value={status}
+              onChange={setStatus}
+              options={[
+                { value: "", label: "Tous", count: payouts.length },
+                { value: "processing", label: "En cours", count: groups.inProgress.length },
+                { value: "failed", label: "En échec", count: groups.failed.length },
+                { value: "succeeded", label: "Réussis", count: groups.succeeded.length },
+              ]}
+            />
+          </>
+        }
+      >
+        {filtered.length === 0 ? (
+          <EmptyState icon={Banknote} title="Aucun retrait" hint="Aucun retrait ne correspond à ces filtres." />
+        ) : (
+          <table className="ax-table">
+            <thead>
               <tr>
-                <td colSpan={7}>Aucun retrait</td>
+                <th>Vendeur</th>
+                <th className="is-num">Montant</th>
+                <th>Destination</th>
+                <th>Statut</th>
+                <th>Demandé le</th>
+                <th aria-label="Action" />
               </tr>
-            ) : (
-              payouts.map((payout) => (
+            </thead>
+            <tbody>
+              {filtered.map((payout) => (
                 <tr key={payout.id}>
                   <td>
-                    <strong>{payout.sellerName}</strong>
-                    <span className="admin-cell-sub admin-mono">@{payout.sellerUsername}</span>
+                    <EntityCell name={payout.sellerName} sub={`@${payout.sellerUsername}`} />
                   </td>
-                  <td className="admin-mono">{formatCurrency(payout.amount)}</td>
-                  <td>{payout.method}</td>
-                  <td className="admin-mono">{payout.phone}</td>
+                  <td className="is-num">{formatCurrency(payout.amount)}</td>
                   <td>
-                    <span className={`admin-badge ${adminStatusClass(payout.status)}`}>
-                      {payoutStatusLabel(payout.status)}
-                    </span>
-                    {payout.failureReason && (
-                      <span className="admin-cell-sub">{payout.failureReason}</span>
-                    )}
+                    {METHOD_LABELS[payout.method] ?? payout.method}
+                    <span className="ax-cell-sub admin-mono">{payout.phone}</span>
                   </td>
-                  <td>{formatAdminDate(payout.createdAt)}</td>
                   <td>
-                    {payout.status === "failed" ? (
+                    <StatusPill tone={toneForStatus(payout.status)} label={payoutStatusLabel(payout.status)} />
+                    {payout.failureReason && <span className="ax-cell-sub">{payout.failureReason}</span>}
+                  </td>
+                  <td className="is-nowrap is-muted">{formatAdminDate(payout.createdAt)}</td>
+                  <td className="is-nowrap">
+                    {payout.status === "failed" && (
                       <button
                         type="button"
-                        className="admin-action-btn"
+                        className="ax-btn ax-btn--sm ax-btn--primary"
                         disabled={retryingId === payout.id}
                         onClick={() => onRetry(payout.id)}
                       >
-                        {retryingId === payout.id ? "…" : "Relancer"}
+                        <RotateCw size={13} aria-hidden="true" />
+                        {retryingId === payout.id ? "Relance…" : "Relancer"}
                       </button>
-                    ) : (
-                      "—"
                     )}
                   </td>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </Panel>
     </section>
   );
 }
