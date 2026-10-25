@@ -232,7 +232,7 @@ export function AdminAnalyticsSection() {
                 />
                 <Bar
                   dataKey="bictorys_fees_estimated_neg"
-                  name="Frais Bictorys (estimés)"
+                  name="Frais Bictorys"
                   stackId="net"
                   fill="#8C8C8C"
                   radius={[4, 4, 0, 0]}

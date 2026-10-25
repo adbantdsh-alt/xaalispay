@@ -52,7 +52,7 @@ export function AdminOverviewSection({
     { label: "Commissions vendeur", value: overview.revenue.seller_commissions_total, color: NAVY },
     { label: "Commissions affiliation", value: -overview.revenue.affiliate_commissions_total, color: NEGATIVE_RED },
     {
-      label: "Frais Bictorys (estimés)",
+      label: "Frais Bictorys",
       value: -overview.revenue.bictorys_fees_estimated_total,
       color: NEGATIVE_RED,
     },
@@ -106,7 +106,7 @@ export function AdminOverviewSection({
         <article className="admin-hero-kpi admin-hero-kpi--outline admin-hero-kpi-plain">
           <span className="admin-hero-kpi-label">Bénéfice net XaalisPay</span>
           <p className="admin-hero-kpi-value admin-mono">{formatCurrency(overview.revenue.net_profit)}</p>
-          <p className="admin-hero-kpi-foot">Frais protection + commissions − affiliation − Bictorys (estimé)</p>
+          <p className="admin-hero-kpi-foot">Frais protection + commissions − affiliation − frais Bictorys</p>
         </article>
       </div>
 
@@ -178,7 +178,7 @@ export function AdminOverviewSection({
                 </strong>
               </li>
               <li>
-                <span>Frais Bictorys (estimés)</span>
+                <span>Frais Bictorys</span>
                 <strong className="admin-negative">
                   − {formatCurrency(overview.revenue.bictorys_fees_estimated_total)}
                 </strong>

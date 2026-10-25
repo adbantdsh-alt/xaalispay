@@ -300,6 +300,10 @@ export interface ConnectOverviewData {
   platform_balances: ConnectSplitBalances;
   revenue: {
     xaalispay_fee_total: number;
+    /** Coût PSP réel (tarif Bictorys par transaction) des encaissements et
+     * retraits Connect — net_revenue = xaalispay_fee_total − ce montant. */
+    bictorys_fees_total: number;
+    net_revenue: number;
     treasury_available_balance: number;
     treasury_paid_out_balance: number;
     treasury_escrow_balance: number;
@@ -313,12 +317,16 @@ export interface ConnectAnalyticsDayPoint {
   transactions_count: number;
   gmv: number;
   xaalispay_fee_revenue: number;
+  bictorys_fees: number;
+  net_revenue: number;
 }
 
 export interface ConnectAnalyticsWindowMetrics {
   transactions_count: number;
   gmv: number;
   xaalispay_fee_revenue: number;
+  bictorys_fees: number;
+  net_revenue: number;
 }
 
 export interface ConnectAnalyticsSummaryData {

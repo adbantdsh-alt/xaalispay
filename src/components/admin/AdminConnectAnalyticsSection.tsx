@@ -42,7 +42,11 @@ function WindowCard({ title, metrics }: { title: string; metrics?: ConnectAnalyt
     <article className="admin-kpi">
       <p className="admin-kpi-label">{title}</p>
       <p className="admin-kpi-value">{metrics ? formatCurrency(metrics.xaalispay_fee_revenue) : "—"}</p>
-      <p className="admin-kpi-sub">{metrics ? `${metrics.transactions_count} transaction(s)` : ""}</p>
+      <p className="admin-kpi-sub">
+        {metrics
+          ? `${metrics.transactions_count} transaction(s) · net de frais Bictorys : ${formatCurrency(metrics.net_revenue)}`
+          : ""}
+      </p>
     </article>
   );
 }
