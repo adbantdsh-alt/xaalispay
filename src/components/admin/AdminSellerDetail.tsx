@@ -94,6 +94,16 @@ function adaptDetail(data: any): SellerDetail {
       ordersCount: data.lifetime.orders_count,
       lifetimeGmv: data.lifetime.lifetime_gmv,
     },
+    productsCount: data.products_count ?? 0,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    products: (data.products ?? []).map((p: any) => ({
+      id: p.id,
+      name: p.name,
+      price: p.price,
+      active: p.active,
+      ordersCount: p.orders_count,
+      createdAt: p.created_at,
+    })),
     recentOrders: data.recent_orders.map(adaptOrderSummary),
     recentPayouts: data.recent_payouts.map(adaptPayoutRow),
     disputes: data.disputes.map(adaptOrderSummary),
@@ -188,7 +198,9 @@ export function AdminSellerDetail({ sellerId, onClose }: { sellerId: number; onC
               <div className="ax-summary-label">CA cumulé</div>
               <div className="ax-summary-amount">{formatCurrency(detail.lifetime.lifetimeGmv)}</div>
             </div>
-            <span className="ax-muted">{detail.lifetime.ordersCount} commande(s) au total</span>
+            <span className="ax-muted">
+              {detail.lifetime.ordersCount} commande(s) · {detail.productsCount} produit(s) créé(s)
+            </span>
           </div>
 
           <DetailSection title="Contact">
@@ -332,6 +344,30 @@ export function AdminSellerDetail({ sellerId, onClose }: { sellerId: number; onC
               <p className="admin-error" role="alert">
                 {extendError}
               </p>
+            )}
+          </DetailSection>
+
+          <DetailSection title={`Produits · ${detail.productsCount}`}>
+            {detail.products.length === 0 ? (
+              <p className="ax-muted">Aucun produit créé.</p>
+            ) : (
+              <ul className="ax-list">
+                {detail.products.map((p) => (
+                  <li key={p.id}>
+                    <span className="ax-list-main">
+                      <span className="ax-list-title">{p.name}</span>
+                      <span className="ax-list-sub">
+                        Créé le {formatAdminDate(p.createdAt)} · {p.ordersCount} vente(s)
+                      </span>
+                    </span>
+                    <span className="ax-list-amount admin-mono">{formatCurrency(p.price)}</span>
+                    <StatusPill tone={p.active ? "good" : "neutral"} label={p.active ? "Publié" : "Dépublié"} />
+                  </li>
+                ))}
+              </ul>
+            )}
+            {detail.productsCount > detail.products.length && (
+              <p className="ax-muted">{detail.products.length} plus récents affichés.</p>
             )}
           </DetailSection>
         </>

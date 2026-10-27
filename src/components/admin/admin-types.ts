@@ -256,6 +256,8 @@ export interface SellerDetail {
     autoPayoutMode?: string;
   };
   lifetime: { ordersCount: number; lifetimeGmv: number };
+  productsCount: number;
+  products: { id: number; name: string; price: number; active: boolean; ordersCount: number; createdAt: string }[];
   recentOrders: OrderSummaryRow[];
   recentPayouts: PayoutRow[];
   disputes: OrderSummaryRow[];
