@@ -8751,7 +8751,7 @@ label.delivery-zone-chip {
 .ax-funnel { list-style: none; margin: 0; padding: 0.25rem 0 0; display: flex; flex-direction: column; }
 .ax-funnel-step { display: flex; flex-direction: column; }
 .ax-funnel-row, .ax-funnel-neck {
-  display: grid; grid-template-columns: minmax(8.5rem, 11rem) 1fr minmax(9.5rem, 11rem); align-items: center; gap: 1rem;
+  display: grid; grid-template-columns: minmax(12rem, 13rem) 1fr minmax(4rem, 6rem); align-items: center; gap: 1rem;
 }
 .ax-funnel-name { display: inline-flex; align-items: center; gap: 0.625rem; min-width: 0; font-size: 0.8125rem; }
 .ax-funnel-index {
@@ -8767,11 +8767,11 @@ label.delivery-zone-chip {
 }
 .ax-funnel-band.is-empty { background: transparent; border: 1px dashed #C9D1DB; color: #9AA3AD; }
 .ax-funnel-neck { height: 26px; }
-.ax-funnel-connector { grid-column: 2; height: 100%; background: #DCE3EC; }
+.ax-funnel-connector { grid-column: 2; grid-row: 1; height: 100%; background: #DCE3EC; }
 .ax-funnel-connector.is-worst { background: #EAD8C4; }
 .ax-funnel-rate { text-align: right; color: #5F6672; font-size: 0.75rem; font-feature-settings: "tnum"; }
 .ax-funnel-loss {
-  grid-column: 3; justify-self: end; padding: 0.1rem 0.5rem; border-radius: 999px;
+  grid-column: 1; grid-row: 1; justify-self: start; margin-left: calc(1.5rem + 0.625rem); padding: 0.1rem 0.5rem; border-radius: 999px;
   border: 1px dashed var(--color-gray-200); background: var(--color-white); color: #5F6672; font: inherit; font-size: 0.6875rem;
   font-family: var(--font-mono), monospace; white-space: nowrap; cursor: pointer;
 }
@@ -8787,7 +8787,7 @@ label.delivery-zone-chip {
   .ax-funnel-row, .ax-funnel-neck { grid-template-columns: 1fr auto; gap: 0.25rem 0.75rem; }
   .ax-funnel-stage { grid-column: 1 / -1; grid-row: 2; }
   .ax-funnel-band { height: 34px; }
-  .ax-funnel-neck { height: auto; }
-  .ax-funnel-connector { grid-column: 1; height: 22px; }
-  .ax-funnel-loss { grid-column: 2; }
+  .ax-funnel-neck { height: auto; grid-template-columns: 1fr; }
+  .ax-funnel-connector { grid-column: 1; grid-row: 2; height: 18px; }
+  .ax-funnel-loss { grid-column: 1; grid-row: 1; }
 }
