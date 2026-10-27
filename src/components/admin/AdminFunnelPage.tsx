@@ -58,6 +58,13 @@ function pct(value: number | null) {
   return value == null ? "—" : `${value.toLocaleString("fr-FR")} %`;
 }
 
+// Largeur d'une tranche de l'entonnoir, en % de la colonne : proportionnelle
+// au taux depuis l'inscription, avec un plancher pour que le nombre reste
+// lisible même sur une étape quasi vide.
+function bandWidth(rateFromStart: number | null) {
+  return Math.max(rateFromStart ?? 0, 14);
+}
+
 function whatsappHref(phone: string) {
   return `https://wa.me/${phone.replace(/\D/g, "")}`;
 }
@@ -130,28 +137,45 @@ export function AdminFunnelPage() {
             {data.steps.map((step, i) => {
               const isDrop = step.key === data.biggest_drop;
               const stuckKey = i > 0 ? data.steps[i - 1].key : null;
+              const width = bandWidth(step.rate_from_start);
+              const prevWidth = i > 0 ? bandWidth(data.steps[i - 1].rate_from_start) : width;
               return (
                 <li key={step.key} className="ax-funnel-step">
                   {i > 0 && (
-                    <button
-                      type="button"
-                      className={`ax-funnel-loss ${isDrop ? "is-worst" : ""} ${stuckKey === activeStuckKey ? "is-active" : ""}`}
-                      onClick={() => setStuckStep(stuckKey)}
-                      disabled={step.lost_from_previous === 0}
-                      title="Voir les vendeurs arrêtés avant cette étape"
-                    >
-                      {step.lost_from_previous > 0
-                        ? `−${step.lost_from_previous} · ${pct(step.rate_from_previous)} passent`
-                        : "aucune perte"}
-                    </button>
+                    <div className="ax-funnel-neck">
+                      <span
+                        className={`ax-funnel-connector ${isDrop ? "is-worst" : ""}`}
+                        aria-hidden="true"
+                        style={{
+                          clipPath: `polygon(${50 - prevWidth / 2}% 0, ${50 + prevWidth / 2}% 0, ${50 + width / 2}% 100%, ${50 - width / 2}% 100%)`,
+                        }}
+                      />
+                      <button
+                        type="button"
+                        className={`ax-funnel-loss ${isDrop ? "is-worst" : ""} ${stuckKey === activeStuckKey ? "is-active" : ""}`}
+                        onClick={() => setStuckStep(stuckKey)}
+                        disabled={step.lost_from_previous === 0}
+                        title="Voir les vendeurs arrêtés avant cette étape"
+                      >
+                        {step.lost_from_previous > 0
+                          ? `−${step.lost_from_previous} · ${pct(step.rate_from_previous)} passent`
+                          : "aucune perte"}
+                      </button>
+                    </div>
                   )}
                   <div className="ax-funnel-row">
-                    <span className="ax-funnel-index admin-mono">{i + 1}</span>
-                    <span className="ax-funnel-label">{step.label}</span>
-                    <span className="ax-funnel-track" aria-hidden="true">
-                      <span className="ax-funnel-fill" style={{ width: `${step.rate_from_start ?? 0}%` }} />
+                    <span className="ax-funnel-name">
+                      <span className="ax-funnel-index admin-mono">{i + 1}</span>
+                      <span className="ax-funnel-label">{step.label}</span>
                     </span>
-                    <span className="ax-funnel-count admin-mono">{step.count}</span>
+                    <span className="ax-funnel-stage">
+                      <span
+                        className={`ax-funnel-band ${step.count === 0 ? "is-empty" : ""}`}
+                        style={{ width: `${width}%`, opacity: step.count === 0 ? 1 : 1 - i * 0.07 }}
+                      >
+                        <span className="admin-mono">{step.count}</span>
+                      </span>
+                    </span>
                     <span className="ax-funnel-rate admin-mono">{pct(step.rate_from_start)}</span>
                   </div>
                 </li>
