@@ -12,7 +12,7 @@ import { useDeliveryZones } from "@/lib/use-delivery-zones";
 import { IconCheck, IconPackage } from "@/components/ui/AppIcon";
 import { ProductImage } from "@/components/ui/ProductImage";
 import { ChargebackExplainDialog } from "@/components/seller/ChargebackExplainDialog";
-import { copyToClipboard, buildPaymentLinkMessage, buildWhatsAppUrl } from "@/lib/share";
+import { copyToClipboard, buildPaymentLinkMessage, buildWhatsAppUrl, trackLinkShare } from "@/lib/share";
 import { buildProductPaymentUrl, formatPublicUrl } from "@/lib/site-url";
 
 export interface ProductFormValues {
@@ -285,6 +285,7 @@ export function ProductListItem({
   const handleQuickCopy = async () => {
     const ok = await copyToClipboard(payUrl);
     if (ok) {
+      trackLinkShare(product.id, "copy");
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     }
@@ -353,12 +354,13 @@ export function ProductListItem({
                 <button
                   type="button"
                   className="btn-ghost btn-compact product-row-action-btn"
-                  onClick={() =>
+                  onClick={() => {
+                    trackLinkShare(product.id, "whatsapp");
                     window.open(
                       buildWhatsAppUrl(buildPaymentLinkMessage(payUrl, product.name)),
                       "_blank"
-                    )
-                  }
+                    );
+                  }}
                 >
                   Partager
                 </button>

@@ -7,6 +7,7 @@ import { useAdminData } from "./AdminDataProvider";
 // [groupe, titre] — le groupe reprend celui de la barre latérale.
 const PAGE_META: Record<string, [string, string]> = {
   "/admin": ["Pilotage", "Vue d'ensemble"],
+  "/admin/funnel": ["Pilotage", "Entonnoir"],
   "/admin/analytics": ["Pilotage", "Analytics"],
   "/admin/orders": ["Marketplace", "Commandes"],
   "/admin/disputes": ["Marketplace", "Litiges"],

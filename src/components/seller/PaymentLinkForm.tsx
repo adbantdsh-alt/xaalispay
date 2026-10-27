@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import type { Product } from "@/lib/types";
 import { formatCurrency } from "@/lib/utils";
 import { ProductFields, type ProductFormValues } from "@/components/seller/ProductForm";
-import { buildPaymentLinkMessage, buildWhatsAppUrl } from "@/lib/share";
+import { buildPaymentLinkMessage, buildWhatsAppUrl, trackLinkShare } from "@/lib/share";
 import { PaymentLinkSuccessPanel } from "@/components/seller/PaymentLinkSuccessPanel";
 import { CopyButton } from "@/components/ui/CopyButton";
 import { IconCheck, IconPackage } from "@/components/ui/AppIcon";
@@ -208,18 +208,24 @@ export function PaymentLinkForm({
         <div className="link-product-preview link-product-preview-url">
           <p className="link-success-url">{formatPublicUrl(displayUrl)}</p>
           <div className="share-buttons">
-            <CopyButton text={displayUrl} label="Copier le lien" className="btn-secondary btn-compact" />
+            <CopyButton
+              text={displayUrl}
+              label="Copier le lien"
+              className="btn-secondary btn-compact"
+              onCopied={() => trackLinkShare(selectedProduct.id, "copy")}
+            />
             <button
               type="button"
               className="btn-whatsapp-full btn-compact"
-              onClick={() =>
+              onClick={() => {
+                trackLinkShare(selectedProduct.id, "whatsapp");
                 window.open(
                   buildWhatsAppUrl(
                     buildPaymentLinkMessage(displayUrl, selectedProduct.name)
                   ),
                   "_blank"
-                )
-              }
+                );
+              }}
             >
               WhatsApp
             </button>

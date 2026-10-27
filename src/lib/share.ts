@@ -1,3 +1,17 @@
+import { apiFetch } from "./api-client";
+
+export type ShareChannel = "whatsapp" | "copy" | "native";
+
+/** Signale au backend qu'un vendeur vient de partager un lien (étape « lien
+ * partagé » de l'entonnoir admin). Sans productId : lien boutique. Jamais
+ * attendu ni bloquant — un échec ne doit pas gêner le partage. */
+export function trackLinkShare(productId: string | undefined, channel: ShareChannel) {
+  apiFetch("/api/catalog/link-events/share", {
+    method: "POST",
+    body: JSON.stringify(productId ? { product_id: productId, channel } : { channel }),
+  }).catch(() => {});
+}
+
 export function buildWhatsAppUrl(message: string) {
   return `https://wa.me/?text=${encodeURIComponent(message)}`;
 }

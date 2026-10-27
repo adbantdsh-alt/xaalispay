@@ -17,6 +17,7 @@ import {
   ClipboardList,
   LogOut,
   PanelLeft,
+  Filter,
 } from "lucide-react";
 import { BrandMark } from "@/components/ui/BrandMark";
 import { useAuth } from "@/lib/auth-client";
@@ -41,6 +42,7 @@ const NAV_GROUPS: { label: string; items: NavItem[] }[] = [
     label: "Pilotage",
     items: [
       { href: "/admin", label: "Vue d'ensemble", icon: LayoutDashboard, exact: true },
+      { href: "/admin/funnel", label: "Entonnoir", icon: Filter },
       { href: "/admin/analytics", label: "Analytics", icon: BarChart3 },
     ],
   },

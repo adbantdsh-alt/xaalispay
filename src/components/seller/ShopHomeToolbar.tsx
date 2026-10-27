@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Plus } from "lucide-react";
 import { CopyButton } from "@/components/ui/CopyButton";
 import { formatPublicUrl } from "@/lib/site-url";
-import { buildShopShareMessage, buildWhatsAppUrl } from "@/lib/share";
+import { buildShopShareMessage, buildWhatsAppUrl, trackLinkShare } from "@/lib/share";
 
 export function ShopHomeToolbar({
   shopUrl,
@@ -36,13 +36,19 @@ export function ShopHomeToolbar({
               {formatPublicUrl(shopUrl)}
             </Link>
             <div className="shop-url-strip-actions">
-              <CopyButton text={shopUrl} label="Copier" className="shop-url-strip-btn" />
+              <CopyButton
+                text={shopUrl}
+                label="Copier"
+                className="shop-url-strip-btn"
+                onCopied={() => trackLinkShare(undefined, "copy")}
+              />
               <button
                 type="button"
                 className="shop-url-strip-btn shop-url-strip-btn-share"
-                onClick={() =>
-                  window.open(buildWhatsAppUrl(buildShopShareMessage(shopUrl, username)), "_blank")
-                }
+                onClick={() => {
+                  trackLinkShare(undefined, "whatsapp");
+                  window.open(buildWhatsAppUrl(buildShopShareMessage(shopUrl, username)), "_blank");
+                }}
               >
                 Partager
               </button>

@@ -5,7 +5,7 @@ import Link from "next/link";
 import { CopyButton } from "@/components/ui/CopyButton";
 import { IconCheck, IconPackage } from "@/components/ui/AppIcon";
 import { ProductImage } from "@/components/ui/ProductImage";
-import { buildPaymentLinkMessage, buildWhatsAppUrl, copyToClipboard } from "@/lib/share";
+import { buildPaymentLinkMessage, buildWhatsAppUrl, copyToClipboard, trackLinkShare } from "@/lib/share";
 import { formatPublicUrl } from "@/lib/site-url";
 import { splitCurrency } from "@/lib/utils";
 
@@ -55,7 +55,10 @@ export function PaymentLinkSuccessPanel({
 
   const handleUrlTap = async () => {
     const ok = await copyToClipboard(payUrl);
-    if (ok) flashCopied();
+    if (ok) {
+      trackLinkShare(productId, "copy");
+      flashCopied();
+    }
   };
 
   const productLine =
@@ -117,14 +120,15 @@ export function PaymentLinkSuccessPanel({
           <button
             type="button"
             className="btn-seller-primary"
-            onClick={() =>
+            onClick={() => {
+              trackLinkShare(productId, "whatsapp");
               window.open(
                 buildWhatsAppUrl(
                   buildPaymentLinkMessage(payUrl, productName || "votre commande")
                 ),
                 "_blank"
-              )
-            }
+              );
+            }}
           >
             Partager sur WhatsApp
           </button>
@@ -134,6 +138,7 @@ export function PaymentLinkSuccessPanel({
           label="Copier le lien"
           copiedLabel="✓ Copié"
           className="btn-ghost"
+          onCopied={() => trackLinkShare(productId, "copy")}
         />
       </div>
 

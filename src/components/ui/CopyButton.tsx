@@ -9,17 +9,20 @@ export function CopyButton({
   label = "Copier",
   copiedLabel = "Copié",
   className = "btn-secondary",
+  onCopied,
 }: {
   text: string;
   label?: string;
   copiedLabel?: string;
   className?: string;
+  onCopied?: () => void;
 }) {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async () => {
     const ok = await copyToClipboard(text);
     if (ok) {
+      onCopied?.();
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     }
