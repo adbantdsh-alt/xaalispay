@@ -23,6 +23,7 @@ type StuckSeller = {
   username: string;
   name: string;
   phone: string;
+  products_count: number;
   created_at: string;
   days_since_signup: number;
 };
@@ -237,6 +238,7 @@ export function AdminFunnelPage() {
               <tr>
                 <th>Vendeur</th>
                 <th>Téléphone</th>
+                <th className="is-num">Produits</th>
                 <th>Inscrit le</th>
                 <th className="is-num">Depuis</th>
               </tr>
@@ -264,6 +266,7 @@ export function AdminFunnelPage() {
                       {s.phone}
                     </a>
                   </td>
+                  <td className="is-num">{s.products_count}</td>
                   <td className="is-nowrap is-muted">{formatAdminDate(s.created_at)}</td>
                   <td className="is-num">{s.days_since_signup} j</td>
                 </tr>
