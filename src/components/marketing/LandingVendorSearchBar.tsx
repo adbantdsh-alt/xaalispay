@@ -9,9 +9,11 @@ export function LandingVendorSearchBar() {
   const [infoOpen, setInfoOpen] = useState(false);
   return (
     <>
-      <div className="border-b border-[#E8E2D5]/60 bg-[#FBF8F2]/40">
-        <div className="lp-container py-4 sm:py-5">
-          <div className="flex items-center gap-1.5 sm:gap-2">
+      <div className="lp-vsb-slim border-b border-[#E8E2D5]/60 bg-[#FBF8F2]/40">
+        {/* Une seule ligne sur desktop (libellé · recherche · Litige) ; libellé
+            au-dessus sur mobile. Champ réduit via .lp-vsb-slim (globals.css). */}
+        <div className="lp-container py-2.5 flex flex-col md:flex-row md:items-center gap-2 md:gap-4">
+          <div className="flex items-center gap-1.5 shrink-0">
             <span className="h-1.5 w-1.5 rounded-full bg-[#D4A373]" />
             <span className="text-[12px] sm:text-[13px] font-medium text-[#1E3A5F]">
               Trouvez votre vendeur grâce à son{" "}
@@ -33,13 +35,13 @@ export function LandingVendorSearchBar() {
             </button>
           </div>
 
-          <div className="mt-4 flex flex-col sm:flex-row sm:items-start gap-2 sm:gap-3">
+          <div className="flex flex-1 min-w-0 items-center gap-2 sm:gap-3">
             <div className="flex-1 min-w-0">
               <VendorSearch />
             </div>
             <Link
               href="/litige"
-              className="hidden sm:inline-flex items-center justify-center gap-1.5 rounded-full border border-[#1E3A5F]/15 bg-white text-[#1E3A5F]/80 font-medium text-[13px] py-2.5 px-4 hover:border-[#1E3A5F]/30 hover:text-[#1E3A5F] transition-colors shrink-0"
+              className="hidden sm:inline-flex items-center justify-center gap-1.5 rounded-full border border-[#1E3A5F]/15 bg-white text-[#1E3A5F]/80 font-medium text-[13px] py-2 px-4 hover:border-[#1E3A5F]/30 hover:text-[#1E3A5F] transition-colors shrink-0"
             >
               Litige
             </Link>

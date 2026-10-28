@@ -19,6 +19,7 @@ const PAGE_META: Record<string, [string, string]> = {
   "/admin/connect": ["Connect", "Trésorerie"],
   "/admin/connect/analytics": ["Connect", "Analytics Connect"],
   "/admin/connect/platforms": ["Connect", "Plateformes"],
+  "/admin/connect/requests": ["Connect", "Demandes bêta"],
   "/admin/profile": ["Compte", "Mon profil"],
   "/admin/change-password": ["Compte", "Changer mon mot de passe"],
 };

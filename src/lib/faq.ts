@@ -33,4 +33,8 @@ export const LANDING_FAQ: FaqItem[] = [
     q: "Qui garde l'argent pendant la transaction ?",
     a: "XaalisPay. Ni le vendeur, ni l'acheteur n'y ont accès tant que la transaction n'est pas finalisée. L'argent est conservé en toute sécurité jusqu'à la validation du colis ou la résolution d'un éventuel litige.",
   },
+  {
+    q: "J'ai une plateforme : puis-je utiliser le séquestre XaalisPay chez moi ?",
+    a: "Oui, avec XaalisPay Connect. Votre plateforme crée les transactions par API, vos clients paient en mobile money, l'argent reste bloqué jusqu'à la livraison et votre commission vous est reversée automatiquement. Connect est en bêta : faites une demande d'accès depuis la section Connect de cette page.",
+  },
 ];

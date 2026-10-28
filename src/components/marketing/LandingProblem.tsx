@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { IconStore, IconUser } from "@/components/icons";
 import { Reveal } from "@/components/marketing/Reveal";
 import { StatBox } from "@/components/marketing/StatBox";
+import { LandingPhoto } from "@/components/marketing/LandingPhoto";
 
 const SELLER_PAINS = [
   "Faux rendez-vous",
@@ -34,8 +35,20 @@ export function LandingProblem() {
         </Reveal>
 
         <div className="mt-14 grid grid-cols-1 md:grid-cols-2 gap-5">
-          <ProblemCard tag="Pour les vendeurs" icon={<IconStore size={20} />} items={SELLER_PAINS} />
-          <ProblemCard tag="Pour les acheteurs" icon={<IconUser size={20} />} items={BUYER_PAINS} />
+          <ProblemCard
+            tag="Pour les vendeurs"
+            icon={<IconStore size={20} />}
+            items={SELLER_PAINS}
+            photo="/landing/problem-seller.webp"
+            alt="Vendeur qui attend devant des colis non récupérés"
+          />
+          <ProblemCard
+            tag="Pour les acheteurs"
+            icon={<IconUser size={20} />}
+            items={BUYER_PAINS}
+            photo="/landing/problem-buyer.webp"
+            alt="Acheteuse qui hésite à payer un article vu sur Instagram"
+          />
         </div>
 
         <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-px bg-[#e3e7ee] lp-hairline">
@@ -48,9 +61,23 @@ export function LandingProblem() {
   );
 }
 
-function ProblemCard({ tag, icon, items }: { tag: string; icon: ReactNode; items: string[] }) {
+function ProblemCard({
+  tag,
+  icon,
+  items,
+  photo,
+  alt,
+}: {
+  tag: string;
+  icon: ReactNode;
+  items: string[];
+  photo: string;
+  alt: string;
+}) {
   return (
-    <Reveal className="lp-card-flat p-8 bg-white" as="div">
+    <Reveal className="lp-card-flat p-3 bg-white" as="div">
+      <LandingPhoto src={photo} alt={alt} sizes="(min-width: 768px) 560px, 92vw" className="aspect-[3/2] rounded-[14px]" />
+      <div className="p-5 md:p-6">
       <div className="flex items-center gap-3">
         <div className="h-9 w-9 rounded-lg bg-[#F5F5F5] grid place-items-center text-[#1E3A5F]">{icon}</div>
         <div className="lp-eyebrow">{tag}</div>
@@ -63,6 +90,7 @@ function ProblemCard({ tag, icon, items }: { tag: string; icon: ReactNode; items
           </li>
         ))}
       </ul>
+      </div>
     </Reveal>
   );
 }

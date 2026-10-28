@@ -7,9 +7,10 @@ import { BrandMark } from "@/components/ui/BrandMark";
 import { IconMenu, IconX } from "@/components/icons";
 
 const NAV = [
-  { href: "/#probleme", label: "Problème" },
+  { href: "/#pour-qui", label: "Pour qui" },
   { href: "/#comment", label: "Comment ça marche" },
   { href: "/#demo", label: "Démo" },
+  { href: "/#connect", label: "Connect" },
   { href: "/#faq", label: "FAQ" },
   { href: "/blog", label: "Blog" },
   { href: "/litige", label: "Litige" },

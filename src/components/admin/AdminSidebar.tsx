@@ -18,6 +18,7 @@ import {
   LogOut,
   PanelLeft,
   Filter,
+  Inbox,
 } from "lucide-react";
 import { BrandMark } from "@/components/ui/BrandMark";
 import { useAuth } from "@/lib/auth-client";
@@ -64,6 +65,7 @@ const NAV_GROUPS: { label: string; items: NavItem[] }[] = [
       { href: "/admin/connect", label: "Trésorerie", icon: Landmark, exact: true },
       { href: "/admin/connect/analytics", label: "Analytics Connect", icon: LineChart },
       { href: "/admin/connect/platforms", label: "Plateformes", icon: Layers },
+      { href: "/admin/connect/requests", label: "Demandes bêta", icon: Inbox },
     ],
   },
 ];

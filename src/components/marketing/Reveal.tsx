@@ -1,6 +1,6 @@
 "use client";
 
-import { motion, useReducedMotion, type HTMLMotionProps } from "framer-motion";
+import { motion, type HTMLMotionProps } from "framer-motion";
 import type { ElementType, ReactNode } from "react";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
@@ -21,17 +21,10 @@ export function Reveal({
   className?: string;
   once?: boolean;
 } & Omit<HTMLMotionProps<"div">, "children" | "ref">) {
-  const reduce = useReducedMotion();
+  // Toujours le même composant motion, y compris en « mouvement réduit » :
+  // rendre un <Tag> brut à la place cassait l'hydratation (le HTML serveur
+  // porte déjà opacity:0, que React ne corrige pas) — sections invisibles.
   const MotionTag = motion[as as keyof typeof motion] as typeof motion.div;
-
-  if (reduce) {
-    const Tag = as as ElementType;
-    return (
-      <Tag className={className} {...(rest as Record<string, unknown>)}>
-        {children}
-      </Tag>
-    );
-  }
 
   return (
     <MotionTag

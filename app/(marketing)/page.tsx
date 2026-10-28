@@ -3,6 +3,9 @@ import { HomeJsonLd } from "@/components/seo/HomeJsonLd";
 import { buildPageMetadata } from "@/lib/seo";
 import { LandingVendorSearchBar } from "@/components/marketing/LandingVendorSearchBar";
 import { LandingHero } from "@/components/marketing/LandingHero";
+import { LandingOperators } from "@/components/marketing/LandingOperators";
+import { LandingAudience } from "@/components/marketing/LandingAudience";
+import { LandingConnect } from "@/components/marketing/LandingConnect";
 import { LandingProblem } from "@/components/marketing/LandingProblem";
 import { LandingHowItWorks } from "@/components/marketing/LandingHowItWorks";
 import { LandingInteractiveDemo } from "@/components/marketing/LandingInteractiveDemo";
@@ -22,9 +25,12 @@ export default function LandingPage() {
       <LandingVendorSearchBar />
       <HomeJsonLd />
       <LandingHero />
+      <LandingOperators />
       <LandingProblem />
+      <LandingAudience />
       <LandingHowItWorks />
       <LandingInteractiveDemo />
+      <LandingConnect />
       <LandingFAQ />
       <LandingFinalCTA />
     </>
