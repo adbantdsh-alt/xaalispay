@@ -170,7 +170,7 @@ export default function ConnectDocsPage() {
           <span className="docs-brand-tag">Connect</span>
         </div>
         <div className="docs-status">
-          Vérifié contre <code>apps/connect/</code> · MAJ 2026-09-27
+          Vérifié contre <code>apps/connect/</code> · MAJ 2026-10-28
           <br />
           Référence de champs : <code>/api/schema/swagger-ui/</code>
         </div>
@@ -188,6 +188,7 @@ export default function ConnectDocsPage() {
             <a className="docs-nav-sub" href="#flux">Flux d&apos;intégration</a>
             <a className="docs-nav-sub" href="#after-delay">Filet — after_delay</a>
             <a className="docs-nav-sub" href="#split-releases">Libération partielle</a>
+            <a className="docs-nav-sub" href="#statuts">Cycle de vie &amp; statuts</a>
           </div>
           <div className="docs-nav-group">
             <div className="docs-nav-label">Référence</div>
@@ -236,6 +237,10 @@ export default function ConnectDocsPage() {
             </li>
             <li>
               <a href="#authentification">Authentification</a> — clés API, portail self-serve.
+            </li>
+            <li>
+              <a href="#statuts">Cycle de vie et statuts</a> — tous les <code>status</code> d&apos;une
+              transaction et comment récupérer l&apos;état courant.
             </li>
             <li>
               <a href="#webhooks">Webhooks</a> — signature HMAC, catalogue d&apos;événements, retry.
@@ -595,6 +600,56 @@ export default function ConnectDocsPage() {
             le reste en une fois.
           </p>
 
+          <h2 className="docs-h2" id="statuts">Cycle de vie et statuts d&apos;une transaction</h2>
+          <Code lang="text">
+            {`                 ┌──────────── transaction.payment_failed ───────────┐
+                 │                                                   ▼
+pending_payment ─┴─ transaction.funded ─► funded              cancelled
+                                            │                     │
+                                            │   (nouvel essai réussi du payeur
+                                            │    sur le même paiement)
+                                            │◄── transaction.funded ┘
+                                            ├─► partially_released ─► released
+                                            ├─► released
+                                            ├─► disputed ─► released | refunded
+                                            └─► refunded`}
+          </Code>
+          <div className="docs-table-wrap">
+            <table className="docs-table">
+              <thead><tr><th><code>status</code></th><th>Signification</th><th>Actions possibles</th></tr></thead>
+              <tbody>
+                <tr><td><code>pending_payment</code></td><td>Créée, en attente du paiement de l&apos;acheteur. N&apos;expire pas d&apos;elle-même.</td><td>—</td></tr>
+                <tr><td><code>funded</code></td><td>Paiement confirmé, fonds en séquestre.</td><td><code>release</code>, <code>refund</code>, <code>dispute</code>, <code>confirm-delivery</code></td></tr>
+                <tr><td><code>partially_released</code></td><td>Une partie des splits a été libérée (multi-bénéficiaires).</td><td><code>release</code>, <code>refund</code> (du reste), <code>dispute</code></td></tr>
+                <tr><td><code>released</code></td><td>Tout est libéré vers les bénéficiaires — <strong>final</strong>.</td><td>—</td></tr>
+                <tr><td><code>refunded</code></td><td>Remboursée à l&apos;acheteur — <strong>final</strong>.</td><td>—</td></tr>
+                <tr><td><code>disputed</code></td><td>Bloquée en litige ; aucune auto-libération.</td><td><code>release</code> ou <code>refund</code> pour trancher</td></tr>
+                <tr><td><code>cancelled</code></td><td>Le paiement a échoué (<code>payment_provider_status: &quot;failed&quot;</code>).</td><td>—</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <Callout kind="warn" title="cancelled n'est pas un état final">
+            Bictorys peut confirmer un succès plus tard sur le même paiement (le payeur a
+            réessayé) : la transaction passe alors en <code>funded</code> avec un webhook{" "}
+            <code>transaction.funded</code>. N&apos;abandonnez donc pas définitivement la commande
+            côté vous sur <code>transaction.payment_failed</code> — proposez plutôt à l&apos;acheteur
+            de réessayer, et gardez <code>transaction.funded</code> comme seul signal de paiement
+            réussi.
+          </Callout>
+          <p>
+            <code>payment_provider_status</code> donne l&apos;état brut côté opérateur :{" "}
+            <code>pending</code>, <code>succeeded</code>, <code>failed</code>, ou{" "}
+            <code>amount_mismatch</code> (montant reçu différent de <code>amount</code> — la
+            transaction reste <code>pending_payment</code>, contactez XaalisPay).
+          </p>
+          <p>
+            <strong>Récupérer le statut</strong> — les webhooks sont la source principale ; en
+            complément (webhook manqué, réconciliation, page de retour),{" "}
+            <span className="docs-method docs-method-get">GET</span>
+            <code>/transactions/{"{id}"}</code> renvoie l&apos;état courant à tout moment (voir{" "}
+            <a href="#exemples">exemples §7</a>).
+          </p>
+
           <h3 className="docs-h3">Suivre l&apos;activité</h3>
           <ul>
             <li><span className="docs-method docs-method-get">GET</span><code>/accounts/{"{id}"}/balance</code> — soldes séquestre / disponible / bloqué / déjà versé.</li>
@@ -750,6 +805,7 @@ X-XaalisPay-Event: transaction.released
               <thead><tr><th>Événement</th><th>Déclenché quand</th></tr></thead>
               <tbody>
                 <tr><td><code>transaction.funded</code></td><td>Le paiement est confirmé côté Bictorys et les fonds entrent en séquestre.</td></tr>
+                <tr><td><code>transaction.payment_failed</code></td><td>Le paiement a échoué ou a été abandonné côté opérateur (solde insuffisant, refus, OTP invalide…) — statut <code>cancelled</code>. <strong>Pas définitif</strong> : si le payeur réessaie et réussit, vous recevrez ensuite <code>transaction.funded</code> (voir <a href="#statuts">cycle de vie</a>).</td></tr>
                 <tr><td><code>transaction.released</code></td><td>Libération totale (manuelle, <code>on_funding</code> immédiat, délai <code>after_delay</code> écoulé, ou code de livraison confirmé).</td></tr>
                 <tr><td><code>transaction.partially_released</code></td><td>Libération partielle (marketplace multi-splits, tranches).</td></tr>
                 <tr><td><code>transaction.refunded</code></td><td>Remboursement à l&apos;acheteur (via <code>/refund</code>, ou automatique si <code>on_delivery_code</code> jamais confirmé).</td></tr>
