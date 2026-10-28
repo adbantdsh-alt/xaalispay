@@ -43,6 +43,12 @@ export function adaptDisputeRow(o: any): DisputeRow {
     sellerResponseDeadlineAt: dispute.seller_response_deadline_at || undefined,
     disputeReason: dispute.reason || "",
     disputeMedia: dispute.media || [],
+    resolvedAt: dispute.resolved_at || undefined,
+    resolutionAction: dispute.resolution_action || undefined,
+    refundAmount: dispute.refund_amount ?? undefined,
+    resolutionNote: dispute.resolution_note || "",
+    resolvedByName: dispute.resolved_by_name || undefined,
+    autoResolved: !!dispute.auto_resolved,
     createdAt: o.created_at,
     updatedAt: o.created_at,
   };

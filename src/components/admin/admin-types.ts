@@ -70,9 +70,18 @@ export interface DisputeRow {
   sellerResponseDeadlineAt?: string;
   disputeReason: string;
   disputeMedia: DisputeMedia[];
+  /** Renseignés une fois le litige tranché (historique). */
+  resolvedAt?: string;
+  resolutionAction?: DisputeResolutionAction;
+  refundAmount?: number;
+  resolutionNote: string;
+  resolvedByName?: string;
+  autoResolved: boolean;
   createdAt: string;
   updatedAt: string;
 }
+
+export type DisputeResolutionAction = "release_full" | "refund_full" | "split";
 
 export interface AnalyticsDayPoint {
   date: string; // YYYY-MM-DD

@@ -14,6 +14,7 @@ export function AdminDisputesPage() {
   const router = useRouter();
   const { refresh: refreshOverview } = useAdminData();
   const [disputes, setDisputes] = useState<DisputeRow[]>([]);
+  const [history, setHistory] = useState<DisputeRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [resolving, setResolving] = useState<string | null>(null);
@@ -30,9 +31,13 @@ export function AdminDisputesPage() {
 
   const fetchDisputes = useCallback(async (silent = false) => {
     if (!silent) setLoading(true);
-    const res = await apiFetch("/api/admin/orders?status=dispute");
+    const [res, historyRes] = await Promise.all([
+      apiFetch("/api/admin/orders?status=dispute"),
+      apiFetch("/api/admin/orders?dispute=resolved"),
+    ]);
     if (handleAdminAuthStatus(res.status, router, "/admin/disputes")) return;
     if (res.ok) setDisputes((await res.json()).map(adaptDisputeRow));
+    if (historyRes.ok) setHistory((await historyRes.json()).map(adaptDisputeRow));
     if (!silent) setLoading(false);
   }, [router]);
 
@@ -50,13 +55,14 @@ export function AdminDisputesPage() {
   const resolveDispute = async (
     disputeId: string,
     action: "release_full" | "refund_full" | "split",
-    refundAmount?: number
+    refundAmount?: number,
+    note?: string
   ): Promise<boolean> => {
     setResolving(disputeId + action);
     setError("");
     const res = await apiFetch(`/api/orders/${disputeId}/resolve-dispute`, {
       method: "POST",
-      body: JSON.stringify({ resolution_action: action, refund_amount: refundAmount }),
+      body: JSON.stringify({ resolution_action: action, refund_amount: refundAmount, note: note || "" }),
     });
     const data = await res.json();
     setResolving(null);
@@ -90,6 +96,7 @@ export function AdminDisputesPage() {
       {error && <p className="admin-error">{error}</p>}
       <AdminDisputesSection
         disputes={disputes}
+        history={history}
         resolving={resolving}
         onResolve={resolveDispute}
         onActivityChange={setBusy}

@@ -1,10 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { ShieldCheck, TriangleAlert } from "lucide-react";
+import { History, ShieldCheck, TriangleAlert } from "lucide-react";
 import { calculateSellerCommission } from "@/lib/fees";
 import { formatCurrency } from "@/lib/utils";
-import { formatAdminDate, isDisputeOverdue, type DisputeRow } from "./admin-types";
+import { formatAdminDate, isDisputeOverdue, type DisputeResolutionAction, type DisputeRow } from "./admin-types";
 import {
   ContactCard,
   DetailPanel,
@@ -15,10 +15,12 @@ import {
   Panel,
   StatStrip,
   StatusPill,
+  Tabs,
   Timeline,
+  type Tone,
 } from "./AdminUI";
 
-type ResolutionAction = "release_full" | "refund_full" | "split";
+type ResolutionAction = DisputeResolutionAction;
 
 type PendingDecision = { action: ResolutionAction; refundAmount?: number };
 
@@ -27,6 +29,23 @@ const DECISION_TITLES: Record<ResolutionAction, string> = {
   release_full: "Libérer au vendeur",
   split: "Partager le montant",
 };
+
+const OUTCOME: Record<ResolutionAction, { label: string; tone: Tone }> = {
+  refund_full: { label: "Acheteur remboursé", tone: "info" },
+  release_full: { label: "Libéré au vendeur", tone: "good" },
+  split: { label: "Partagé", tone: "warn" },
+};
+
+/** Montants réellement envoyés à chaque partie, recalculés depuis la
+ * décision enregistrée (même règle de commission que decisionLines). */
+function outcomeAmounts(dispute: DisputeRow): { buyer: number; seller: number } {
+  const total = dispute.total;
+  if (dispute.resolutionAction === "refund_full") return { buyer: total, seller: 0 };
+  if (dispute.resolutionAction === "release_full") return { buyer: 0, seller: total - calculateSellerCommission(total) };
+  const refund = dispute.refundAmount ?? 0;
+  const sellerPart = total - refund;
+  return { buyer: refund, seller: sellerPart - calculateSellerCommission(sellerPart) };
+}
 
 /** Ce que la décision va réellement faire, montants compris — affiché AVANT
  * exécution (étape de confirmation : décision irréversible, argent réel). */
@@ -56,13 +75,15 @@ function decisionLines(dispute: DisputeRow, decision: PendingDecision): string[]
 
 export function AdminDisputesSection({
   disputes,
+  history,
   resolving,
   onResolve,
   onActivityChange,
 }: {
   disputes: DisputeRow[];
+  history: DisputeRow[];
   resolving: string | null;
-  onResolve: (disputeId: string, action: ResolutionAction, refundAmount?: number) => Promise<boolean>;
+  onResolve: (disputeId: string, action: ResolutionAction, refundAmount?: number, note?: string) => Promise<boolean>;
   onActivityChange?: (busy: boolean) => void;
 }) {
   const [selectedDispute, setSelectedDispute] = useState<DisputeRow | null>(null);
@@ -70,6 +91,8 @@ export function AdminDisputesSection({
   const [splitAmount, setSplitAmount] = useState("");
   const [showSplitForm, setShowSplitForm] = useState(false);
   const [pendingDecision, setPendingDecision] = useState<PendingDecision | null>(null);
+  const [decisionNote, setDecisionNote] = useState("");
+  const [tab, setTab] = useState<"open" | "history">("open");
 
   useEffect(() => {
     onActivityChange?.(!!selectedDispute || !!lightboxUrl);
@@ -80,10 +103,11 @@ export function AdminDisputesSection({
     setShowSplitForm(false);
     setSplitAmount("");
     setPendingDecision(null);
+    setDecisionNote("");
   };
 
   const resolve = async (disputeId: string, action: ResolutionAction, refundAmount?: number) => {
-    const ok = await onResolve(disputeId, action, refundAmount);
+    const ok = await onResolve(disputeId, action, refundAmount, decisionNote.trim());
     if (ok) {
       setSelectedDispute(null);
       setPendingDecision(null);
@@ -93,6 +117,19 @@ export function AdminDisputesSection({
   const blockedTotal = disputes.reduce((sum, d) => sum + d.total, 0);
   const overdueCount = disputes.filter(isDisputeOverdue).length;
   const withProofs = disputes.filter((d) => d.disputeMedia.length > 0).length;
+  const isResolved = !!selectedDispute?.resolvedAt;
+
+  const tabs = (
+    <Tabs
+      label="Litiges"
+      value={tab}
+      onChange={setTab}
+      options={[
+        { value: "open", label: "En attente", count: disputes.length },
+        { value: "history", label: "Historique", count: history.length },
+      ]}
+    />
+  );
 
   return (
     <>
@@ -111,7 +148,8 @@ export function AdminDisputesSection({
           ]}
         />
 
-        <Panel title="Litiges en attente d'arbitrage" count={disputes.length}>
+        {tab === "open" ? (
+        <Panel title="Litiges en attente d'arbitrage" count={disputes.length} toolbar={tabs}>
           {disputes.length === 0 ? (
             <EmptyState icon={ShieldCheck} title="Aucun litige ouvert" hint="Bonne nouvelle : aucun argent bloqué en litige." />
           ) : (
@@ -159,6 +197,53 @@ export function AdminDisputesSection({
             </table>
           )}
         </Panel>
+        ) : (
+        <Panel title="Litiges tranchés" count={history.length} toolbar={tabs}>
+          {history.length === 0 ? (
+            <EmptyState icon={History} title="Aucun litige tranché" hint="Les décisions d'arbitrage apparaîtront ici." />
+          ) : (
+            <table className="ax-table">
+              <thead>
+                <tr>
+                  <th>Commande</th>
+                  <th>Motif</th>
+                  <th>Décision</th>
+                  <th>Vendeur</th>
+                  <th>Acheteur</th>
+                  <th className="is-num">Montant</th>
+                  <th>Tranché le</th>
+                </tr>
+              </thead>
+              <tbody>
+                {history.map((d) => (
+                  <tr key={d.id} className="ax-row" tabIndex={0} onClick={() => openDispute(d)} onKeyDown={(e) => e.key === "Enter" && openDispute(d)}>
+                    <td>
+                      <span className="ax-cell-strong admin-mono">{d.orderNumber}</span>
+                      <span className="ax-cell-sub">{d.productName}</span>
+                    </td>
+                    <td>{d.disputeTypeLabel}</td>
+                    <td>
+                      {d.resolutionAction && (
+                        <StatusPill tone={OUTCOME[d.resolutionAction].tone} label={OUTCOME[d.resolutionAction].label} />
+                      )}
+                      <span className="ax-cell-sub">{d.autoResolved ? "Automatique (délai 24h)" : d.resolvedByName || "—"}</span>
+                    </td>
+                    <td>
+                      <EntityCell name={d.sellerName} sub={`@${d.sellerUsername}`} />
+                    </td>
+                    <td>
+                      {d.clientName}
+                      <span className="ax-cell-sub admin-mono">{d.clientPhone}</span>
+                    </td>
+                    <td className="is-num">{formatCurrency(d.total)}</td>
+                    <td className="is-nowrap is-muted">{formatAdminDate(d.resolvedAt)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </Panel>
+        )}
       </section>
 
       {selectedDispute && (
@@ -167,7 +252,12 @@ export function AdminDisputesSection({
           title={`Litige ${selectedDispute.orderNumber}`}
           subtitle={selectedDispute.productName}
           badge={
-            isDisputeOverdue(selectedDispute) ? (
+            isResolved && selectedDispute.resolutionAction ? (
+              <StatusPill
+                tone={OUTCOME[selectedDispute.resolutionAction].tone}
+                label={OUTCOME[selectedDispute.resolutionAction].label}
+              />
+            ) : isDisputeOverdue(selectedDispute) ? (
               <StatusPill tone="bad" label="Délai dépassé" />
             ) : (
               <StatusPill tone="warn" label="En attente" />
@@ -177,11 +267,13 @@ export function AdminDisputesSection({
         >
           <div className="ax-summary">
             <div>
-              <div className="ax-summary-label">Montant bloqué</div>
+              <div className="ax-summary-label">{isResolved ? "Montant en litige" : "Montant bloqué"}</div>
               <div className="ax-summary-amount">{formatCurrency(selectedDispute.total)}</div>
             </div>
             <span className="ax-muted">
-              {selectedDispute.sellerResponseDeadlineAt
+              {isResolved
+                ? `Tranché le ${formatAdminDate(selectedDispute.resolvedAt)}`
+                : selectedDispute.sellerResponseDeadlineAt
                 ? `Délai vendeur : ${formatAdminDate(selectedDispute.sellerResponseDeadlineAt)}`
                 : `Ouvert le ${formatAdminDate(selectedDispute.disputeOpenedAt)}`}
             </span>
@@ -264,6 +356,15 @@ export function AdminDisputesSection({
                 ...(selectedDispute.disputeOpenedAt
                   ? [{ label: "Litige ouvert", date: formatAdminDate(selectedDispute.disputeOpenedAt), tone: "bad" as const }]
                   : []),
+                ...(selectedDispute.resolvedAt && selectedDispute.resolutionAction
+                  ? [
+                      {
+                        label: `Litige tranché : ${OUTCOME[selectedDispute.resolutionAction].label.toLowerCase()}`,
+                        date: formatAdminDate(selectedDispute.resolvedAt),
+                        tone: "ok" as const,
+                      },
+                    ]
+                  : []),
               ]}
             />
           </DetailSection>
@@ -277,6 +378,23 @@ export function AdminDisputesSection({
             />
           </DetailSection>
 
+          {isResolved ? (
+            <DetailSection title="Décision">
+              <KeyValues
+                rows={[
+                  {
+                    label: "Tranché par",
+                    value: selectedDispute.autoResolved
+                      ? "Arbitrage automatique (délai vendeur dépassé)"
+                      : selectedDispute.resolvedByName || "—",
+                  },
+                  { label: "Envoyé à l'acheteur", value: formatCurrency(outcomeAmounts(selectedDispute).buyer) },
+                  { label: "Crédité au vendeur (net)", value: formatCurrency(outcomeAmounts(selectedDispute).seller) },
+                ]}
+              />
+              {selectedDispute.resolutionNote && <p className="ax-callout">{selectedDispute.resolutionNote}</p>}
+            </DetailSection>
+          ) : (
             <div className="ax-dsection admin-arbitrage">
               <h3 className="ax-dsection-title">Décision d&apos;arbitrage</h3>
               <div className="admin-arbitrage-warn">
@@ -293,6 +411,18 @@ export function AdminDisputesSection({
                       <li key={line}>{line}</li>
                     ))}
                   </ul>
+                  <label className="admin-split-label" htmlFor="decision-note">
+                    Note pour l&apos;historique (optionnelle)
+                  </label>
+                  <textarea
+                    id="decision-note"
+                    className="input-field input-compact"
+                    rows={2}
+                    maxLength={255}
+                    value={decisionNote}
+                    onChange={(e) => setDecisionNote(e.target.value)}
+                    placeholder="Ex. : photos confirment le défaut, vendeur injoignable…"
+                  />
                   <div className="admin-arbitrage-actions">
                     <button
                       type="button"
@@ -399,6 +529,7 @@ export function AdminDisputesSection({
               </>
               )}
             </div>
+          )}
         </DetailPanel>
       )}
 
