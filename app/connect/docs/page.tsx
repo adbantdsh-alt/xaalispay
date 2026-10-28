@@ -1010,7 +1010,7 @@ export SK="sk_test_..."`}
 
           <h3 className="docs-h3">5. Lister les opérateurs mobile money valides pour un pays</h3>
           <Code lang="bash" copyText={exOperators}>{exOperators}</Code>
-          <Code lang="json — réponse">{`{ "operators": ["wave", "orange", "maxit"], "otp_required": [] }`}</Code>
+          <Code lang="json — réponse">{`{ "operators": ["wave", "maxit"], "otp_required": [] }`}</Code>
           <p>Un pays inconnu ou sans opérateur activé renvoie une liste vide, jamais une erreur : <code>{"{\"operators\": [], \"otp_required\": []}"}</code>. Envoyer un <code>payment_method</code> hors liste est rejeté en 400.</p>
           <p>Pays couverts : <code>SN</code>, <code>CI</code>, <code>ML</code>, <code>BJ</code>, <code>TG</code>, <code>BF</code>. <code>otp_required</code> liste les opérateurs qui exigent le champ <code>otp</code> à la création dans ce pays — aujourd&apos;hui Orange Money en Côte d&apos;Ivoire et au Burkina Faso :</p>
           <Code lang="json — GET /operators?country=BF">{`{ "operators": ["moov", "wave", "orange"], "otp_required": ["orange"] }`}</Code>

@@ -9,7 +9,7 @@ import {
   TogocellFavicon,
   WaveFavicon,
 } from "@/components/pay/PaymentBrandLogos";
-import { MOBILE_MONEY_METHODS, mobileMoneyMethodsForCountry, type MobileMoneyMethod } from "@/lib/payment-methods";
+import { MOBILE_MONEY_METHODS, withdrawalMethodsForCountry, type MobileMoneyMethod } from "@/lib/payment-methods";
 
 interface Props {
   value: MobileMoneyMethod;
@@ -33,7 +33,7 @@ function MethodIcon({ id }: { id: MobileMoneyMethod }) {
 }
 
 export function WalletPayoutMethodPicker({ value, onChange, country }: Props) {
-  const available = mobileMoneyMethodsForCountry(country);
+  const available = withdrawalMethodsForCountry(country);
   const methods = MOBILE_MONEY_METHODS.filter((m) => available.includes(m.id));
 
   return (

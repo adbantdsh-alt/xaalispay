@@ -10,7 +10,7 @@
 import { useEffect, useState } from "react";
 import {
   MOBILE_MONEY_METHODS,
-  mobileMoneyMethodsForCountry,
+  chargeMethodsForCountry,
   orangeRequiresOtp,
   type MobileMoneyMethod,
 } from "@/lib/payment-methods";
@@ -60,7 +60,7 @@ export function PayMethodButtons({
     if (!paying) setActiveMethod(null);
   }, [paying]);
 
-  const available = mobileMoneyMethodsForCountry(country);
+  const available = chargeMethodsForCountry(country);
   const buttons = MOBILE_MONEY_METHODS.filter((m) => available.includes(m.id));
 
   const handleClick = (method: MobileMoneyMethod) => {

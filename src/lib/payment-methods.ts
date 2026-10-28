@@ -88,6 +88,34 @@ export function mobileMoneyMethodsForCountry(country: string): MobileMoneyMethod
   return MOBILE_MONEY_METHODS_BY_COUNTRY[country] ?? MOBILE_MONEY_METHODS_BY_COUNTRY.SN;
 }
 
+/** Miroir de apps.payments.operators.CHARGE_DISABLED_OPERATORS : opérateurs
+ * retirés des PAIEMENTS acheteur mais toujours valides pour les retraits
+ * (voir withdrawalMethodsForCountry pour les retraits). Orange Money
+ * Sénégal retiré le 2026-10-28 : l'acheteur Orange paie via MaxIt. */
+const CHARGE_DISABLED_METHODS: Record<string, MobileMoneyMethod[]> = {
+  SN: ["orange"],
+};
+
+export function chargeMethodsForCountry(country: string): MobileMoneyMethod[] {
+  const key = MOBILE_MONEY_METHODS_BY_COUNTRY[country] ? country : "SN";
+  const disabled = CHARGE_DISABLED_METHODS[key] ?? [];
+  return mobileMoneyMethodsForCountry(country).filter((m) => !disabled.includes(m));
+}
+
+/** Opérateurs proposés pour un RETRAIT vendeur. MaxIt (SN) sert à payer
+ * mais n'a jamais été confirmé côté payout Bictorys : le backend le refuse
+ * (apps.payments.operators.BICTORYS_PAYOUT_CONFIRMED_COMBINATIONS), donc on
+ * ne le propose pas au retrait. */
+const WITHDRAWAL_DISABLED_METHODS: Record<string, MobileMoneyMethod[]> = {
+  SN: ["maxit"],
+};
+
+export function withdrawalMethodsForCountry(country: string): MobileMoneyMethod[] {
+  const key = MOBILE_MONEY_METHODS_BY_COUNTRY[country] ? country : "SN";
+  const disabled = WITHDRAWAL_DISABLED_METHODS[key] ?? [];
+  return mobileMoneyMethodsForCountry(country).filter((m) => !disabled.includes(m));
+}
+
 /** Orange Money exige un OTP généré côté client (composer #144*82#) dans ces
  * pays uniquement — voir apps.payments.operators.ORANGE_OTP_REQUIRED_COUNTRIES
  * ("Orange Money CI et BF sont les seuls opérateurs qui nécessitent un code

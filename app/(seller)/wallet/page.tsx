@@ -8,7 +8,7 @@ import { dialCodeFor, formatCurrency, formatPhoneDisplay, phonePlaceholderFor, s
 import { WalletPayoutMethodPicker } from "@/components/seller/WalletPayoutMethodPicker";
 import { WalletPayoutHistory } from "@/components/seller/WalletPayoutHistory";
 import { WalletTransactionHistory } from "@/components/seller/WalletTransactionHistory";
-import { MOBILE_MONEY_LABELS, mobileMoneyMethodsForCountry, type MobileMoneyMethod } from "@/lib/payment-methods";
+import { MOBILE_MONEY_LABELS, withdrawalMethodsForCountry, type MobileMoneyMethod } from "@/lib/payment-methods";
 import type { Order } from "@/lib/types";
 import { DashboardSkeleton } from "@/components/ui/Skeleton";
 import { useSellerData } from "@/components/seller/SellerDataProvider";
@@ -41,7 +41,7 @@ export default function WalletPage() {
   // Mali) tant qu'il n'a pas touché le sélecteur lui-même.
   useEffect(() => {
     if (methodTouched) return;
-    const first = mobileMoneyMethodsForCountry(country)[0];
+    const first = withdrawalMethodsForCountry(country)[0];
     if (first && first !== method) setMethod(first);
   }, [country, method, methodTouched]);
 
