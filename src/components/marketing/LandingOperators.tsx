@@ -14,7 +14,7 @@ export function LandingOperators({ sellers }: { sellers: number | null }) {
     { value: OPERATORS.length, prefix: "", label: "opérateurs mobile money" },
   ];
   return (
-    <section aria-label="XaalisPay en chiffres et moyens de paiement acceptés" className="bg-white pb-14 md:pb-20">
+    <section aria-label="XaalisPay en chiffres et moyens de paiement acceptés" className="bg-white pb-20 md:pb-20">
       <div className="lp-container">
         <dl
           className="mx-auto mb-12 grid max-w-3xl divide-x divide-[#1E3A5F]/10 border-y border-[#1E3A5F]/10 py-6"
@@ -30,14 +30,16 @@ export function LandingOperators({ sellers }: { sellers: number | null }) {
           ))}
         </dl>
         <p className="text-center text-[13px] text-[#6B7280]">
-          Payez et soyez payé avec le mobile money que vous utilisez déjà, dans {COUNTRIES.length} pays
+          Payez et soyez payé avec le mobile money que vous utilisez déjà
         </p>
-        <ul className="mt-6 flex flex-wrap items-center justify-center gap-x-8 gap-y-4">
+        {/* Grille 4 colonnes sur mobile (logo au-dessus du nom, 4 + 3), une
+            seule ligne discrète sur desktop. */}
+        <ul className="mx-auto mt-6 grid max-w-sm grid-cols-4 gap-x-2 gap-y-5 sm:flex sm:max-w-none sm:flex-wrap sm:items-center sm:justify-center sm:gap-x-7 sm:gap-y-3">
           {OPERATORS.map((op) => (
-            <li key={op.name} className="flex items-center gap-2.5">
+            <li key={op.name} className="flex flex-col items-center gap-1.5 sm:flex-row sm:gap-2">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={op.logo} alt="" width={28} height={28} className="h-7 w-7 rounded-lg object-contain" />
-              <span className="text-[15px] font-medium text-[#1E3A5F]">{op.name}</span>
+              <img src={op.logo} alt="" width={28} height={28} className="h-8 w-8 sm:h-6 sm:w-6 rounded-lg object-contain" />
+              <span className="text-center text-[11px] sm:text-[14px] font-medium leading-tight text-[#1E3A5F]">{op.name}</span>
             </li>
           ))}
         </ul>

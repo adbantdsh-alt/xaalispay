@@ -1,6 +1,22 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import Link from "next/link";
 
+/** Masqué tant qu'on est en haut de page : il recouvrait les liens du hero
+ * mobile (le lien « Litige » reste dans la barre XaalisTag et le menu). */
 export function MobileDisputeFab() {
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setVisible(window.scrollY > 600);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  if (!visible) return null;
+
   return (
     <Link
       href="/litige"
