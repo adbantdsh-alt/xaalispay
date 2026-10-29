@@ -1,15 +1,46 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
+import { Reveal } from "@/components/marketing/Reveal";
 import { buildPageMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = buildPageMetadata({
-  title: "Mot du CEO — Notre histoire",
+  title: "Notre histoire — Les fondateurs de XaalisPay",
   description:
-    "L'histoire de XaalisPay, racontée par Mr Abdoulaye Badji, son CEO. Du boostage WhatsApp aux dizaines de millions de chiffre d'affaires, et la naissance d'un tiers de confiance pour l'e-commerce africain.",
+    "XaalisPay est né de la rencontre entre le terrain et la tech : Abdoulaye Badji, e-commerçant et CEO, et Insa Diouf, ingénieur et CTO. Leur histoire, et pourquoi la confiance est au cœur de l'e-commerce africain.",
   path: "/histoire",
 });
 
-const SECTIONS = [
+const FOUNDERS = [
+  {
+    name: "Abdoulaye Badji",
+    role: "CEO & co-fondateur",
+    facet: "Le terrain",
+    photo: "/team/abdoulaye.jpg",
+    alt: "Abdoulaye Badji, CEO et co-fondateur de XaalisPay",
+    bio: [
+      "E-commerçant parti de zéro, sans voiture, sans moto, avec des boostages WhatsApp à 2 dollars. Il a généré des dizaines de millions de FCFA de chiffre d'affaires, et en a perdu autant à cause des commandes fantômes.",
+      "Il connaît chaque étape du métier : la négociation, le rendez-vous, le client qui ne répond plus. C'est cette douleur, partagée par tous les e-commerçants africains, qui a donné naissance à XaalisPay.",
+    ],
+    tags: ["E-commerce", "Terrain", "Vente sur les réseaux"],
+    quote: "L'Afrique attend depuis trop longtemps que quelqu'un règle ce problème. Ce quelqu'un, c'était nous.",
+  },
+  {
+    name: "Insa Diouf",
+    role: "CTO & co-fondateur",
+    facet: "La tech",
+    photo: "/team/insa.jpg",
+    alt: "Insa Diouf, CTO et co-fondateur de XaalisPay",
+    bio: [
+      "Ingénieur, entrepreneur et créateur, entre le Sénégal et la France. Il transforme des idées en produits qui marchent vraiment, vite, et lance des produits pensés pour les marchés africains, comme Afrydex Immo et CopyX.",
+      "Chez XaalisPay, il porte la vision produit et la tech.",
+    ],
+    tags: ["Ingénierie", "Vision produit", "Vitesse d'exécution"],
+    quote: "C'est l'ère de la jeunesse africaine. Ce n'est pas un slogan. C'est pourquoi je me lève le matin.",
+  },
+];
+
+const CHAPTERS = [
   {
     heading: "Tout a commencé avec un boostage WhatsApp à 2 dollars",
     body: [
@@ -50,63 +81,233 @@ const SECTIONS = [
   },
 ];
 
+const FINALE_PHOTOS = [
+  {
+    src: "/team/next/finale-316.jpg",
+    alt: "Insa Diouf pitche XaalisPay devant la salle comble de la finale Next Sénégal",
+    className: "col-span-2 aspect-[3/2]",
+    sizes: "(min-width: 768px) 66vw, 100vw",
+  },
+  {
+    src: "/team/next/finale-310.jpg",
+    alt: "Insa Diouf sur scène, micro en main, pendant son pitch",
+    className: "row-span-2",
+    sizes: "(min-width: 768px) 33vw, 100vw",
+  },
+  {
+    src: "/team/next/finale-308.jpg",
+    alt: "Insa Diouf présente XaalisPay au jury de la finale",
+    className: "aspect-[3/2]",
+    sizes: "(min-width: 768px) 33vw, 100vw",
+  },
+  {
+    src: "/team/next/finale-315.jpg",
+    alt: "Le public de la finale Next Sénégal pendant le pitch de XaalisPay",
+    className: "aspect-[3/2]",
+    sizes: "(min-width: 768px) 33vw, 100vw",
+  },
+];
+
 export default function HistoirePage() {
   return (
-    <article className="content-page">
-      <header className="content-hero">
-        <p className="section-label">Mot du CEO</p>
-        <h1 className="content-title">Mr Abdoulaye Badji</h1>
-        <p className="content-lead">
-          L&apos;histoire de XaalisPay, racontée par son CEO — e-commerçant et acteur du terrain
-          africain.
-        </p>
+    <article className="bg-white text-[#1E3A5F]">
+      {/* ─── Hero ─── */}
+      <header className="lp-container pt-14 pb-16 md:pt-20 md:pb-24 grid grid-cols-1 lg:grid-cols-12 gap-14 lg:gap-12 items-center">
+        <Reveal className="lg:col-span-6">
+          <span className="lp-pill">Notre histoire</span>
+          <h1
+            className="mt-6 font-semibold"
+            style={{ fontSize: "clamp(2.4rem, 4.8vw, 4.2rem)", lineHeight: 1.02, letterSpacing: "-0.035em" }}
+          >
+            Deux fondateurs.
+            <br />
+            <span className="italic font-normal text-[#D4A373]">Une seule obsession : la confiance.</span>
+          </h1>
+          <p className="mt-7 max-w-2xl text-[17px] md:text-[19px] leading-relaxed text-[#6B7280]">
+            XaalisPay est né de la rencontre entre <span className="font-medium text-[#1E3A5F]">le terrain</span> et{" "}
+            <span className="font-medium text-[#1E3A5F]">la tech</span> : un e-commerçant qui a vu des dizaines de
+            millions s&apos;envoler en commandes fantômes, et un ingénieur qui construit des produits pour les
+            marchés africains.
+          </p>
+        </Reveal>
+
+        <div className="lg:col-span-6 grid grid-cols-2 gap-4 md:gap-6">
+          {FOUNDERS.map((f, i) => (
+            <Reveal key={f.name} delay={i * 0.1} className={i === 1 ? "mt-10 md:mt-16" : ""}>
+              <a href={`#${slug(f.name)}`} className="group block">
+                <div className="relative aspect-[4/5] overflow-hidden rounded-[28px] bg-[#F7EEE3]">
+                  <Image
+                    src={f.photo}
+                    alt={f.alt}
+                    fill
+                    priority
+                    sizes="(min-width: 768px) 360px, 45vw"
+                    className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+                  />
+                  <span className="absolute left-3 top-3 rounded-full bg-white/90 px-3 py-1 text-[11px] md:text-[12px] font-semibold uppercase tracking-wider">
+                    {f.facet}
+                  </span>
+                </div>
+                <p className="mt-4 text-[17px] md:text-[20px] font-semibold leading-tight">{f.name}</p>
+                <p className="mt-1 text-[13px] md:text-[14px] text-[#B8895D] font-medium">{f.role}</p>
+              </a>
+            </Reveal>
+          ))}
+        </div>
       </header>
 
-      <div className="content-timeline">
-        <div className="lp-card-flat content-chapter">
-          <div className="rounded-2xl overflow-hidden bg-[#0B1B33] aspect-[4/5] max-w-md">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="/team/abdoulaye.jpg"
-              alt="Mr Abdoulaye Badji, CEO de XaalisPay"
-              className="w-full h-full object-cover"
-            />
-          </div>
-          <blockquote className="mt-6 text-[18px] md:text-[20px] text-[#1E3A5F] leading-[1.4]">
-            « L&apos;Afrique attend depuis trop longtemps que quelqu&apos;un règle ce problème. Ce
-            quelqu&apos;un, c&apos;était nous. »
-          </blockquote>
-        </div>
+      {/* ─── Les fondateurs ─── */}
+      <section className="lp-surface-gray py-20 md:py-28">
+        <div className="lp-container">
+          <Reveal className="max-w-3xl">
+            <div className="lp-eyebrow">Les fondateurs</div>
+            <h2 className="lp-h2 mt-5 !text-[36px] md:!text-[52px] leading-[1.05]">
+              Le terrain et la tech, à la même table.
+            </h2>
+          </Reveal>
 
-        {SECTIONS.map((section) => (
-          <section key={section.heading} className="lp-card-flat content-chapter">
-            <h2 className="content-chapter-title text-[22px] md:text-[26px] font-medium">{section.heading}</h2>
-            {section.body.map((p, i) => (
-              <p key={i} className="content-chapter-body" style={{ whiteSpace: "normal" }}>
-                {p}
-              </p>
+          <div className="mt-16 space-y-20 md:space-y-28">
+            {FOUNDERS.map((f, i) => (
+              <Reveal
+                key={f.name}
+                className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-16 items-center scroll-mt-28"
+              >
+                <div id={slug(f.name)} className={`lg:col-span-5 ${i % 2 ? "lg:order-2" : ""}`}>
+                  <div className="relative mx-auto aspect-[4/5] w-full max-w-[440px] overflow-hidden rounded-[32px] bg-[#F7EEE3]">
+                    <Image src={f.photo} alt={f.alt} fill sizes="(min-width: 1024px) 440px, 90vw" className="object-cover" />
+                  </div>
+                </div>
+                <div className={`lg:col-span-7 ${i % 2 ? "lg:order-1" : ""}`}>
+                  <p className="font-mono text-[12px] uppercase tracking-[0.16em] text-[#B8895D]">
+                    0{i + 1} · {f.facet}
+                  </p>
+                  <h3 className="mt-3 text-[32px] md:text-[44px] font-semibold leading-[1.05] tracking-tight">
+                    {f.name}
+                  </h3>
+                  <p className="mt-2 text-[16px] font-medium text-[#6B7280]">{f.role}</p>
+                  <div className="mt-7 space-y-4 text-[16px] md:text-[17px] leading-relaxed text-[#1E3A5F]/80">
+                    {f.bio.map((p) => (
+                      <p key={p}>{p}</p>
+                    ))}
+                  </div>
+                  <ul className="mt-7 flex flex-wrap gap-2">
+                    {f.tags.map((t) => (
+                      <li key={t} className="rounded-full lp-hairline bg-white px-3.5 py-1.5 text-[13px] font-medium">
+                        {t}
+                      </li>
+                    ))}
+                  </ul>
+                  <blockquote className="mt-9 border-l-2 border-[#D4A373] pl-5 text-[19px] md:text-[22px] italic leading-[1.4]">
+                    « {f.quote} »
+                  </blockquote>
+                </div>
+              </Reveal>
             ))}
-          </section>
-        ))}
+          </div>
+        </div>
+      </section>
 
-        <div className="lp-surface-navy content-chapter">
-          <p className="text-white text-[20px] md:text-[26px] leading-[1.35]">
-            « L&apos;arnaque s&apos;arrête là où XaalisPay pose le pied. »
+      {/* ─── Mot du CEO ─── */}
+      <section className="py-20 md:py-28">
+        <div className="lp-container grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16">
+          <aside className="lg:col-span-4">
+            <div className="lg:sticky lg:top-28">
+              <div className="lp-eyebrow">Mot du CEO</div>
+              <h2 className="mt-5 text-[32px] md:text-[42px] font-semibold leading-[1.08] tracking-tight">
+                Comment tout a commencé.
+              </h2>
+              <div className="mt-8 flex items-center gap-3">
+                <span className="relative h-12 w-12 overflow-hidden rounded-full bg-[#F7EEE3]">
+                  <Image src="/team/abdoulaye.jpg" alt="" fill sizes="48px" className="object-cover" />
+                </span>
+                <span className="leading-tight">
+                  <span className="block text-[15px] font-semibold">Abdoulaye Badji</span>
+                  <span className="block text-[13px] text-[#6B7280]">CEO & co-fondateur</span>
+                </span>
+              </div>
+            </div>
+          </aside>
+
+          <ol className="lg:col-span-8 space-y-14 md:space-y-16">
+            {CHAPTERS.map((c, i) => (
+              <Reveal as="li" key={c.heading} className="border-t border-[#1E3A5F]/10 pt-8">
+                <span className="font-mono text-[13px] text-[#B8895D]">{String(i + 1).padStart(2, "0")}</span>
+                <h3 className="mt-3 text-[24px] md:text-[30px] font-semibold leading-[1.15] tracking-tight">
+                  {c.heading}
+                </h3>
+                <div className="mt-5 space-y-4 text-[16px] md:text-[17px] leading-[1.75] text-[#1E3A5F]/80">
+                  {c.body.map((p) => (
+                    <p key={p}>{p}</p>
+                  ))}
+                </div>
+              </Reveal>
+            ))}
+          </ol>
+        </div>
+      </section>
+
+      {/* ─── Finale Next Sénégal ─── */}
+      <section className="lp-surface-navy py-20 md:py-28">
+        <div className="lp-container">
+          <Reveal className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-16 items-end">
+            <div className="lg:col-span-7">
+              <span className="lp-pill lp-pill-dark">Concours Next Sénégal · Finaliste</span>
+              <h2
+                className="mt-6 text-white font-semibold"
+                style={{ fontSize: "clamp(2rem, 4.4vw, 3.4rem)", lineHeight: 1.05, letterSpacing: "-0.025em" }}
+              >
+                XaalisPay sur la scène{" "}
+                <span className="italic font-normal text-[#D4A373]">de la finale.</span>
+              </h2>
+            </div>
+            <p className="lg:col-span-5 text-[16px] md:text-[17px] leading-relaxed text-white/70">
+              Insa a porté XaalisPay jusqu&apos;en finale du concours de pitch Next Sénégal, face au jury et à une
+              salle pleine. Une étape de plus pour faire de la confiance le standard de l&apos;e-commerce africain.
+            </p>
+          </Reveal>
+
+          <div className="mt-12 grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
+            {FINALE_PHOTOS.map((p) => (
+              <Reveal key={p.src} className={`relative overflow-hidden rounded-[24px] bg-white/5 ${p.className}`}>
+                <Image src={p.src} alt={p.alt} fill sizes={p.sizes} className="object-cover" />
+              </Reveal>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ─── Fin ─── */}
+      <section className="py-20 md:py-28">
+        <Reveal className="lp-container max-w-4xl text-center">
+          <p
+            className="font-semibold"
+            style={{ fontSize: "clamp(1.9rem, 4.2vw, 3.2rem)", lineHeight: 1.12, letterSpacing: "-0.025em" }}
+          >
+            « L&apos;arnaque s&apos;arrête là où{" "}
+            <span className="italic font-normal text-[#D4A373]">XaalisPay pose le pied.</span>{"\u00a0»"}
           </p>
-          <div className="mt-3 text-white/60 text-[13px]">— Mr Abdoulaye Badji, CEO</div>
-          <div className="mt-7 flex flex-wrap gap-3">
+          <p className="mt-4 text-[14px] text-[#6B7280]">Abdoulaye Badji & Insa Diouf, co-fondateurs</p>
+          <div className="mt-10 flex flex-wrap justify-center gap-3">
             <Link href="/auth?mode=signup" className="lp-btn lp-btn-primary">
               Rejoindre XaalisPay
             </Link>
             <Link
               href="/contact"
-              className="inline-flex items-center px-5 py-3 rounded-full border border-white/25 lp-text-white text-[14px] font-semibold hover:bg-white/10 transition-colors"
+              className="inline-flex items-center rounded-full border border-[#1E3A5F]/20 px-5 py-3 text-[14px] font-semibold hover:bg-[#1E3A5F]/5 transition-colors"
             >
               Nous contacter
             </Link>
           </div>
-        </div>
-      </div>
+        </Reveal>
+      </section>
     </article>
   );
+}
+
+function slug(name: string) {
+  return name
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .toLowerCase()
+    .replace(/\s+/g, "-");
 }
