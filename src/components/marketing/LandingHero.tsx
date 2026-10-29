@@ -44,7 +44,7 @@ export function LandingHero() {
             remboursé si quelque chose ne va pas. Fini les arnaques, fini le stress.
           </p>
 
-          <ul className="order-4 lg:order-3 mt-8 lg:mt-7 grid grid-cols-2 gap-x-4 gap-y-3 sm:flex sm:flex-wrap sm:gap-x-5 sm:gap-y-2">
+          <ul className="order-4 lg:order-3 mt-8 lg:mt-7 grid max-w-md grid-cols-2 gap-x-6 gap-y-3">
             {PROOFS.map((p) => (
               <li key={p.full} className="flex items-start gap-1.5 text-[13.5px] sm:text-[14px] leading-snug text-[#1E3A5F]">
                 <span className="mt-[2px] grid h-4 w-4 shrink-0 place-items-center rounded-full bg-[#F7EEE3] text-[#B8895D]">
