@@ -6,6 +6,7 @@ import { formatCurrency } from "@/lib/utils";
 import { ORDER_STATUS_LABELS } from "@/lib/types";
 import { ContactCard, DetailPanel, DetailSection, StatusPill, toneForStatus } from "./AdminUI";
 import {
+  boostTierDetail,
   formatAdminDate,
   payoutStatusLabel,
   type OrderSummaryRow,
@@ -311,7 +312,7 @@ export function AdminSellerDetail({ sellerId, onClose }: { sellerId: number; onC
                       <span className="ax-list-title">{r.businessName}</span>
                       <span className="ax-list-sub">
                         CA {formatCurrency(r.lifetimeGmv)} · commission {formatCurrency(r.commissionEarnedTotal)} ·
-                        palier {r.isBoosted ? "1 %" : "0,25 %"} jusqu&apos;au {formatAdminDate(r.boostExpiresAt)}
+                        {boostTierDetail(r.isBoosted, r.boostExpiresAt)}
                       </span>
                     </span>
                     <span className="ax-inline-form">

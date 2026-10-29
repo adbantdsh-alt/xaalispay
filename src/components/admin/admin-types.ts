@@ -493,6 +493,20 @@ export function formatAdminDate(iso?: string) {
   });
 }
 
+/** Date sans heure, avec l'année — pour les échéances longues (palier 1 %). */
+export function formatAdminDay(iso?: string | null) {
+  if (!iso) return "—";
+  return new Date(iso).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" });
+}
+
+/** Sous-titre du palier d'affiliation : la date ne concerne QUE le palier
+ * 1 % ; une fois terminé, le 0,25 % est à vie (sans échéance). */
+export function boostTierDetail(isBoosted: boolean, boostExpiresAt?: string | null) {
+  return isBoosted
+    ? `1 % jusqu'au ${formatAdminDay(boostExpiresAt)}, puis 0,25 % à vie`
+    : `À vie · palier 1 % terminé le ${formatAdminDay(boostExpiresAt)}`;
+}
+
 export function adminStatusClass(status: string) {
   if (status === "failed" || status === "dispute" || status === "refunded") return "bad";
   if (status === "succeeded" || status === "released") return "good";

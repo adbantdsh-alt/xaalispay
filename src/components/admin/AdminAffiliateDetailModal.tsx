@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { apiFetch } from "@/lib/api-client";
 import { formatCurrency } from "@/lib/utils";
 import { adaptAffiliateRow } from "./admin-adapters";
-import { formatAdminDate, type AffiliateRow } from "./admin-types";
+import { boostTierDetail, type AffiliateRow } from "./admin-types";
 import { DetailPanel, DetailSection, StatusPill } from "./AdminUI";
 
 export function AdminAffiliateDetailModal({
@@ -64,7 +64,7 @@ export function AdminAffiliateDetailModal({
                   <span className="ax-list-main">
                     <span className="ax-list-title">{r.businessName}</span>
                     <span className="ax-list-sub">
-                      CA {formatCurrency(r.lifetimeGmv)} · palier jusqu&apos;au {formatAdminDate(r.boostExpiresAt)}
+                      CA {formatCurrency(r.lifetimeGmv)} · {boostTierDetail(r.isBoosted, r.boostExpiresAt)}
                     </span>
                   </span>
                   <span className="ax-list-amount admin-mono">{formatCurrency(r.commissionEarnedTotal)}</span>

@@ -150,7 +150,6 @@ export function AdminAffiliationPage() {
           onReject={rejectApplication}
         />
       )}
-      <AdminApprovedAffiliatesPanel affiliates={members} />
       <AdminAffiliationSection
         referrers={referrers}
         summary={summary}
@@ -158,6 +157,7 @@ export function AdminAffiliationPage() {
         onExtendAllBoost={extendAllBoost}
         onOpenDetail={openDetail}
       />
+      <AdminApprovedAffiliatesPanel affiliates={members} onExtendAllBoost={extendAllBoost} />
       <AdminAffiliateDetailModal
         referrerId={detailReferrerId}
         referrerName={detailReferrerName}

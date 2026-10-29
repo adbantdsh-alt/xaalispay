@@ -5,7 +5,7 @@ import { Handshake } from "lucide-react";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { formatCurrency } from "@/lib/utils";
 import { NAVY } from "./admin-chart-colors";
-import { formatAdminDate, type AffiliateProgramSummary, type ReferrerGroupRow } from "./admin-types";
+import { boostTierDetail, type AffiliateProgramSummary, type ReferrerGroupRow } from "./admin-types";
 import { EmptyState, EntityCell, Panel, SearchField, StatStrip, StatusPill, Tabs } from "./AdminUI";
 
 const ORDERING_OPTIONS = [
@@ -14,7 +14,7 @@ const ORDERING_OPTIONS = [
   { value: "-latest_boost_expires_at", label: "Boost expirant le plus tard" },
 ] as const;
 
-function ExtendBoostCell({
+export function ExtendBoostCell({
   referrerId,
   onExtendAllBoost,
 }: {
@@ -154,7 +154,7 @@ export function AdminAffiliationSection({
                   <td className="is-num">{formatCurrency(r.totalCommission)}</td>
                   <td>
                     <StatusPill tone={r.boostedCount > 0 ? "good" : "neutral"} label={r.boostedCount > 0 ? "1 %" : "0,25 %"} />
-                    <span className="ax-cell-sub">jusqu&apos;au {formatAdminDate(r.latestBoostExpiresAt)}</span>
+                    <span className="ax-cell-sub">{boostTierDetail(r.boostedCount > 0, r.latestBoostExpiresAt)}</span>
                   </td>
                   <td>
                     <ExtendBoostCell referrerId={r.referrerId} onExtendAllBoost={onExtendAllBoost} />
