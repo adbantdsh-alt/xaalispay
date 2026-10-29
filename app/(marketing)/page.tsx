@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { HomeJsonLd } from "@/components/seo/HomeJsonLd";
 import { buildPageMetadata } from "@/lib/seo";
+import { fetchPublicStats } from "@/lib/public-stats";
 import { LandingVendorSearchBar } from "@/components/marketing/LandingVendorSearchBar";
 import { LandingHero } from "@/components/marketing/LandingHero";
 import { LandingOperators } from "@/components/marketing/LandingOperators";
@@ -19,13 +20,14 @@ export const metadata: Metadata = buildPageMetadata({
   path: "/",
 });
 
-export default function LandingPage() {
+export default async function LandingPage() {
+  const { sellers } = await fetchPublicStats();
   return (
     <>
       <LandingVendorSearchBar />
       <HomeJsonLd />
       <LandingHero />
-      <LandingOperators />
+      <LandingOperators sellers={sellers} />
       <LandingProblem />
       <LandingAudience />
       <LandingHowItWorks />
