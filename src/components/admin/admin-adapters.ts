@@ -1,5 +1,6 @@
 import type {
   AffiliateApplicationRow,
+  ApprovedAffiliateRow,
   AffiliateProgramSummary,
   AffiliateRow,
   ConnectPayoutRow,
@@ -187,6 +188,19 @@ export function adaptReferrerGroupRow(r: any): ReferrerGroupRow {
     totalCommission:        r.total_commission,
     totalLifetimeGmv:       r.total_lifetime_gmv,
     latestBoostExpiresAt:   r.latest_boost_expires_at,
+  };
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function adaptApprovedAffiliateRow(r: any): ApprovedAffiliateRow {
+  return {
+    id:              r.id,
+    username:        r.username,
+    businessName:    r.business_name,
+    phone:           r.phone,
+    referralCount:   r.referral_count,
+    totalCommission: r.total_commission,
+    approvedAt:      r.approved_at,
   };
 }
 

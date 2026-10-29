@@ -238,6 +238,16 @@ export interface AffiliateRow {
   commissionEarnedTotal: number;
 }
 
+export interface ApprovedAffiliateRow {
+  id: number;
+  username: string;
+  businessName: string;
+  phone: string;
+  referralCount: number;
+  totalCommission: number;
+  approvedAt: string | null;
+}
+
 export interface AffiliateApplicationRow {
   id: number;
   sellerUsername: string;
