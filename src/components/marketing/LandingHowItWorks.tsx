@@ -27,7 +27,7 @@ const STEPS = [
     n: "02",
     icon: <IconTruck size={20} />,
     title: "Le vendeur livre",
-    desc: "Le vendeur prépare et expédie sans crainte sous 48 heures maximum ou le client est remboursé automatiquement.",
+    desc: "Le vendeur prépare et expédie sans crainte sous 72 heures maximum ou le client est remboursé automatiquement.",
     visual: <DeliveryPhotoVisual />,
   },
   {
@@ -136,7 +136,7 @@ function DeliveryPhotoVisual() {
         className="absolute -bottom-5 left-4 md:-left-6"
         icon={<IconTruck size={16} />}
         title="Commande #4821 · en route"
-        value="Livraison sous 48 h max"
+        value="Livraison sous 72 h max"
       />
     </div>
   );

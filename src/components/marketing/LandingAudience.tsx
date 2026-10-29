@@ -16,7 +16,7 @@ const SELLER_POINTS = [
 const BUYER_POINTS = [
   "Vous payez avec Wave, Orange Money, MTN ou Moov, comme d'habitude",
   "Le vendeur n'est payé que quand vous avez le colis entre les mains",
-  "Pas livré sous 48 h ? Remboursé automatiquement, frais inclus",
+  "Pas livré sous 72 h ? Remboursé automatiquement, frais inclus",
   "30 minutes pour vérifier et ouvrir un litige si ça ne va pas",
 ];
 

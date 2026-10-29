@@ -23,7 +23,7 @@ export function ChargebackExplainDialog({
             perdu, annulation après paiement, ou livraison non effectuée dans les délais.
           </p>
           <p>
-            Sur XaalisPay, si vous ne livrez pas dans les <strong>48 h après paiement</strong>,
+            Sur XaalisPay, si vous ne livrez pas dans les <strong>72 h après paiement</strong>,
             le client est remboursé automatiquement — cela compte comme un chargeback sur votre
             compte vendeur.
           </p>

@@ -15,7 +15,7 @@ export const LANDING_FAQ: FaqItem[] = [
   },
   {
     q: "Que se passe-t-il si le vendeur ne livre jamais ?",
-    a: "Chaque vendeur dispose de 48 heures maximum pour livrer. S'il ne livre pas dans ce délai, votre commande est intégralement remboursée, frais de protection inclus, et le vendeur se voit appliquer des pénalités.",
+    a: "Chaque vendeur dispose de 72 heures maximum pour livrer. S'il ne livre pas dans ce délai, votre commande est intégralement remboursée, frais de protection inclus, et le vendeur se voit appliquer des pénalités.",
   },
   {
     q: "Mes données bancaires sont-elles partagées avec le vendeur ?",

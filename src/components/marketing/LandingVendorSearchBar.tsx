@@ -116,7 +116,7 @@ function XaalisTagModal({ open, onClose }: { open: boolean; onClose: () => void 
                 "Le client copie le XaalisTag du vendeur.",
                 "Il le saisit sur XaalisPay.com → la boutique s'ouvre.",
                 "Il choisit son produit et paie en toute sécurité.",
-                "Le vendeur a 48 h pour livrer, sinon remboursement auto.",
+                "Le vendeur a 72 h pour livrer, sinon remboursement auto.",
               ].map((step, i) => (
                 <li
                   key={i}
